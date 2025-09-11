@@ -1,0 +1,152 @@
+{
+  "lesson_id": 101,
+  "title": "Bài học 1: Hành động và Mô tả",
+  "sequence": [
+    {
+      "entity_type": "divider",
+      "data": {
+        "title": "Phần 1: Học từ mới"
+      }
+    },
+    {
+      "entity_type": "vocabulary_card",
+      "data": {
+        "id": "3123",
+        "simplified": "删除",
+        "traditional": "刪除",
+        "pinyin": "shānchú",
+        "translation": "Xóa",
+        "part_of_speech": "động từ",
+        "audio_url": "https://chinese-master.s3.amazonaws.com/audio/shanchu.mp3",
+        "image_url": "https://chinese-master.s3.amazonaws.com/images/delete.png"
+      }
+    },
+    {
+      "entity_type": "vocabulary_card",
+      "data": {
+        "id": "456",
+        "simplified": "衣服",
+        "traditional": "衣服",
+        "pinyin": "yīfú",
+        "translation": "Quần áo",
+        "part_of_speech": "danh từ",
+        "audio_url": "https://chinese-master.s3.amazonaws.com/audio/yifu.mp3",
+        "image_url": "https://chinese-master.s3.amazonaws.com/images/clothes.png"
+      }
+    },
+    {
+      "entity_type": "grammar_card",
+      "data": {
+        "id": "102",
+        "pattern": "太 ... 了",
+        "pinyin": "tài ... le",
+        "explanation": "Biểu thị mức độ quá cao, thường mang nghĩa phàn nàn hoặc cảm thán. Ví dụ: '太好了' (Tốt quá rồi!), '太贵了' (Đắt quá!)."
+      }
+    },
+    {
+      "entity_type": "sentence_card",
+      "data": {
+        "simplified": "我的衣服太长了。",
+        "traditional": "我的衣服太長了。",
+        "pinyin": "wǒ de yīfú tài cháng le。",
+        "translation": "Quần áo của tôi dài quá rồi.",
+        "audio_url": "https://chinese-master.s3.amazonaws.com/audio/my-clothes-too-long.mp3",
+        "clickable_elements": [
+          { "text": "我", "id": 123, "type": "word" },
+          { "text": "的", "id": 101, "type": "grammar" },
+          { "text": "衣服", "id": 456, "type": "word" },
+          { "text": "太...了", "id": 102, "type": "grammar" }
+        ]
+      }
+    },
+    {
+      "entity_type": "divider",
+      "data": {
+        "title": "Phần 2: Luyện tập"
+      }
+    },
+    {
+      "entity_type": "exercise",
+      "data": {
+        "exercise_id": 5502,
+        "type": "multiple_choice_image",
+        "title": "Nghe và chọn hình ảnh đúng",
+        "prompt": {
+          "id": "3123",
+          "simplified": "删除",
+          "pinyin": "shānchú",
+          "audio_url": "https://chinese-master.s3.amazonaws.com/audio/shanchu.mp3"
+        },
+        "options": [
+          {
+            "id": "3123",
+            "simplified": "删除",
+            "image_url": "https://chinese-master.s3.amazonaws.com/images/delete.png"
+          },
+          {
+            "id": "3124",
+            "simplified": "保存",
+            "image_url": "https://chinese-master.s3.amazonaws.com/images/save.png"
+          },
+          {
+            "id": "3125",
+            "simplified": "复制",
+            "image_url": "https://chinese-master.s3.amazonaws.com/images/copy.png"
+          },
+          {
+            "id": "3126",
+            "simplified": "粘贴",
+            "image_url": "https://chinese-master.s3.amazonaws.com/images/paste.png"
+          }
+        ],
+        "correct_answer": { "id": "3123" }
+      }
+    },
+    {
+      "entity_type": "exercise",
+      "data": {
+        "exercise_id": 5501,
+        "type": "fill_in_the_blanks",
+        "title": "Chọn từ điền vào chỗ trống",
+        "assets": {
+          "image_url": "https://example.com/image.jpg"
+        },
+        "sentence_template": {
+          "cn": "我 早上 {blank_1} 门 {grammar_1} {blank_2} 小明 了。",
+          "pinyin": "Wǒ zǎoshang {blank_1} mén {grammar_1} {blank_2} Xiǎomíng le.",
+          "translation": "Tôi thấy Tiểu Minh khi tôi ra ngoài vào buổi sáng."
+        },
+        "blanks": [
+          {
+            "id": "blank_1",
+            "options": [
+              { "id": 1232, "text": "出", "pinyin": "chū" },
+              { "id": 1236, "text": "来", "pinyin": "lái" }
+            ],
+            "correct_answer": 1232
+          },
+          {
+            "id": "blank_2",
+            "options": [
+              { "id": 1233, "text": "看见", "pinyin": "kànjiàn" },
+              { "id": 1235, "text": "看", "pinyin": "kàn" }
+            ],
+            "correct_answer": 1233
+          }
+        ],
+        "clickable_grammar": [
+          {
+            "id": "grammar_1",
+            "text": "的时候",
+            "grammar_details": {
+              "id": 401,
+              "pattern": "...的时候",
+              "pinyin": "...de shíhou",
+              "explanation": "Một cấu trúc ngữ pháp dùng để chỉ 'khi/lúc' một hành động xảy ra."
+            }
+          }
+        ]
+      }
+    }
+  ]
+} 
