@@ -25,6 +25,11 @@ const menuItems = [
     label: <Link href="/lessons">Quản lý Bài học</Link>,
   },
   {
+    key: '/question',
+    icon: <ReadOutlined />,
+    label: <Link href="/question">Quản lý Câu hỏi</Link>,
+  },
+  {
     key: '/settings',
     icon: <SettingOutlined />,
     label: <Link href="/settings">Cài đặt</Link>,

@@ -84,7 +84,7 @@ const LessonList: React.FC<LessonListProps> = ({ courseId, showAll = false }) =>
   } catch (error) {
     message.error('Failed to fetch lessons');
     console.error(error);
-    setLessons([]); // Set empty array on error
+    setLessons([]);
   } finally {
     setLoading(false);
   }
