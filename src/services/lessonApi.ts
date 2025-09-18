@@ -35,10 +35,30 @@ export const lessonApi = {
   },
 
   // Get lessons by course ID (active only)
-  getLessonsByCourse: async (courseId: number): Promise<Lesson[]> => {
+getLessonsByCourse: async (courseId: number): Promise<Lesson[]> => {
+  try {
     const response = await api.get(`/lessons/course/${courseId}`);
+    
+    if (!response) {
+      return [];
+    }
+    
+    if (response.data === undefined) {
+      
+    if (Array.isArray(response)) {
+        return response;
+      }
+      
+      return [];
+    }
+    
+    console.log('Successfully retrieved lessons data:', response.data);
     return response.data as Lesson[];
-  },
+  } catch (error) {
+    console.error('Error in getLessonsByCourse:', error);
+    throw error;
+  }
+},
 
   // Get all lessons by course ID (including inactive)
   getAllLessonsByCourse: async (courseId: number): Promise<Lesson[]> => {

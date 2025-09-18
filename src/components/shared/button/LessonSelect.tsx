@@ -32,73 +32,47 @@ const LessonSelect: React.FC<LessonSelectProps> = ({
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    const fetchLessons = async () => {
-      console.log('CourseId changed to:', courseId);
+  const fetchLessons = async () => {
+    console.log('CourseId changed to:', courseId);
+    
+    if (!courseId) {
+      setLessons([]);
+      return;
+    }
+    
+    setLoading(true);
+    setError(null);
+    
+    try {
+      console.log('Fetching lessons for courseId:', courseId);
+      const lessonData = await lessonApi.getLessonsByCourse(courseId);
+      console.log('API response data:', lessonData);
       
-      if (!courseId) {
-        setLessons([]);
-        return;
-      }
-      
-      setLoading(true);
-      setError(null);
-      
-      try {
-        console.log('Fetching lessons for courseId:', courseId);
-        const response = await lessonApi.getLessonsByCourse(courseId);
-        console.log('API raw response:', response);
-        
-        // Determine response type and extract data
-        let extractedData: any[] = [];
-        
-        if (Array.isArray(response)) {
-          console.log('Response is an array with length:', response.length);
-          extractedData = response;
-        } else if (response && typeof response === 'object') {
-          console.log('Response is an object:', response);
-          
-          // Use type assertion to tell TypeScript this is an object with potential properties
-          const responseObj = response as Record<string, any>;
-          
-          if ('data' in responseObj) {
-            extractedData = responseObj.data;
-            console.log('Extracted data from response.data:', extractedData);
-          } else if ('items' in responseObj) {
-            extractedData = responseObj.items;
-            console.log('Extracted data from response.items:', extractedData);
-          } else if ('lessons' in responseObj) {
-            extractedData = responseObj.lessons;
-            console.log('Extracted data from response.lessons:', extractedData);
-          } else {
-            console.log('Unknown response structure, keys:', Object.keys(responseObj));
-          }
-        }
-        
-        // Ensure extractedData is an array
-        if (!Array.isArray(extractedData)) {
-          console.log('ExtractedData is not an array:', extractedData);
-          extractedData = [];
-        }
-        
-        // Map to simple lesson objects
-        const simpleLessons = extractedData.map(lesson => ({
+      // Since we know our API returns an array of lessons directly,
+      // simplify the processing logic
+      if (Array.isArray(lessonData)) {
+        const simpleLessons = lessonData.map(lesson => ({
           id: lesson.id,
           name: lesson.name
         }));
         
         console.log('Processed lessons:', simpleLessons);
         setLessons(simpleLessons);
-      } catch (err) {
-        console.error('Failed to fetch lessons:', err);
-        setError('Failed to load lessons. Please try again.');
+      } else {
+        console.log('Unexpected response format:', lessonData);
         setLessons([]);
-      } finally {
-        setLoading(false);
       }
-    };
+    } catch (err) {
+      console.error('Failed to fetch lessons:', err);
+      setError('Failed to load lessons. Please try again.');
+      setLessons([]);
+    } finally {
+      setLoading(false);
+    }
+  };
 
-    fetchLessons();
-  }, [courseId]);
+  fetchLessons();
+}, [courseId]);
   
   useEffect(() => {
     console.log('Current lessons state:', lessons);

@@ -1,29 +1,199 @@
-import React from 'react';
-import { Card, Typography, Space, Image, Row, Col } from 'antd';
+import React, { useState } from 'react';
+import { Card, Typography, Space, Image, Row, Col, Form, Input, Upload, Button } from 'antd';
+import { PlusOutlined, UploadOutlined, DeleteOutlined } from '@ant-design/icons';
 import AudioPlayer from './AudioPlayer';
 import { Question, AudioImageQuestionData } from '@/types/questionType';
 
 const { Text, Paragraph } = Typography;
+const { TextArea } = Input;
 
 interface AudioImageQuestionProps {
-  question: Question;
+  question?: Question;
   isPreview?: boolean;
+  form?: any; // For Form.useForm()
+  initialValues?: AudioImageQuestionData;
 }
 
 const AudioImageQuestion: React.FC<AudioImageQuestionProps> = ({ 
   question, 
-  isPreview = false 
+  isPreview = false,
+  form,
+  initialValues
 }) => {
-  const data = question.data as AudioImageQuestionData;
+  // If form is provided, we're in edit mode, otherwise we're in display mode
+  const isEditMode = !!form;
   
+  // For display mode
+  const data = question?.data as AudioImageQuestionData;
+  
+  // For edit mode
+  const [options, setOptions] = useState<any[]>(initialValues?.options || []);
+  
+  const addOption = () => {
+    const newOption = {
+      id: `option_${Date.now()}`,
+      image: '',
+      label: '',
+      correct: false
+    };
+    
+    const newOptions = [...options, newOption];
+    setOptions(newOptions);
+    form.setFieldsValue({ options: newOptions });
+  };
+  
+  const removeOption = (index: number) => {
+    const newOptions = [...options];
+    newOptions.splice(index, 1);
+    setOptions(newOptions);
+    form.setFieldsValue({ options: newOptions });
+  };
+  
+  const handleOptionChange = (index: number, key: string, value: any) => {
+    const newOptions = [...options];
+    newOptions[index] = {
+      ...newOptions[index],
+      [key]: value
+    };
+    setOptions(newOptions);
+    form.setFieldsValue({ options: newOptions });
+  };
+  
+  // If we're in edit mode, render the form for creating/editing a question
+  if (isEditMode) {
+    return (
+      <>
+        <Form.Item
+          name="instruction"
+          label="Instruction"
+          rules={[{ required: true, message: 'Please enter instruction' }]}
+        >
+          <TextArea rows={2} placeholder="Enter the instruction for this question" />
+        </Form.Item>
+        
+        <Form.Item
+          name="audio"
+          label="Audio"
+          rules={[{ required: true, message: 'Please upload audio' }]}
+        >
+          <Upload
+            maxCount={1}
+            beforeUpload={() => false} // Prevent auto upload
+          >
+            <Button icon={<UploadOutlined />}>Upload Audio</Button>
+          </Upload>
+        </Form.Item>
+        
+        <Form.Item
+          name="audio_transcript_chinese"
+          label="Chinese Transcript"
+        >
+          <Input placeholder="Enter Chinese text" />
+        </Form.Item>
+        
+        <Form.Item
+          name="audio_transcript_pinyin"
+          label="Pinyin"
+        >
+          <Input placeholder="Enter pinyin" />
+        </Form.Item>
+        
+        <Form.Item
+          name="audio_transcript_translation"
+          label="English Translation"
+        >
+          <Input placeholder="Enter English translation" />
+        </Form.Item>
+        
+        <div style={{ marginBottom: 16 }}>
+          <Text strong>Options</Text>
+          
+          {options.map((option, index) => (
+            <Card key={option.id} style={{ marginTop: 8 }}>
+              <Space direction="vertical" style={{ width: '100%' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                  <Text>Option {index + 1}</Text>
+                  <Button 
+                    type="text" 
+                    danger 
+                    icon={<DeleteOutlined />} 
+                    onClick={() => removeOption(index)}
+                  />
+                </div>
+                
+                <Form.Item
+                  label="Label"
+                  required
+                >
+                  <Input
+                    value={option.label}
+                    onChange={e => handleOptionChange(index, 'label', e.target.value)}
+                    placeholder="Option label"
+                  />
+                </Form.Item>
+                
+                <Form.Item
+                  label="Image"
+                  required
+                >
+                  <Upload
+                    maxCount={1}
+                    beforeUpload={() => false}
+                    onChange={info => handleOptionChange(index, 'image', info.file)}
+                  >
+                    <Button icon={<UploadOutlined />}>Upload Image</Button>
+                  </Upload>
+                </Form.Item>
+                
+                <Form.Item label="Is Correct">
+                  <Button
+                    type={option.correct ? 'primary' : 'default'}
+                    onClick={() => {
+                      // Update all options to set correct=false, then set this one to true
+                      const updatedOptions = options.map((opt, i) => ({
+                        ...opt,
+                        correct: i === index
+                      }));
+                      setOptions(updatedOptions);
+                      form.setFieldsValue({ options: updatedOptions });
+                    }}
+                  >
+                    {option.correct ? 'Correct Answer' : 'Mark as Correct'}
+                  </Button>
+                </Form.Item>
+              </Space>
+            </Card>
+          ))}
+          
+          <Button 
+            type="dashed" 
+            onClick={addOption} 
+            style={{ width: '100%', marginTop: 16 }}
+            icon={<PlusOutlined />}
+          >
+            Add Option
+          </Button>
+        </div>
+        
+        <Form.Item
+          name="explanation"
+          label="Explanation"
+        >
+          <TextArea rows={3} placeholder="Enter an explanation (optional)" />
+        </Form.Item>
+      </>
+    );
+  }
+  
+  // Display mode (original component logic)
   // Handle both formats from API (older vs newer format)
-  const instruction = data.instruction || 'Listen to the audio and select the correct image';
-  const audioUrl = data.audio || data.audio_url || '';
-  const options = data.options || data.answers || [];
-  const explanation = data.explanation || '';
-  const transcript = data.audio_transcript_chinese || '';
-  const pinyin = data.audio_transcript_pinyin || '';
-  const english = data.audio_transcript_translation || '';
+  const instruction = data?.instruction || 'Listen to the audio and select the correct image';
+  const audioUrl = data?.audio || data?.audio_url || '';
+  const displayOptions = data?.options || data?.answers || [];
+  const explanation = data?.explanation || '';
+  const transcript = data?.audio_transcript_chinese || '';
+  const pinyin = data?.audio_transcript_pinyin || '';
+  const english = data?.audio_transcript_translation || '';
 
   return (
     <div>
@@ -55,10 +225,10 @@ const AudioImageQuestion: React.FC<AudioImageQuestionProps> = ({
       </Card>
       
       <Row gutter={[16, 16]}>
-        {options.map((option: any, index: number) => {
+        {displayOptions.map((option: any, index: number) => {
           const isCorrect = 
             (option.correct === true) || 
-            (data.correctAnswer && data.correctAnswer === option.id);
+            (data?.correctAnswer && data?.correctAnswer === option.id);
           
           return (
             <Col xs={24} sm={12} md={8} key={option.id || index}>
