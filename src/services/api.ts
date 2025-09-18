@@ -22,6 +22,7 @@ const apiRequest = async <T>(endpoint: string, options: RequestInit = {}): Promi
   const response = await fetch(`${API_BASE_URL}${endpoint}`, {
     ...options,
     headers,
+    cache: 'no-store',
   });
 
   if (!response.ok) {
@@ -54,7 +55,6 @@ export const api = {
 export const courseService = {
   getCourses: (page = 1, limit = 10): Promise<PaginatedResponse<Course>> => 
     apiRequest(`/courses?page=${page}&limit=${limit}`),
-  
   getCoursesByHskLevel: (level: number): Promise<Course[]> => 
     apiRequest(`/courses/hsk/${level}`),
   

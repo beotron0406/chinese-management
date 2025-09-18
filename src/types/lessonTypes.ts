@@ -63,3 +63,21 @@ export interface ContentFormValues {
   data: any;
   orderIndex: number;
 }
+export interface ILessonByCourse {
+  id: number;
+  name: string;
+  description: string;
+  isActive: boolean;
+  orderIndex: number;
+  courseId: number;
+  course: {
+    id: number;
+    hskLevel: number;
+    title: string;
+    description: string;
+    prerequisiteCourseId: number | null;
+    isActive: boolean;
+    orderIndex: number;
+    createdAt: string; // ISO date string
+  }
+}
