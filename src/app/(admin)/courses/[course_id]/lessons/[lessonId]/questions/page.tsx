@@ -1,62 +1,68 @@
 "use client";
 import React, { useState, useEffect } from 'react';
-import { useRouter, useSearchParams } from 'next/navigation';
-import { QuestionType } from '@/enums/question-type.enum';
-import { Button, Modal, Select, Card, Typography, Tag, Spin, Alert } from 'antd';
-import { PlusOutlined, BookOutlined, UserOutlined } from '@ant-design/icons';
-import QuestionList from '@/components/question/QuestionList';
+import { useRouter, useParams } from 'next/navigation';
+import { Card, Typography, Button, Space, Alert, Spin, Tag } from 'antd';
+import { ArrowLeftOutlined, PlusOutlined, BookOutlined } from '@ant-design/icons';
+import { courseService } from '@/services/api';
 import { lessonApi } from '@/services/lessonApi';
+import { QuestionType } from '@/enums/question-type.enum';
+import { Course } from '@/types';
 import { Lesson } from '@/types/lessonTypes';
+import QuestionList from '@/components/question/QuestionList';
 
 const { Title, Text, Paragraph } = Typography;
 
-export default function QuestionPage() {
-  const searchParams = useSearchParams();
+export default function LessonQuestionsPage() {
   const router = useRouter();
-  const lessonId = parseInt(searchParams.get('lessonId') || '1'); // Default to 1 for now
+  const params = useParams();
+  const courseId = parseInt(params.course_id as string);
+  const lessonId = parseInt(params.lessonId as string);
 
-  const [isModalVisible, setIsModalVisible] = useState(false);
+  const [course, setCourse] = useState<Course | null>(null);
   const [lesson, setLesson] = useState<Lesson | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  // Fetch lesson data
   useEffect(() => {
-    const fetchLesson = async () => {
-      if (!lessonId) return;
-
-      setLoading(true);
-      setError(null);
-
+    const fetchData = async () => {
       try {
-        const lessonData = await lessonApi.getLesson(lessonId);
+        setLoading(true);
+        const [courseData, lessonData] = await Promise.all([
+          courseService.getCourseById(courseId),
+          lessonApi.getLesson(lessonId)
+        ]);
+
+        setCourse(courseData);
         setLesson(lessonData);
       } catch (err) {
-        console.error('Failed to fetch lesson:', err);
-        setError('Failed to load lesson data');
+        console.error('Failed to fetch data:', err);
+        setError('Failed to load lesson and course data');
       } finally {
         setLoading(false);
       }
     };
 
-    fetchLesson();
-  }, [lessonId]);
+    if (courseId && lessonId) {
+      fetchData();
+    }
+  }, [courseId, lessonId]);
 
-  const showModal = () => {
+  const handleBackToLessons = () => {
+    router.push(`/courses/${courseId}/lessons`);
+  };
+
+  const handleAddQuestion = () => {
+    // Show question type selection modal or navigate to create page
     setIsModalVisible(true);
   };
 
-  const handleCancel = () => {
-    setIsModalVisible(false);
-  };
+  const [isModalVisible, setIsModalVisible] = useState(false);
 
   const handleQuestionTypeSelect = (questionType: QuestionType) => {
     setIsModalVisible(false);
-    router.push(`/question/create?lessonId=${lessonId}&type=${questionType}`);
+    router.push(`/question/create?lessonId=${lessonId}&type=${questionType}&courseId=${courseId}`);
   };
 
-
-  // Map QuestionType enum to human-readable names
   const questionTypeOptions = Object.entries(QuestionType).map(([key, value]) => ({
     label: key.replace(/_/g, ' ').toLowerCase().replace(/\b\w/g, l => l.toUpperCase()),
     value: value
@@ -73,7 +79,7 @@ export default function QuestionPage() {
   if (error) {
     return (
       <Alert
-        message="Error Loading Lesson"
+        message="Error Loading Data"
         description={error}
         type="error"
         showIcon
@@ -84,7 +90,7 @@ export default function QuestionPage() {
 
   return (
     <div style={{ display: 'flex', height: '100vh', gap: '16px', padding: '16px' }}>
-      {/* Left Panel - Lesson Info (20%) */}
+      {/* Left Panel - Lesson Info (300px fixed) */}
       <div style={{ flex: '0 0 300px' }}>
         <Card
           title={
@@ -96,6 +102,14 @@ export default function QuestionPage() {
           bordered={true}
           style={{ height: 'fit-content' }}
         >
+          <Button
+            icon={<ArrowLeftOutlined />}
+            onClick={handleBackToLessons}
+            style={{ marginBottom: '16px', width: '100%' }}
+          >
+            Back to Lessons
+          </Button>
+
           {lesson && (
             <>
               <Title level={4} style={{ marginTop: 0 }}>
@@ -108,13 +122,13 @@ export default function QuestionPage() {
 
               <div style={{ marginBottom: '12px' }}>
                 <Text strong>Course: </Text>
-                <Text>{lesson.course?.title || 'Unknown Course'}</Text>
+                <Text>{course?.title || 'Unknown Course'}</Text>
               </div>
 
-              {lesson.course?.hskLevel && (
+              {course?.hskLevel && (
                 <div style={{ marginBottom: '12px' }}>
                   <Text strong>HSK Level: </Text>
-                  <Tag color="blue">HSK {lesson.course.hskLevel}</Tag>
+                  <Tag color="blue">HSK {course.hskLevel}</Tag>
                 </div>
               )}
 
@@ -134,7 +148,7 @@ export default function QuestionPage() {
         </Card>
       </div>
 
-      {/* Right Panel - Question Management (80%) */}
+      {/* Right Panel - Question Management (flex: 1) */}
       <div style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
           <Title level={3} style={{ margin: 0 }}>
@@ -143,7 +157,7 @@ export default function QuestionPage() {
           <Button
             type="primary"
             icon={<PlusOutlined />}
-            onClick={showModal}
+            onClick={handleAddQuestion}
             size="large"
           >
             Add Question
@@ -152,32 +166,48 @@ export default function QuestionPage() {
 
         {/* Question List Component */}
         <div style={{ flex: 1, overflow: 'auto' }}>
-          <QuestionList lessonId={lessonId} />
+          <QuestionList lessonId={lessonId} courseId={courseId} />
         </div>
       </div>
 
       {/* Question Type Selection Modal */}
-      <Modal
-        title="Select Question Type"
-        open={isModalVisible}
-        onCancel={handleCancel}
-        footer={null}
-        width={600}
-      >
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '12px', padding: '16px 0' }}>
-          {questionTypeOptions.map(option => (
-            <Button
-              key={option.value}
-              size="large"
-              style={{ height: '60px', textAlign: 'left' }}
-              onClick={() => handleQuestionTypeSelect(option.value as QuestionType)}
-            >
-              {option.label}
-            </Button>
-          ))}
+      {isModalVisible && (
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          backgroundColor: 'rgba(0,0,0,0.5)',
+          display: 'flex',
+          justifyContent: 'center',
+          alignItems: 'center',
+          zIndex: 1000
+        }}>
+          <Card
+            title="Select Question Type"
+            style={{ width: 600, maxHeight: '80vh', overflow: 'auto' }}
+          >
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '12px', padding: '16px 0' }}>
+              {questionTypeOptions.map(option => (
+                <Button
+                  key={option.value}
+                  size="large"
+                  style={{ height: '60px', textAlign: 'left' }}
+                  onClick={() => handleQuestionTypeSelect(option.value as QuestionType)}
+                >
+                  {option.label}
+                </Button>
+              ))}
+            </div>
+            <div style={{ textAlign: 'right', marginTop: '16px' }}>
+              <Button onClick={() => setIsModalVisible(false)}>
+                Cancel
+              </Button>
+            </div>
+          </Card>
         </div>
-      </Modal>
-
+      )}
     </div>
   );
 }

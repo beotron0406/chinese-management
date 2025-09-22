@@ -1,0 +1,35 @@
+<div style="display: flex">
+  <div style="flex: 2">
+    <!-- Lesson Info -->
+    <h2>Lesson Title</h2>
+    <p>
+      Lesson description goes here. might have decorate box, and layout, you
+      decide
+    </p>
+    <!-- belong to what course -->
+    <p>Course: Course Name</p>
+  </div>
+  <div style="flex: 8">
+    <!-- List of Questions -->
+    <!-- create question card here, question card have: (drag 6 dots box, question types) -- spacebetween -- duplicate, edit, delete, then below it is the question and answer that dynamically changes base on the question types, just fix data for now -->
+    <div class="question-card">
+      <div class="question-header">
+        <div class="drag-handle">:::</div>
+        <div class="question-type">Multiple Choice</div>
+        <div class="question-actions">
+          <button class="duplicate">Duplicate</button>
+          <button class="edit">Edit</button>
+          <button class="delete">Delete</button>
+        </div>
+      </div>
+      <div class="question-body">
+        <p>What is the capital of France?</p>
+        <div class="answer-options">
+          <label><input type="radio" name="q1" value="a" /> A) Berlin</label>
+          <label><input type="radio" name="q1" value="b" /> B) Madrid</label>
+          <label><input type="radio" name="q1" value="c" /> C) Paris</label>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

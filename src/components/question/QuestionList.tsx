@@ -14,7 +14,8 @@ interface QuestionListProps {
   onAddQuestion?: () => void;
   onEditQuestion?: (question: Question) => void;
   onDeleteQuestion?: (questionId: number) => void;
-  onView?: (question: Question) => void; // Thêm prop onView
+  onView?: (question: Question) => void;
+  courseId?: number;
 }
 
 export interface QuestionListRef {
@@ -27,7 +28,8 @@ const QuestionList = forwardRef<QuestionListRef, QuestionListProps>(({
   onAddQuestion,
   onEditQuestion,
   onDeleteQuestion,
-  onView, // Thêm prop onView
+  onView,
+  courseId,
 }, ref) => {
   const [questions, setQuestions] = useState<Question[]>([]);
   const [loading, setLoading] = useState<boolean>(false);
@@ -112,7 +114,8 @@ const QuestionList = forwardRef<QuestionListRef, QuestionListProps>(({
             question={question}
             onEdit={editable ? onEditQuestion : undefined}
             onDelete={editable ? onDeleteQuestion : undefined}
-            onView={onView} // Truyền prop onView vào QuestionCard
+            onView={onView}
+            courseId={courseId}
           />
         )}
       />
