@@ -1,0 +1,1900 @@
+{
+  "info": {
+    "name": "Chinese Learning Platform API",
+    "description": "Comprehensive API collection for the Chinese Language Learning Platform. This collection includes all endpoints for authentication, user management, courses, lessons, words, grammar, and sentences management.\n\n## Authentication\nMost endpoints require JWT authentication. Use the 'Login' endpoint to get a token, then set it in the Authorization header.\n\n## Variables\n- `{{baseUrl}}`: API base URL (default: http://localhost:3000)\n- `{{token}}`: JWT token obtained from login\n- `{{userId}}`: Current user ID\n- `{{courseId}}`: Course ID for testing\n- `{{lessonId}}`: Lesson ID for testing\n- `{{wordId}}`: Word ID for testing",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:3000",
+      "type": "string"
+    },
+    {
+      "key": "token",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "userId",
+      "value": "1",
+      "type": "string"
+    },
+    {
+      "key": "courseId",
+      "value": "1",
+      "type": "string"
+    },
+    {
+      "key": "lessonId",
+      "value": "1",
+      "type": "string"
+    },
+    {
+      "key": "wordId",
+      "value": "1",
+      "type": "string"
+    }
+  ],
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{token}}",
+        "type": "string"
+      }
+    ]
+  },
+  "item": [
+    {
+      "name": "🔐 Authentication",
+      "item": [
+        {
+          "name": "Register User",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"user@example.com\",\n  \"password\": \"SecurePassword123!\",\n  \"display_name\": \"John Doe\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/auth/signup",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "signup"]
+            },
+            "description": "Register a new user account with email, password, and display name."
+          },
+          "response": []
+        },
+        {
+          "name": "Login User",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "    const response = pm.response.json();",
+                  "    pm.collectionVariables.set('token', response.access_token);",
+                  "    pm.test('Login successful', function () {",
+                  "        pm.expect(response.access_token).to.be.a('string');",
+                  "    });",
+                  "} else {",
+                  "    pm.test('Login failed', function () {",
+                  "        pm.expect.fail('Login request failed');",
+                  "    });",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"user@example.com\",\n  \"password\": \"SecurePassword123!\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/auth/login",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "login"]
+            },
+            "description": "Authenticate user and receive JWT token."
+          },
+          "response": []
+        },
+        {
+          "name": "Check Auth Status",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/auth/status",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "status"]
+            },
+            "description": "Verify JWT token validity."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "👥 User Management",
+      "item": [
+        {
+          "name": "Get Current User Profile",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/users/profile",
+              "host": ["{{baseUrl}}"],
+              "path": ["users", "profile"]
+            },
+            "description": "Get the current user's profile information."
+          },
+          "response": []
+        },
+        {
+          "name": "Update Current User Profile",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"displayName\": \"Updated Name\",\n  \"currentHskLevel\": 2,\n  \"nativeLanguage\": \"English\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/users/profile",
+              "host": ["{{baseUrl}}"],
+              "path": ["users", "profile"]
+            },
+            "description": "Update the current user's profile."
+          },
+          "response": []
+        },
+        {
+          "name": "[Admin] Get All Users",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/users?page=1&limit=10",
+              "host": ["{{baseUrl}}"],
+              "path": ["users"],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "limit",
+                  "value": "10"
+                },
+                {
+                  "key": "role",
+                  "value": "user",
+                  "disabled": true
+                },
+                {
+                  "key": "isActive",
+                  "value": "true",
+                  "disabled": true
+                }
+              ]
+            },
+            "description": "Get paginated list of all users (Admin only)."
+          },
+          "response": []
+        },
+        {
+          "name": "[Admin] Get User by ID",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/users/{{userId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["users", "{{userId}}"]
+            },
+            "description": "Get specific user by ID (Admin only)."
+          },
+          "response": []
+        },
+        {
+          "name": "[Admin] Update User",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"role\": \"admin\",\n  \"isActive\": true,\n  \"displayName\": \"Admin User\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/users/{{userId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["users", "{{userId}}"]
+            },
+            "description": "Update any user's information (Admin only)."
+          },
+          "response": []
+        },
+        {
+          "name": "[Admin] Get User Statistics",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/users/stats",
+              "host": ["{{baseUrl}}"],
+              "path": ["users", "stats"]
+            },
+            "description": "Get user statistics and metrics (Admin only)."
+          },
+          "response": []
+        },
+        {
+          "name": "[Admin] Soft Delete User",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/users/{{userId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["users", "{{userId}}"]
+            },
+            "description": "Soft delete user (Admin only)."
+          },
+          "response": []
+        },
+        {
+          "name": "[Admin] Hard Delete User",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/users/{{userId}}/hard",
+              "host": ["{{baseUrl}}"],
+              "path": ["users", "{{userId}}", "hard"]
+            },
+            "description": "Permanently delete user (Admin only). This action is irreversible."
+          },
+          "response": []
+        },
+        {
+          "name": "[Admin] Restore User",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/users/{{userId}}/restore",
+              "host": ["{{baseUrl}}"],
+              "path": ["users", "{{userId}}", "restore"]
+            },
+            "description": "Restore soft-deleted user (Admin only)."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "📚 Course Management",
+      "item": [
+        {
+          "name": "[Admin] Create Course",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"hskLevel\": 1,\n  \"title\": \"HSK 1 - Basic Chinese Characters\",\n  \"description\": \"Introduction to basic Chinese characters and pronunciation\",\n  \"prerequisiteCourseId\": null,\n  \"isActive\": true,\n  \"orderIndex\": 1\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/courses",
+              "host": ["{{baseUrl}}"],
+              "path": ["courses"]
+            },
+            "description": "Create a new course (Admin only)."
+          },
+          "response": []
+        },
+        {
+          "name": "[Admin] Get All Courses",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/courses?page=1&limit=10",
+              "host": ["{{baseUrl}}"],
+              "path": ["courses"],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "limit",
+                  "value": "10"
+                },
+                {
+                  "key": "hskLevel",
+                  "value": "1",
+                  "disabled": true
+                },
+                {
+                  "key": "isActive",
+                  "value": "true",
+                  "disabled": true
+                }
+              ]
+            },
+            "description": "Get paginated list of courses with optional filtering (Admin only)."
+          },
+          "response": []
+        },
+        {
+          "name": "[Admin] Get Course by ID",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/courses/{{courseId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["courses", "{{courseId}}"]
+            },
+            "description": "Get specific course by ID (Admin only)."
+          },
+          "response": []
+        },
+        {
+          "name": "[Admin] Get Courses by HSK Level",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/courses/hsk/1",
+              "host": ["{{baseUrl}}"],
+              "path": ["courses", "hsk", "1"]
+            },
+            "description": "Get all courses for specific HSK level (Admin only)."
+          },
+          "response": []
+        },
+        {
+          "name": "[Admin] Get Course Statistics",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/courses/stats",
+              "host": ["{{baseUrl}}"],
+              "path": ["courses", "stats"]
+            },
+            "description": "Get course statistics and metrics (Admin only)."
+          },
+          "response": []
+        },
+        {
+          "name": "[Admin] Update Course",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Updated Course Title\",\n  \"description\": \"Updated course description\",\n  \"isActive\": true\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/courses/{{courseId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["courses", "{{courseId}}"]
+            },
+            "description": "Update course information (Admin only)."
+          },
+          "response": []
+        },
+        {
+          "name": "[Admin] Soft Delete Course",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/courses/{{courseId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["courses", "{{courseId}}"]
+            },
+            "description": "Soft delete course (Admin only)."
+          },
+          "response": []
+        },
+        {
+          "name": "[Admin] Hard Delete Course",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/courses/{{courseId}}/hard",
+              "host": ["{{baseUrl}}"],
+              "path": ["courses", "{{courseId}}", "hard"]
+            },
+            "description": "Permanently delete course (Admin only). This action is irreversible."
+          },
+          "response": []
+        },
+        {
+          "name": "[Admin] Restore Course",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/courses/{{courseId}}/restore",
+              "host": ["{{baseUrl}}"],
+              "path": ["courses", "{{courseId}}", "restore"]
+            },
+            "description": "Restore soft-deleted course (Admin only)."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "📖 Lesson Management",
+      "item": [
+        {
+          "name": "[Admin] Create Lesson",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Lesson 1: Greetings\",\n  \"description\": \"Learn basic Chinese greetings\",\n  \"isActive\": true,\n  \"orderIndex\": 1,\n  \"courseId\": {{courseId}}\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/lessons",
+              "host": ["{{baseUrl}}"],
+              "path": ["lessons"]
+            },
+            "description": "Create a new lesson (Admin only)."
+          },
+          "response": []
+        },
+        {
+          "name": "Get All Lessons",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/lessons?page=1&limit=10",
+              "host": ["{{baseUrl}}"],
+              "path": ["lessons"],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "limit",
+                  "value": "10"
+                },
+                {
+                  "key": "courseId",
+                  "value": "{{courseId}}",
+                  "disabled": true
+                },
+                {
+                  "key": "isActive",
+                  "value": "true",
+                  "disabled": true
+                }
+              ]
+            },
+            "description": "Get paginated list of lessons with optional filtering."
+          },
+          "response": []
+        },
+        {
+          "name": "Get Lesson by ID",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/lessons/{{lessonId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["lessons", "{{lessonId}}"]
+            },
+            "description": "Get specific lesson by ID."
+          },
+          "response": []
+        },
+        {
+          "name": "Get Lessons by Course ID",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/lessons/course/{{courseId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["lessons", "course", "{{courseId}}"]
+            },
+            "description": "Get all active lessons for a specific course."
+          },
+          "response": []
+        },
+        {
+          "name": "[Admin] Get All Lessons by Course ID",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/lessons/course/{{courseId}}/all",
+              "host": ["{{baseUrl}}"],
+              "path": ["lessons", "course", "{{courseId}}", "all"]
+            },
+            "description": "Get all lessons (including inactive) for a specific course (Admin only)."
+          },
+          "response": []
+        },
+        {
+          "name": "Get Lesson Content",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/lessons/content/{{lessonId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["lessons", "content", "{{lessonId}}"]
+            },
+            "description": "Get comprehensive lesson content including words and grammar patterns."
+          },
+          "response": []
+        },
+        {
+          "name": "[Admin] Update Lesson",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Updated Lesson Name\",\n  \"description\": \"Updated lesson description\",\n  \"isActive\": true\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/lessons/{{lessonId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["lessons", "{{lessonId}}"]
+            },
+            "description": "Update lesson information (Admin only)."
+          },
+          "response": []
+        },
+        {
+          "name": "[Admin] Soft Delete Lesson",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/lessons/{{lessonId}}/soft",
+              "host": ["{{baseUrl}}"],
+              "path": ["lessons", "{{lessonId}}", "soft"]
+            },
+            "description": "Soft delete lesson (Admin only)."
+          },
+          "response": []
+        },
+        {
+          "name": "[Admin] Hard Delete Lesson",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/lessons/{{lessonId}}/hard",
+              "host": ["{{baseUrl}}"],
+              "path": ["lessons", "{{lessonId}}", "hard"]
+            },
+            "description": "Permanently delete lesson (Admin only). This action is irreversible."
+          },
+          "response": []
+        },
+        {
+          "name": "[Admin] Restore Lesson",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/lessons/{{lessonId}}/restore",
+              "host": ["{{baseUrl}}"],
+              "path": ["lessons", "{{lessonId}}", "restore"]
+            },
+            "description": "Restore soft-deleted lesson (Admin only)."
+          },
+          "response": []
+        },
+        {
+          "name": "Get Lesson Words",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/lessons/{{lessonId}}/words",
+              "host": ["{{baseUrl}}"],
+              "path": ["lessons", "{{lessonId}}", "words"]
+            },
+            "description": "Get all words associated with a lesson."
+          },
+          "response": []
+        },
+        {
+          "name": "[Admin] Add Words to Lesson",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"wordSenseIds\": [1, 2, 3],\n  \"isPrimary\": true\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/lessons/{{lessonId}}/words",
+              "host": ["{{baseUrl}}"],
+              "path": ["lessons", "{{lessonId}}", "words"]
+            },
+            "description": "Add words to a lesson (Admin only)."
+          },
+          "response": []
+        },
+        {
+          "name": "[Admin] Remove Words from Lesson",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"wordSenseIds\": [1, 2]\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/lessons/{{lessonId}}/words",
+              "host": ["{{baseUrl}}"],
+              "path": ["lessons", "{{lessonId}}", "words"]
+            },
+            "description": "Remove words from a lesson (Admin only)."
+          },
+          "response": []
+        },
+        {
+          "name": "Get Lesson Grammar Patterns",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/lessons/{{lessonId}}/grammar-patterns",
+              "host": ["{{baseUrl}}"],
+              "path": ["lessons", "{{lessonId}}", "grammar-patterns"]
+            },
+            "description": "Get all grammar patterns associated with a lesson."
+          },
+          "response": []
+        },
+        {
+          "name": "[Admin] Add Grammar Patterns to Lesson",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"grammarPatternIds\": [1, 2]\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/lessons/{{lessonId}}/grammar-patterns",
+              "host": ["{{baseUrl}}"],
+              "path": ["lessons", "{{lessonId}}", "grammar-patterns"]
+            },
+            "description": "Add grammar patterns to a lesson (Admin only)."
+          },
+          "response": []
+        },
+        {
+          "name": "[Admin] Remove Grammar Patterns from Lesson",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"grammarPatternIds\": [1, 2]\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/lessons/{{lessonId}}/grammar-patterns",
+              "host": ["{{baseUrl}}"],
+              "path": ["lessons", "{{lessonId}}", "grammar-patterns"]
+            },
+            "description": "Remove grammar patterns from a lesson (Admin only)."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "📝 Content & Questions",
+      "item": [
+        {
+          "name": "[Admin] Create Content",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"lessonId\": {{lessonId}},\n  \"title\": \"Introduction to Greetings\",\n  \"content\": \"This lesson covers basic Chinese greetings...\",\n  \"contentType\": \"text\",\n  \"orderIndex\": 1\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/content",
+              "host": ["{{baseUrl}}"],
+              "path": ["content"]
+            },
+            "description": "Create lesson content (Admin only)."
+          },
+          "response": []
+        },
+        {
+          "name": "Get All Content",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/content",
+              "host": ["{{baseUrl}}"],
+              "path": ["content"]
+            },
+            "description": "Get all lesson content."
+          },
+          "response": []
+        },
+        {
+          "name": "Get Content by Lesson ID",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/content/lesson/{{lessonId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["content", "lesson", "{{lessonId}}"]
+            },
+            "description": "Get all content for a specific lesson."
+          },
+          "response": []
+        },
+        {
+          "name": "[Admin] Create Question",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"lessonId\": {{lessonId}},\n  \"questionText\": \"What is the Chinese word for 'hello'?\",\n  \"questionType\": \"multiple_choice\",\n  \"options\": [\"你好\", \"再见\", \"谢谢\", \"不客气\"],\n  \"correctAnswer\": \"你好\",\n  \"points\": 10\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/questions",
+              "host": ["{{baseUrl}}"],
+              "path": ["questions"]
+            },
+            "description": "Create a question for a lesson (Admin only)."
+          },
+          "response": []
+        },
+        {
+          "name": "Get All Questions",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/questions",
+              "host": ["{{baseUrl}}"],
+              "path": ["questions"]
+            },
+            "description": "Get all questions."
+          },
+          "response": []
+        },
+        {
+          "name": "Get Questions by Lesson ID",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/questions/lesson/{{lessonId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["questions", "lesson", "{{lessonId}}"]
+            },
+            "description": "Get all questions for a specific lesson."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "📚 Words & Dictionary",
+      "item": [
+        {
+          "name": "[Admin] Create Word",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"simplified\": \"你好\",\n  \"traditional\": \"你好\",\n  \"isCompound\": true,\n  \"characterCount\": 2\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/words",
+              "host": ["{{baseUrl}}"],
+              "path": ["words"]
+            },
+            "description": "Create a new word (Admin only)."
+          },
+          "response": []
+        },
+        {
+          "name": "Get All Words",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/words?page=1&limit=10",
+              "host": ["{{baseUrl}}"],
+              "path": ["words"],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "limit",
+                  "value": "10"
+                },
+                {
+                  "key": "search",
+                  "value": "你好",
+                  "disabled": true
+                },
+                {
+                  "key": "characterCount",
+                  "value": "2",
+                  "disabled": true
+                },
+                {
+                  "key": "isCompound",
+                  "value": "true",
+                  "disabled": true
+                }
+              ]
+            },
+            "description": "Get paginated list of words with filtering options."
+          },
+          "response": []
+        },
+        {
+          "name": "Get Word by ID",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/words/{{wordId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["words", "{{wordId}}"]
+            },
+            "description": "Get specific word by ID with all senses and translations."
+          },
+          "response": []
+        },
+        {
+          "name": "Get Word by Simplified Form",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/words/simplified/你好",
+              "host": ["{{baseUrl}}"],
+              "path": ["words", "simplified", "你好"]
+            },
+            "description": "Get word by its simplified Chinese characters."
+          },
+          "response": []
+        },
+        {
+          "name": "[Admin] Get Word Statistics",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/words/stats",
+              "host": ["{{baseUrl}}"],
+              "path": ["words", "stats"]
+            },
+            "description": "Get word statistics (Admin only)."
+          },
+          "response": []
+        },
+        {
+          "name": "[Admin] Update Word",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"traditional\": \"你好\",\n  \"isCompound\": true\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/words/{{wordId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["words", "{{wordId}}"]
+            },
+            "description": "Update word information (Admin only)."
+          },
+          "response": []
+        },
+        {
+          "name": "[Admin] Delete Word",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/words/{{wordId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["words", "{{wordId}}"]
+            },
+            "description": "Delete word and all related senses and translations (Admin only)."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "📖 Word Senses",
+      "item": [
+        {
+          "name": "[Admin] Create Word Sense",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"wordId\": {{wordId}},\n  \"senseNumber\": 1,\n  \"pinyin\": \"nǐ hǎo\",\n  \"partOfSpeech\": \"phrase\",\n  \"hskLevel\": 1,\n  \"usageContext\": \"greeting\",\n  \"isPrimary\": true,\n  \"exampleContext\": \"你好！很高兴见到你。\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/word-senses",
+              "host": ["{{baseUrl}}"],
+              "path": ["word-senses"]
+            },
+            "description": "Create a new word sense (Admin only)."
+          },
+          "response": []
+        },
+        {
+          "name": "Get All Word Senses",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/word-senses?page=1&limit=10",
+              "host": ["{{baseUrl}}"],
+              "path": ["word-senses"],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "limit",
+                  "value": "10"
+                }
+              ]
+            },
+            "description": "Get paginated list of word senses."
+          },
+          "response": []
+        },
+        {
+          "name": "Get Word Senses by Word ID",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/word-senses/by-word/{{wordId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["word-senses", "by-word", "{{wordId}}"]
+            },
+            "description": "Get all senses for a specific word."
+          },
+          "response": []
+        },
+        {
+          "name": "[Admin] Get Word Sense Statistics",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/word-senses/stats",
+              "host": ["{{baseUrl}}"],
+              "path": ["word-senses", "stats"]
+            },
+            "description": "Get word sense statistics (Admin only)."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "🌍 Word Sense Translations",
+      "item": [
+        {
+          "name": "[Admin] Create Word Sense Translation",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"wordSenseId\": 1,\n  \"language\": \"en\",\n  \"translation\": \"hello, hi\",\n  \"usageNotes\": \"Common greeting used at any time of day\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/word-sense-translations",
+              "host": ["{{baseUrl}}"],
+              "path": ["word-sense-translations"]
+            },
+            "description": "Create a new word sense translation (Admin only)."
+          },
+          "response": []
+        },
+        {
+          "name": "Get All Word Sense Translations",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/word-sense-translations?page=1&limit=10",
+              "host": ["{{baseUrl}}"],
+              "path": ["word-sense-translations"],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "limit",
+                  "value": "10"
+                }
+              ]
+            },
+            "description": "Get paginated list of word sense translations."
+          },
+          "response": []
+        },
+        {
+          "name": "Get Translations by Word Sense ID",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/word-sense-translations/by-word-sense/1",
+              "host": ["{{baseUrl}}"],
+              "path": ["word-sense-translations", "by-word-sense", "1"]
+            },
+            "description": "Get all translations for a specific word sense."
+          },
+          "response": []
+        },
+        {
+          "name": "Get Translations by Language",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/word-sense-translations/by-language/en",
+              "host": ["{{baseUrl}}"],
+              "path": ["word-sense-translations", "by-language", "en"]
+            },
+            "description": "Get all translations in a specific language."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "📝 Grammar System",
+      "item": [
+        {
+          "name": "[Admin] Create Grammar Pattern",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"pattern\": \"Subject + 是 + Object\",\n  \"chinesePattern\": \"主语 + 是 + 宾语\",\n  \"patternType\": \"sentence_structure\",\n  \"hskLevel\": 1,\n  \"difficultyLevel\": 1,\n  \"exampleSentence\": \"我是学生。\",\n  \"usageNotes\": \"Basic sentence structure for identity\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/grammar-patterns",
+              "host": ["{{baseUrl}}"],
+              "path": ["grammar-patterns"]
+            },
+            "description": "Create a new grammar pattern (Admin only)."
+          },
+          "response": []
+        },
+        {
+          "name": "Get All Grammar Patterns",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/grammar-patterns?page=1&limit=10",
+              "host": ["{{baseUrl}}"],
+              "path": ["grammar-patterns"],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "limit",
+                  "value": "10"
+                }
+              ]
+            },
+            "description": "Get paginated list of grammar patterns."
+          },
+          "response": []
+        },
+        {
+          "name": "Get Grammar Pattern by Pattern",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/grammar-patterns/pattern/Subject + 是 + Object",
+              "host": ["{{baseUrl}}"],
+              "path": ["grammar-patterns", "pattern", "Subject + 是 + Object"]
+            },
+            "description": "Get grammar pattern by its pattern string."
+          },
+          "response": []
+        },
+        {
+          "name": "[Admin] Create Grammar Translation",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"grammarPatternId\": 1,\n  \"language\": \"en\",\n  \"translation\": \"Subject + to be + Object\",\n  \"explanation\": \"This pattern expresses identity or characteristics\",\n  \"usageNotes\": \"Most basic sentence structure in Chinese\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/grammar-translations",
+              "host": ["{{baseUrl}}"],
+              "path": ["grammar-translations"]
+            },
+            "description": "Create a new grammar pattern translation (Admin only)."
+          },
+          "response": []
+        },
+        {
+          "name": "Get All Grammar Translations",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/grammar-translations?page=1&limit=10",
+              "host": ["{{baseUrl}}"],
+              "path": ["grammar-translations"],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "limit",
+                  "value": "10"
+                }
+              ]
+            },
+            "description": "Get paginated list of grammar translations."
+          },
+          "response": []
+        },
+        {
+          "name": "Get Grammar Translations by Pattern ID",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/grammar-translations/by-grammar-pattern/1",
+              "host": ["{{baseUrl}}"],
+              "path": ["grammar-translations", "by-grammar-pattern", "1"]
+            },
+            "description": "Get all translations for a specific grammar pattern."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "💬 Sentences System",
+      "item": [
+        {
+          "name": "[Admin] Create Sentence",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"chineseText\": \"我喜欢学习中文。\",\n  \"pinyin\": \"Wǒ xǐhuān xuéxí zhōngwén.\",\n  \"sentenceType\": \"example\",\n  \"difficultyLevel\": 2,\n  \"audioUrl\": \"https://example.com/audio/sentence1.mp3\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/sentences",
+              "host": ["{{baseUrl}}"],
+              "path": ["sentences"]
+            },
+            "description": "Create a new sentence (Admin only)."
+          },
+          "response": []
+        },
+        {
+          "name": "Get All Sentences",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/sentences?page=1&limit=10",
+              "host": ["{{baseUrl}}"],
+              "path": ["sentences"],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "limit",
+                  "value": "10"
+                },
+                {
+                  "key": "search",
+                  "value": "喜欢",
+                  "disabled": true
+                },
+                {
+                  "key": "sentenceType",
+                  "value": "example",
+                  "disabled": true
+                },
+                {
+                  "key": "difficultyLevel",
+                  "value": "2",
+                  "disabled": true
+                },
+                {
+                  "key": "hasAudio",
+                  "value": "true",
+                  "disabled": true
+                }
+              ]
+            },
+            "description": "Get paginated list of sentences with filtering options."
+          },
+          "response": []
+        },
+        {
+          "name": "Get Sentence by ID",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/sentences/1",
+              "host": ["{{baseUrl}}"],
+              "path": ["sentences", "1"]
+            },
+            "description": "Get specific sentence with all translations and tokens."
+          },
+          "response": []
+        },
+        {
+          "name": "Get Sentences by Type",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/sentences/type/example",
+              "host": ["{{baseUrl}}"],
+              "path": ["sentences", "type", "example"]
+            },
+            "description": "Get sentences by type (example, exercise, dialogue)."
+          },
+          "response": []
+        },
+        {
+          "name": "Get Sentences by Difficulty Level",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/sentences/difficulty/2",
+              "host": ["{{baseUrl}}"],
+              "path": ["sentences", "difficulty", "2"]
+            },
+            "description": "Get sentences by difficulty level (1-5)."
+          },
+          "response": []
+        },
+        {
+          "name": "[Admin] Create Sentence Translation",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"sentenceId\": 1,\n  \"language\": \"en\",\n  \"translation\": \"I like learning Chinese.\",\n  \"literalTranslation\": \"I like study Chinese.\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/sentence-translations",
+              "host": ["{{baseUrl}}"],
+              "path": ["sentence-translations"]
+            },
+            "description": "Create a sentence translation (Admin only)."
+          },
+          "response": []
+        },
+        {
+          "name": "Get Sentence Translations",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/sentence-translations/sentence/1",
+              "host": ["{{baseUrl}}"],
+              "path": ["sentence-translations", "sentence", "1"]
+            },
+            "description": "Get all translations for a specific sentence."
+          },
+          "response": []
+        },
+        {
+          "name": "Get Sentence Translation by Language",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/sentence-translations/sentence/1/language/en",
+              "host": ["{{baseUrl}}"],
+              "path": [
+                "sentence-translations",
+                "sentence",
+                "1",
+                "language",
+                "en"
+              ]
+            },
+            "description": "Get specific translation for a sentence in a specific language."
+          },
+          "response": []
+        },
+        {
+          "name": "Get Sentence Tokens",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/sentence-tokens/sentence/1",
+              "host": ["{{baseUrl}}"],
+              "path": ["sentence-tokens", "sentence", "1"]
+            },
+            "description": "Get word-by-word breakdown tokens for a sentence."
+          },
+          "response": []
+        },
+        {
+          "name": "[Admin] Create Sentence Tokens (Bulk)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "[\n  {\n    \"sentenceId\": 1,\n    \"position\": 1,\n    \"chineseText\": \"我\",\n    \"tokenType\": \"word\",\n    \"isClickable\": true\n  },\n  {\n    \"sentenceId\": 1,\n    \"position\": 2,\n    \"chineseText\": \"喜欢\",\n    \"tokenType\": \"word\",\n    \"isClickable\": true\n  },\n  {\n    \"sentenceId\": 1,\n    \"position\": 3,\n    \"chineseText\": \"学习\",\n    \"tokenType\": \"word\",\n    \"isClickable\": true\n  },\n  {\n    \"sentenceId\": 1,\n    \"position\": 4,\n    \"chineseText\": \"中文\",\n    \"tokenType\": \"word\",\n    \"isClickable\": true\n  },\n  {\n    \"sentenceId\": 1,\n    \"position\": 5,\n    \"chineseText\": \"。\",\n    \"tokenType\": \"punctuation\",\n    \"isClickable\": false\n  }\n]"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/sentence-tokens/bulk",
+              "host": ["{{baseUrl}}"],
+              "path": ["sentence-tokens", "bulk"]
+            },
+            "description": "Create multiple sentence tokens at once (Admin only)."
+          },
+          "response": []
+        }
+      ]
+    }
+  ],
+  "event": [
+    {
+      "listen": "prerequest",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          "// Auto-set authorization header if token exists",
+          "const token = pm.collectionVariables.get('token');",
+          "if (token && token.length > 0) {",
+          "    pm.request.headers.add({",
+          "        key: 'Authorization',",
+          "        value: 'Bearer ' + token",
+          "    });",
+          "}"
+        ]
+      }
+    },
+    {
+      "listen": "test",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          "// Global test for successful responses",
+          "pm.test('Status code is success', function () {",
+          "    pm.expect(pm.response.code).to.be.oneOf([200, 201, 204]);",
+          "});",
+          "",
+          "// Global test for response time",
+          "pm.test('Response time is less than 5000ms', function () {",
+          "    pm.expect(pm.response.responseTime).to.be.below(5000);",
+          "});"
+        ]
+      }
+    }
+  ]
+}
