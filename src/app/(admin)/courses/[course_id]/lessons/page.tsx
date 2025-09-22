@@ -7,40 +7,87 @@ import { courseService } from '@/services/api';
 import { lessonApi } from '@/services/lessonApi';
 import { Course } from '@/types';
 import { Lesson } from '@/types/lessonTypes';
+import { useLessonCache } from '@/context/LessonCacheContext';
 
 const { Title, Text, Paragraph } = Typography;
 
 export default function CourseLessonsPage() {
   const router = useRouter();
   const params = useParams();
-  const courseId = parseInt(params.course_id as string);
+  const { setCachedLesson } = useLessonCache();
+
+  // Safe parameter extraction with validation
+  const courseIdParam = params.course_id as string;
+  const courseId = courseIdParam ? parseInt(courseIdParam, 10) : NaN;
 
   const [course, setCourse] = useState<Course | null>(null);
   const [lessons, setLessons] = useState<Lesson[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  // Early return for invalid course ID
+  if (!courseIdParam || isNaN(courseId)) {
+    return (
+      <Alert
+        message="Invalid Course ID"
+        description="The course ID provided in the URL is not valid."
+        type="error"
+        showIcon
+        style={{ margin: '20px' }}
+        action={
+          <Button onClick={() => router.push('/courses')}>
+            Back to Courses
+          </Button>
+        }
+      />
+    );
+  }
+
   useEffect(() => {
     const fetchData = async () => {
       try {
         setLoading(true);
-        const [courseData, lessonsData] = await Promise.all([
-          courseService.getCourseById(courseId),
-          lessonApi.getLessonsByCourse(courseId)
-        ]);
+        setError(null);
+
+        // Validate courseId
+        if (!courseId || isNaN(courseId)) {
+          throw new Error('Invalid course ID');
+        }
+
+        // Fetch data with individual error handling
+        let courseData: Course | null = null;
+        let lessonsData: Lesson[] = [];
+
+        try {
+          courseData = await courseService.getCourseById(courseId);
+        } catch (courseErr) {
+          console.error('Failed to fetch course:', courseErr);
+          throw new Error('Failed to load course information');
+        }
+
+        try {
+          lessonsData = await lessonApi.getLessonsByCourse(courseId);
+        } catch (lessonsErr) {
+          console.error('Failed to fetch lessons:', lessonsErr);
+          // Don't throw here, just use empty array
+          lessonsData = [];
+        }
 
         setCourse(courseData);
         setLessons(lessonsData);
       } catch (err) {
         console.error('Failed to fetch data:', err);
-        setError('Failed to load course and lessons data');
+        setError(err instanceof Error ? err.message : 'Failed to load course and lessons data');
       } finally {
         setLoading(false);
       }
     };
 
-    if (courseId) {
+    if (courseId && !isNaN(courseId)) {
       fetchData();
+    } else {
+      setError('Invalid course ID provided');
+      setLoading(false);
     }
   }, [courseId]);
 
@@ -49,7 +96,9 @@ export default function CourseLessonsPage() {
   };
 
   const handleLessonClick = (lesson: Lesson) => {
-    router.push(`/courses/${courseId}/lessons/${lesson.id}/questions`);
+    // Cache the lesson data before navigating
+    setCachedLesson(lesson);
+    router.push(`/question?lessonId=${lesson.id}`);
   };
 
   const columns = [
@@ -101,7 +150,7 @@ export default function CourseLessonsPage() {
             size="small"
             onClick={() => handleLessonClick(record)}
           >
-            View Questions
+            View Items
           </Button>
           <Button
             type="default"

@@ -72,6 +72,7 @@ const CardFormModal: React.FC<CardFormModalProps> = ({
 
       const { type, orderIndex, ...rest } = values;
       const contentData: ContentFormValues = {
+        lessonId: lessonId,
         type: type as 'text' | 'vocabulary' | 'grammar' | 'exercise' | 'divider',
         orderIndex,
         data: getDataByType(type, rest),

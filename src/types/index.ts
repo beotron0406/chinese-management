@@ -158,3 +158,24 @@ export interface CourseStats {
     count: number;
   }[];
 }
+
+// Placeholder types for sequence cards (to be properly defined later)
+export interface DividerData {
+  [key: string]: any;
+}
+
+export interface ExerciseData {
+  [key: string]: any;
+}
+
+export interface GrammarCardData {
+  [key: string]: any;
+}
+
+export interface SentenceCardData {
+  [key: string]: any;
+}
+
+export interface VocabularyCardData {
+  [key: string]: any;
+}

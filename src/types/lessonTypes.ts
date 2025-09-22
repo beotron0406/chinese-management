@@ -21,22 +21,27 @@ export interface Lesson {
   lessonGrammarPatterns?: any[]; // Added from API response
 }
 
+import { ContentType } from '@/enums/content-type.enum';
+
 export interface LessonContent {
   id: number;
-  type: 'text' | 'vocabulary' | 'grammar' | 'exercise' | 'divider';
-  data: {
-    title?: string;
-    content?: string;
-    mediaUrl?: string;
-    // Add other possible properties for different content types
-    // These will vary based on the content type
-    words?: any[];
-    patterns?: any[];
-    questions?: any[];
-    options?: any[];
-  };
-  orderIndex: number;
+  type: ContentType | 'text' | 'vocabulary' | 'grammar' | 'exercise' | 'divider';
+  data: Record<string, any>;
+  orderIndex?: number;
   lessonId: number;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+export interface LessonItem {
+  id: number;
+  type: 'content' | 'question';
+  lessonId: number;
+  orderIndex?: number;
+  data: Record<string, any>;
+  contentType?: ContentType;
+  questionType?: string;
+  isActive?: boolean;
   createdAt?: string;
   updatedAt?: string;
 }
@@ -59,9 +64,10 @@ export interface LessonFormValues {
 
 // Add content form interface
 export interface ContentFormValues {
-  type: 'text' | 'vocabulary' | 'grammar' | 'exercise' | 'divider';
-  data: any;
-  orderIndex: number;
+  lessonId: number;
+  type: ContentType | 'text' | 'vocabulary' | 'grammar' | 'exercise' | 'divider';
+  data: Record<string, any>;
+  orderIndex?: number;
 }
 export interface ILessonByCourse {
   id: number;

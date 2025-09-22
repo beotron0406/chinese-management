@@ -7,7 +7,7 @@ import {
 } from '@/types';
 import { Lesson, LessonFormValues } from '@/types/lessonTypes';
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://26.112.47.221:3000';
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:3000';
 
 // Helper function to handle API requests
 const apiRequest = async <T>(endpoint: string, options: RequestInit = {}): Promise<T> => {

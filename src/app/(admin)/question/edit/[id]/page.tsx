@@ -80,8 +80,8 @@ export default function EditQuestionPage() {
 
       await questionApi.updateQuestion(questionId, updateData);
 
-      // Navigate back to lesson questions page
-      router.push(`/courses/${courseId}/lessons/${lessonId}/questions`);
+      // Navigate back to Items Management page
+      router.push(`/question?lessonId=${lessonId}`);
     } catch (err) {
       console.error('Failed to update question:', err);
       setError('Failed to update question');
@@ -103,7 +103,7 @@ export default function EditQuestionPage() {
   };
 
   const handleCancel = () => {
-    router.push(`/courses/${courseId}/lessons/${lessonId}/questions`);
+    router.push(`/question?lessonId=${lessonId}`);
   };
 
   const getQuestionTypeTitle = (type: QuestionType) => {

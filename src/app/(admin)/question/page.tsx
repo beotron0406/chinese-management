@@ -2,18 +2,21 @@
 import React, { useState, useEffect } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { QuestionType } from '@/enums/question-type.enum';
+import { ContentType } from '@/enums/content-type.enum';
 import { Button, Modal, Select, Card, Typography, Tag, Spin, Alert } from 'antd';
-import { PlusOutlined, BookOutlined, UserOutlined } from '@ant-design/icons';
-import QuestionList from '@/components/question/QuestionList';
+import { PlusOutlined, BookOutlined, UserOutlined, ArrowLeftOutlined } from '@ant-design/icons';
+import ItemList from '@/components/question/ItemList';
 import { lessonApi } from '@/services/lessonApi';
 import { Lesson } from '@/types/lessonTypes';
+import { useLessonCache } from '@/context/LessonCacheContext';
 
 const { Title, Text, Paragraph } = Typography;
 
-export default function QuestionPage() {
+export default function ItemsPage() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const lessonId = parseInt(searchParams.get('lessonId') || '1'); // Default to 1 for now
+  const { getCachedLesson, setCachedLesson } = useLessonCache();
 
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [lesson, setLesson] = useState<Lesson | null>(null);
@@ -25,12 +28,21 @@ export default function QuestionPage() {
     const fetchLesson = async () => {
       if (!lessonId) return;
 
+      // Check cache first
+      const cachedLessonData = getCachedLesson(lessonId);
+      if (cachedLessonData) {
+        setLesson(cachedLessonData);
+        setLoading(false);
+        return;
+      }
+
       setLoading(true);
       setError(null);
 
       try {
         const lessonData = await lessonApi.getLesson(lessonId);
         setLesson(lessonData);
+        setCachedLesson(lessonData); // Cache the lesson data
       } catch (err) {
         console.error('Failed to fetch lesson:', err);
         setError('Failed to load lesson data');
@@ -40,7 +52,7 @@ export default function QuestionPage() {
     };
 
     fetchLesson();
-  }, [lessonId]);
+  }, [lessonId, getCachedLesson, setCachedLesson]);
 
   const showModal = () => {
     setIsModalVisible(true);
@@ -55,12 +67,36 @@ export default function QuestionPage() {
     router.push(`/question/create?lessonId=${lessonId}&type=${questionType}`);
   };
 
+  const handleContentTypeSelect = (contentType: ContentType) => {
+    setIsModalVisible(false);
+    // Navigate to content creation page (to be implemented)
+    router.push(`/content/create?lessonId=${lessonId}&type=${contentType}`);
+  };
+
+  const handleBackToLessons = () => {
+    if (lesson && lesson.course?.id) {
+      router.push(`/courses/${lesson.course.id}/lessons`);
+    } else {
+      router.push('/courses');
+    }
+  };
+
 
   // Map QuestionType enum to human-readable names
   const questionTypeOptions = Object.entries(QuestionType).map(([key, value]) => ({
     label: key.replace(/_/g, ' ').toLowerCase().replace(/\b\w/g, l => l.toUpperCase()),
-    value: value
+    value: value,
+    type: 'question'
   }));
+
+  // Map ContentType enum to human-readable names
+  const contentTypeOptions = Object.entries(ContentType).map(([key, value]) => ({
+    label: key.replace(/_/g, ' ').toLowerCase().replace(/\b\w/g, l => l.toUpperCase()),
+    value: value,
+    type: 'content'
+  }));
+
+  const allItemTypeOptions = [...contentTypeOptions, ...questionTypeOptions];
 
   if (loading) {
     return (
@@ -96,6 +132,14 @@ export default function QuestionPage() {
           bordered={true}
           style={{ height: 'fit-content' }}
         >
+          <Button
+            icon={<ArrowLeftOutlined />}
+            onClick={handleBackToLessons}
+            style={{ marginBottom: '16px', width: '100%' }}
+          >
+            Back to Lessons
+          </Button>
+
           {lesson && (
             <>
               <Title level={4} style={{ marginTop: 0 }}>
@@ -134,11 +178,11 @@ export default function QuestionPage() {
         </Card>
       </div>
 
-      {/* Right Panel - Question Management (80%) */}
+      {/* Right Panel - Items Management (80%) */}
       <div style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
           <Title level={3} style={{ margin: 0 }}>
-            Question Management
+            Items Management
           </Title>
           <Button
             type="primary"
@@ -146,35 +190,52 @@ export default function QuestionPage() {
             onClick={showModal}
             size="large"
           >
-            Add Question
+            Add Item
           </Button>
         </div>
 
-        {/* Question List Component */}
+        {/* Item List Component */}
         <div style={{ flex: 1, overflow: 'auto' }}>
-          <QuestionList lessonId={lessonId} />
+          <ItemList lessonId={lessonId} />
         </div>
       </div>
 
-      {/* Question Type Selection Modal */}
+      {/* Item Type Selection Modal */}
       <Modal
-        title="Select Question Type"
+        title="Select Item Type"
         open={isModalVisible}
         onCancel={handleCancel}
         footer={null}
         width={600}
       >
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '12px', padding: '16px 0' }}>
-          {questionTypeOptions.map(option => (
-            <Button
-              key={option.value}
-              size="large"
-              style={{ height: '60px', textAlign: 'left' }}
-              onClick={() => handleQuestionTypeSelect(option.value as QuestionType)}
-            >
-              {option.label}
-            </Button>
-          ))}
+        <div style={{ padding: '16px 0' }}>
+          <Typography.Title level={5} style={{ marginBottom: '12px' }}>Content Types:</Typography.Title>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '12px', marginBottom: '24px' }}>
+            {contentTypeOptions.map(option => (
+              <Button
+                key={option.value}
+                size="large"
+                style={{ height: '60px', textAlign: 'left' }}
+                onClick={() => handleContentTypeSelect(option.value as ContentType)}
+              >
+                {option.label}
+              </Button>
+            ))}
+          </div>
+
+          <Typography.Title level={5} style={{ marginBottom: '12px' }}>Question Types:</Typography.Title>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '12px' }}>
+            {questionTypeOptions.map(option => (
+              <Button
+                key={option.value}
+                size="large"
+                style={{ height: '60px', textAlign: 'left' }}
+                onClick={() => handleQuestionTypeSelect(option.value as QuestionType)}
+              >
+                {option.label}
+              </Button>
+            ))}
+          </div>
         </div>
       </Modal>
 

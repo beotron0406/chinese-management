@@ -146,7 +146,7 @@ const LessonDetailView: React.FC<LessonDetailViewProps> = ({ lessonId }) => {
       <Tabs defaultActiveKey="content">
         <TabPane tab="Lesson Content" key="content">
           {contents.length > 0 ? (
-            contents.sort((a, b) => a.orderIndex - b.orderIndex).map(content => (
+            contents.sort((a, b) => (a.orderIndex || 0) - (b.orderIndex || 0)).map(content => (
               <div key={content.id}>
                 {renderContent(content)}
               </div>
