@@ -19,8 +19,30 @@ const { Title, Text, Paragraph } = Typography;
 export default function ItemsPage() {
   const searchParams = useSearchParams();
   const router = useRouter();
-  const lessonId = parseInt(searchParams.get("lessonId") || "1"); // Default to 1 for now
   const { getCachedLesson, setCachedLesson } = useLessonCache();
+
+  const [lessonId, setLessonId] = useState<number>(1);
+
+  // Handle lessonId from URL params or localStorage
+  useEffect(() => {
+    const urlLessonId = searchParams.get("lessonId");
+
+    if (urlLessonId) {
+      const parsedLessonId = parseInt(urlLessonId);
+      setLessonId(parsedLessonId);
+      // Save to localStorage for persistence
+      localStorage.setItem('currentLessonId', urlLessonId);
+    } else {
+      // Fallback to localStorage if URL param is missing
+      const storedLessonId = localStorage.getItem('currentLessonId');
+      if (storedLessonId) {
+        const parsedStoredId = parseInt(storedLessonId);
+        setLessonId(parsedStoredId);
+        // Update URL to include the lessonId
+        router.replace(`/question?lessonId=${storedLessonId}`);
+      }
+    }
+  }, [searchParams, router]);
 
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [lesson, setLesson] = useState<Lesson | null>(null);

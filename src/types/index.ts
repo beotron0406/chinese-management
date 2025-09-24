@@ -62,12 +62,10 @@ export interface GrammarPattern {
   pattern: string;
   description: string;
   examples?: string[];
-  difficulty: 'beginner' | 'intermediate' | 'advanced';
+  difficulty: "beginner" | "intermediate" | "advanced";
   hskLevel?: number;
   isActive: boolean;
 }
-
-
 
 export interface CourseFormModalProps {
   visible: boolean;
@@ -79,7 +77,6 @@ export interface CourseFormModalProps {
 export interface LessonDetailViewProps {
   lessonId: number | string;
 }
-
 
 export interface ProtectedRouteProps {
   children: React.ReactNode;
