@@ -6,6 +6,7 @@ import {
   LessonItem,
   ContentFormValues,
 } from "../types/lessonTypes";
+import { ContentType } from "@/enums/content-type.enum";
 
 // Define response types to match API
 interface PaginatedLessonResponse {
@@ -25,7 +26,49 @@ interface LessonItemsResponse {
   lesson?: Lesson | null;
   items: LessonItem[];
 }
+interface RawLessonContentResponse {
+  id: number;
+  name: string;
+  description: string;
+  content: RawLessonContentItem[];
+}
 
+// Base content item interface
+interface RawLessonContentItem {
+  order_index: number;
+  type: string;
+  [key: string]: any; // For dynamic properties
+}
+
+// Specific content type interfaces
+interface AudioImageQuestionContent extends RawLessonContentItem {
+  type: "question_audio_image";
+  audio: string;
+  pinyin: string;
+  english: string;
+  transcript: string;
+  explanation: string;
+  instruction: string;
+  correctAnswer: boolean;
+}
+
+interface WordDefinitionContent extends RawLessonContentItem {
+  type: "content_word_definition";
+  pinyin: string;
+  speech: string;
+  audio_url: string;
+  picture_url: string;
+  chinese_text: string;
+  explaination: string; // Note: this is spelled "explaination" in the API
+}
+
+// You can add more specific content types here as needed
+
+// Update your LessonItemsResponse to match the transformed structure
+interface LessonItemsResponse {
+  lesson?: Lesson | null;
+  items: LessonItem[];
+}
 export const lessonApi = {
   // Get paginated lessons
   getAllLessons: async (page: number, pageSize: number): Promise<any> => {
@@ -45,78 +88,59 @@ export const lessonApi = {
     return response.data as LessonContentResponse;
   },
 
-  // Get lesson with all items (content + questions)
-  getLessonItems: async (id: number): Promise<LessonItemsResponse> => {
-    console.log(`🌐 API Call: GET /lessons/content/${id}`);
+getLessonItems: async (id: number): Promise<LessonItemsResponse> => {
+  const response = await api.get(`/lessons/content/${id}`);
+  
+  const rawData = response.data || response;
+  
+  if (!rawData || typeof rawData !== 'object' || !('content' in rawData)) {
+    return { lesson: null, items: [] };
+  }
+  
+  const lessonData = rawData as RawLessonContentResponse;
 
-    try {
-      const response = await api.get(`/lessons/content/${id}`);
-
-      console.log("🔍 FULL API RESPONSE:", response);
-      console.log("🔍 response.data:", response.data);
-
-      // Check if response.data exists and what it contains
-      if (response && response.data) {
-        console.log("📦 response.data keys:", Object.keys(response.data));
-        console.log("📦 response.data type:", typeof response.data);
-        console.log("📦 response.data content:", response.data);
-
-        // Your actual API returns the data directly in response.data
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const actualData = response.data as any;
-
-        if (
-          actualData &&
-          actualData.content &&
-          Array.isArray(actualData.content)
-        ) {
-          console.log(
-            `✅ FOUND CONTENT ARRAY with ${actualData.content.length} items`
-          );
-
-          // Transform the content items to our LessonItem format
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          const items: LessonItem[] = actualData.content.map(
-            (item: any, index: number) => ({
-              id: item.id || `content-${id}-${index}`,
-              type: "content" as const,
-              lessonId: id,
-              orderIndex: item.order_index || index,
-              data: item, // Store the entire item as data
-              contentType: item.type || "unknown",
-              isActive: true,
-              createdAt: item.createdAt,
-              updatedAt: item.updatedAt,
-            })
-          );
-
-          console.log(`✅ TRANSFORMED ${items.length} items successfully`);
-          return {
-            lesson: {
-              id: actualData.id,
-              name: actualData.name,
-              description: actualData.description,
-              // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            } as any,
-            items: items,
-          } as LessonItemsResponse;
-        } else {
-          console.error("❌ NO CONTENT ARRAY FOUND in actualData:", actualData);
-        }
-      } else {
-        console.error("❌ NO response.data found. Full response:", response);
-      }
-
-      // Fallback: return empty
-      return {
-        lesson: null,
-        items: [],
-      } as LessonItemsResponse;
-    } catch (error) {
-      console.error("❌ getLessonItems CATCH ERROR:", error);
-      throw error;
+  const contentItems: LessonItem[] = lessonData.content.map((item: any, index: number) => {
+    // Map string type to ContentType enum
+    let contentType;
+    switch (item.type) {
+      case "question_audio_image":
+        contentType = ContentType.QUESTION_AUDIO_IMAGE;
+        break;
+      case "content_word_definition":
+        contentType = ContentType.CONTENT_WORD_DEFINITION;
+        break;
+      case "audio_image":
+        contentType = ContentType.AUDIO_IMAGE;
+        break;
+      default:
+        contentType = ContentType.UNKNOWN;
     }
-  },
+
+    return {
+      id: item.id || `content-${id}-${index}`,
+      type: "content",
+      lessonId: id,
+      orderIndex: item.order_index || 0,
+      contentType: contentType,
+      data: item,
+      isActive: true,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    };
+  });
+
+  return {
+    lesson: {
+      id: lessonData.id,
+      name: lessonData.name,
+      description: lessonData.description,
+      courseId: 0,
+      orderIndex: 0,
+      isActive: true,
+    },
+    items: contentItems,
+  };
+},
 
   // Get lessons by course ID (active only)
   getLessonsByCourse: async (courseId: number): Promise<Lesson[]> => {

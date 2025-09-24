@@ -76,9 +76,16 @@ const ContentItemCard: React.FC<ContentItemCardProps> = ({
   };
 
   // Safe function to render any data structure
+  // Fixed renderDataContent function with better null checks
   const renderDataContent = (data: unknown) => {
-    if (!data || typeof data !== "object") {
+    // More robust null/undefined check
+    if (!data || typeof data !== "object" || data === null) {
       return <Text type="secondary">No content data</Text>;
+    }
+
+    // Additional check for arrays (though arrays are objects in JS)
+    if (Array.isArray(data) && data.length === 0) {
+      return <Text type="secondary">Empty content data</Text>;
     }
 
     try {
@@ -167,8 +174,8 @@ const ContentItemCard: React.FC<ContentItemCardProps> = ({
               );
             }
 
-            // Handle objects
-            if (typeof value === "object") {
+            // Handle objects (with additional null check)
+            if (typeof value === "object" && value !== null) {
               return (
                 <div key={key} style={{ marginBottom: "4px" }}>
                   <Text strong>
@@ -191,9 +198,11 @@ const ContentItemCard: React.FC<ContentItemCardProps> = ({
         </div>
       );
     } catch (error) {
+      console.error("Error in renderDataContent:", error);
       return (
         <Text type="secondary" style={{ color: "red" }}>
-          Error displaying content: {String(error)}
+          Error displaying content:{" "}
+          {error instanceof Error ? error.message : String(error)}
         </Text>
       );
     }
