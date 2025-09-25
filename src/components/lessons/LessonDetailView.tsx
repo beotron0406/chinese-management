@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { Card, Typography, Button, Space, Tabs, Divider, Empty, message, Spin } from 'antd';
 import { PlusOutlined, EditOutlined } from '@ant-design/icons';
+import { useRouter } from 'next/navigation';
 import { Lesson, LessonContent } from '../../types/lessonTypes';
 import { lessonApi } from '../../services/lessonApi';
-import CardFormModal from './CardFormModal';
+// import CardFormModal from './CardFormModal'; // Removed - content creation moved to /items
 import LessonFormModal from './LessonFormModal';
 
 const { Title, Text } = Typography;
@@ -14,11 +15,10 @@ interface LessonDetailViewProps {
 }
 
 const LessonDetailView: React.FC<LessonDetailViewProps> = ({ lessonId }) => {
+  const router = useRouter();
   const [lesson, setLesson] = useState<Lesson | null>(null);
   const [contents, setContents] = useState<LessonContent[]>([]);
   const [loading, setLoading] = useState(true);
-  const [cardModalVisible, setCardModalVisible] = useState(false);
-  const [editingCard, setEditingCard] = useState<LessonContent | null>(null);
   const [lessonModalVisible, setLessonModalVisible] = useState(false);
 
   const fetchLessonData = async () => {
@@ -48,24 +48,17 @@ const LessonDetailView: React.FC<LessonDetailViewProps> = ({ lessonId }) => {
   }, [lessonId]);
 
   const handleAddCard = () => {
-    setEditingCard(null);
-    setCardModalVisible(true);
+    // Navigate to items management page for this lesson
+    router.push(`/items?lessonId=${lessonId}`);
   };
 
   const handleEditCard = (card: LessonContent) => {
-    setEditingCard(card);
-    setCardModalVisible(true);
+    // Navigate to items management page for this lesson
+    router.push(`/items?lessonId=${lessonId}`);
   };
 
   const handleEditLesson = () => {
     setLessonModalVisible(true);
-  };
-
-  const handleCardModalClose = (refresh: boolean) => {
-    setCardModalVisible(false);
-    if (refresh) {
-      fetchLessonData();
-    }
   };
 
   const handleLessonModalClose = (refresh: boolean) => {
@@ -139,7 +132,7 @@ const LessonDetailView: React.FC<LessonDetailViewProps> = ({ lessonId }) => {
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
         <Title level={3}>Lesson Content</Title>
         <Button type="primary" icon={<PlusOutlined />} onClick={handleAddCard}>
-          Add Content Card
+          Manage Lesson Items
         </Button>
       </div>
 
@@ -156,13 +149,6 @@ const LessonDetailView: React.FC<LessonDetailViewProps> = ({ lessonId }) => {
           )}
         </TabPane>
       </Tabs>
-
-      <CardFormModal
-        visible={cardModalVisible}
-        onClose={handleCardModalClose}
-        card={editingCard}
-        lessonId={lessonId}
-      />
 
       <LessonFormModal
         visible={lessonModalVisible}

@@ -98,7 +98,7 @@ export default function CourseLessonsPage() {
   const handleLessonClick = (lesson: Lesson) => {
     // Cache the lesson data before navigating
     setCachedLesson(lesson);
-    router.push(`/question?lessonId=${lesson.id}`);
+    router.push(`/items?lessonId=${lesson.id}`);
   };
 
   const columns = [

@@ -11,8 +11,12 @@ export interface WordDefinitionData {
 
 // Sentences content data type for CONTENT_SENTENCES
 export interface SentencesData {
-  // Add structure for sentences content when needed
-  [key: string]: any;
+  picture_url: string;
+  audio_url: string;
+  chinese_text: string[];
+  pinyin: string[];
+  translation: string;
+  additional_info: string;
 }
 
 // Union type for all content data types

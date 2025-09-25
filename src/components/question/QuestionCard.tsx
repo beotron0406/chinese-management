@@ -97,8 +97,8 @@ const QuestionCard: React.FC<QuestionCardProps> = ({
                   } else {
                     // Navigate to edit page with course context
                     const editUrl = courseId
-                      ? `/question/edit/${question.id}?lessonId=${question.lessonId}&courseId=${courseId}`
-                      : `/question/edit/${question.id}?lessonId=${question.lessonId}`;
+                      ? `/items/edit/${question.id}?lessonId=${question.lessonId}&courseId=${courseId}`
+                      : `/items/edit/${question.id}?lessonId=${question.lessonId}`;
                     router.push(editUrl);
                   }
                 }}

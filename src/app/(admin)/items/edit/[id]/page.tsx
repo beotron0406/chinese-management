@@ -81,7 +81,7 @@ export default function EditQuestionPage() {
       await questionApi.updateQuestion(questionId, updateData);
 
       // Navigate back to Items Management page
-      router.push(`/question?lessonId=${lessonId}`);
+      router.push(`/items?lessonId=${lessonId}`);
     } catch (err) {
       console.error('Failed to update question:', err);
       setError('Failed to update question');
@@ -103,7 +103,7 @@ export default function EditQuestionPage() {
   };
 
   const handleCancel = () => {
-    router.push(`/question?lessonId=${lessonId}`);
+    router.push(`/items?lessonId=${lessonId}`);
   };
 
   const getQuestionTypeTitle = (type: QuestionType) => {

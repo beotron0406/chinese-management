@@ -39,7 +39,7 @@ export default function ItemsPage() {
         const parsedStoredId = parseInt(storedLessonId);
         setLessonId(parsedStoredId);
         // Update URL to include the lessonId
-        router.replace(`/question?lessonId=${storedLessonId}`);
+        router.replace(`/items?lessonId=${storedLessonId}`);
       }
     }
   }, [searchParams, router]);
@@ -93,13 +93,13 @@ export default function ItemsPage() {
 
   const handleQuestionTypeSelect = (questionType: QuestionType) => {
     setIsModalVisible(false);
-    router.push(`/question/create?lessonId=${lessonId}&type=${questionType}`);
+    router.push(`/items/create?lessonId=${lessonId}&type=${questionType}`);
   };
 
   const handleContentTypeSelect = (contentType: ContentType) => {
     setIsModalVisible(false);
-    // Navigate to content creation page (to be implemented)
-    router.push(`/content/create?lessonId=${lessonId}&type=${contentType}`);
+    // Navigate to unified items creation page
+    router.push(`/items/create?lessonId=${lessonId}&type=${contentType}`);
   };
 
   const handleBackToLessons = () => {
