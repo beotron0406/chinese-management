@@ -10,6 +10,7 @@ import { questionApi } from "@/services/questionApi";
 import { Lesson } from "@/types/lessonTypes";
 import { QuestionFormValues } from "@/types/questionType";
 import MultipleChoiceForm from "@/components/question/forms/MultipleChoiceForm";
+import AudioImageQuestionForm from "@/components/question/forms/AudioImageQuestionForm";
 import WordDefinitionForm from "@/components/content/forms/WordDefinitionForm";
 import SentencesForm from "@/components/content/forms/SentencesForm";
 import JsonPreviewCard from "@/components/question/JsonPreviewCard";
@@ -63,13 +64,25 @@ export default function CreateItemPage() {
     setLoading(true);
     try {
       if (isQuestion) {
-        // Handle question creation
+        // Handle question creation - clean the data first
+        const cleanData = { ...values.data };
+
+        // Remove temporary form fields that shouldn't be sent to backend
+        delete cleanData.transcript_input;
+        if (cleanData.answers) {
+          cleanData.answers = cleanData.answers.map((answer: any) => {
+            if (!answer) return answer;
+            const { label_zh_input, ...rest } = answer;
+            return rest;
+          });
+        }
+
         const questionData: QuestionFormValues = {
           lessonId,
           questionType,
           orderIndex: 0,
           isActive: values.isActive ?? true,
-          data: values.data,
+          data: cleanData,
         };
 
         await questionApi.createQuestion(questionData);
@@ -107,12 +120,23 @@ export default function CreateItemPage() {
   // Generate preview data for JSON card
   const getPreviewData = () => {
     if (isQuestion) {
+      // Clean preview data for questions
+      const cleanPreviewData = { ...formValues.data } || {};
+      delete cleanPreviewData.transcript_input;
+      if (cleanPreviewData.answers) {
+        cleanPreviewData.answers = cleanPreviewData.answers.map((answer: any) => {
+          if (!answer) return answer;
+          const { label_zh_input, ...rest } = answer;
+          return rest;
+        });
+      }
+
       return {
         lessonId,
         questionType,
         orderIndex: "Auto-assigned by backend",
         isActive: formValues.isActive ?? true,
-        data: formValues.data || {},
+        data: cleanPreviewData,
       };
     } else {
       // Clean preview data for content
@@ -165,6 +189,8 @@ export default function CreateItemPage() {
       switch (questionType) {
         case QuestionType.TEXT_SELECTION:
           return <MultipleChoiceForm form={form} />;
+        case QuestionType.AUDIO_IMAGE:
+          return <AudioImageQuestionForm form={form} questionType={questionType} />;
         default:
           return (
             <Alert
