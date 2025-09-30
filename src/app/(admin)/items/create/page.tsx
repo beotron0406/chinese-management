@@ -178,9 +178,9 @@ export default function CreateItemPage() {
     } else if (isContent) {
       switch (contentType) {
         case ContentType.CONTENT_WORD_DEFINITION:
-          return <WordDefinitionForm form={form} />;
+          return <WordDefinitionForm form={form} contentType={contentType} />;
         case ContentType.CONTENT_SENTENCES:
-          return <SentencesForm form={form} />;
+          return <SentencesForm form={form} contentType={contentType} />;
         default:
           return (
             <Alert

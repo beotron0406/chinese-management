@@ -5,7 +5,7 @@ import { SoundOutlined, PictureOutlined, UploadOutlined, DeleteOutlined } from '
 import { pinyin } from 'pinyin-pro';
 import type { FormInstance } from 'antd/es/form';
 import { WordDefinitionData } from '@/types/contentTypes';
-import { uploadWordImageToS3, uploadWordAudioToS3, validateFile, UploadProgress } from '@/utils/s3Upload';
+import { uploadImageByType, uploadAudioByType, validateFile, UploadProgress } from '@/utils/s3Upload';
 import UploadModal from '@/components/common/UploadModal';
 
 const { Text } = Typography;
@@ -14,9 +14,10 @@ const { TextArea } = Input;
 interface WordDefinitionFormProps {
   form: FormInstance;
   initialValues?: WordDefinitionData;
+  contentType?: string;
 }
 
-const WordDefinitionForm: React.FC<WordDefinitionFormProps> = ({ form, initialValues }) => {
+const WordDefinitionForm: React.FC<WordDefinitionFormProps> = ({ form, initialValues, contentType = 'content_word_definition' }) => {
   const [chineseText, setChineseText] = useState<string>('');
   const [generatedPinyin, setGeneratedPinyin] = useState<string>('');
   const [selectedImageFile, setSelectedImageFile] = useState<File | null>(null);
@@ -112,8 +113,9 @@ const WordDefinitionForm: React.FC<WordDefinitionFormProps> = ({ form, initialVa
 
       // Upload image if selected
       if (selectedImageFile) {
-        const imageUploadPromise = uploadWordImageToS3(
+        const imageUploadPromise = uploadImageByType(
           selectedImageFile,
+          contentType,
           (progress: UploadProgress) => {
             setUploadProgress(Math.round(progress.percentage / 2)); // 50% for image
           }
@@ -123,8 +125,9 @@ const WordDefinitionForm: React.FC<WordDefinitionFormProps> = ({ form, initialVa
 
       // Upload audio if selected
       if (selectedAudioFile) {
-        const audioUploadPromise = uploadWordAudioToS3(
+        const audioUploadPromise = uploadAudioByType(
           selectedAudioFile,
+          contentType,
           (progress: UploadProgress) => {
             const baseProgress = selectedImageFile ? 50 : 0;
             const audioProgress = selectedImageFile ? progress.percentage / 2 : progress.percentage;
@@ -245,9 +248,9 @@ const WordDefinitionForm: React.FC<WordDefinitionFormProps> = ({ form, initialVa
         </Form.Item>
 
         <Form.Item
-          label="Explanation"
-          name={['data', 'explaination']}
-          rules={[{ required: true, message: 'Please enter the explanation' }]}
+          label="Translation"
+          name={['data', 'translation']}
+          rules={[{ required: true, message: 'Please enter the translation' }]}
         >
           <TextArea rows={3} />
         </Form.Item>
@@ -390,8 +393,8 @@ const WordDefinitionForm: React.FC<WordDefinitionFormProps> = ({ form, initialVa
               <Text>{form.getFieldValue(['data', 'speech']) || 'Not specified'}</Text>
             </div>
             <div>
-              <Text strong>Explanation: </Text>
-              <Text>{form.getFieldValue(['data', 'explaination']) || 'Not specified'}</Text>
+              <Text strong>Translation: </Text>
+              <Text>{form.getFieldValue(['data', 'translation']) || 'Not specified'}</Text>
             </div>
           </div>
         </Card>

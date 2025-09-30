@@ -136,63 +136,46 @@ export const uploadFileToS3 = async (
 };
 
 /**
- * Upload an image file to S3 for word definitions
+ * Upload a file to S3 based on content/question type
+ * @param file - The file to upload
+ * @param type - The content or question type (e.g., 'content_word_definition', 'question_audio_image')
+ * @param fileType - Either 'images' or 'audio'
+ * @param onProgress - Optional progress callback
  */
-export const uploadWordImageToS3 = (
+export const uploadFileByType = (
   file: File,
+  type: string,
+  fileType: 'images' | 'audio',
   onProgress?: (progress: UploadProgress) => void
 ): Promise<UploadResult> => {
-  return uploadFileToS3(file, 'images/word-definitions', onProgress);
+  // Convert type to folder name (e.g., 'content_word_definition' -> 'content-word-definition')
+  // Convert underscores to hyphens
+  const folderName = type.replace(/_/g, '-');
+
+  const folder = `${folderName}/${fileType}`;
+  return uploadFileToS3(file, folder, onProgress);
 };
 
 /**
- * Upload an audio file to S3 for word pronunciations
+ * Upload an image file to S3 based on type
  */
-export const uploadWordAudioToS3 = (
+export const uploadImageByType = (
   file: File,
+  type: string,
   onProgress?: (progress: UploadProgress) => void
 ): Promise<UploadResult> => {
-  return uploadFileToS3(file, 'audio/word-pronunciations', onProgress);
+  return uploadFileByType(file, type, 'images', onProgress);
 };
 
 /**
- * Upload an image file to S3 for lessons
+ * Upload an audio file to S3 based on type
  */
-export const uploadLessonImageToS3 = (
+export const uploadAudioByType = (
   file: File,
+  type: string,
   onProgress?: (progress: UploadProgress) => void
 ): Promise<UploadResult> => {
-  return uploadFileToS3(file, 'images/lessons', onProgress);
-};
-
-/**
- * Upload an audio file to S3 for lessons
- */
-export const uploadLessonAudioToS3 = (
-  file: File,
-  onProgress?: (progress: UploadProgress) => void
-): Promise<UploadResult> => {
-  return uploadFileToS3(file, 'audio/lessons', onProgress);
-};
-
-/**
- * Upload an image file to S3 for questions
- */
-export const uploadQuestionImageToS3 = (
-  file: File,
-  onProgress?: (progress: UploadProgress) => void
-): Promise<UploadResult> => {
-  return uploadFileToS3(file, 'images/questions', onProgress);
-};
-
-/**
- * Upload an audio file to S3 for questions
- */
-export const uploadQuestionAudioToS3 = (
-  file: File,
-  onProgress?: (progress: UploadProgress) => void
-): Promise<UploadResult> => {
-  return uploadFileToS3(file, 'audio/questions', onProgress);
+  return uploadFileByType(file, type, 'audio', onProgress);
 };
 
 /**

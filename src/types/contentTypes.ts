@@ -5,7 +5,7 @@ export interface WordDefinitionData {
   chinese_text: string;
   pinyin: string;
   speech: string;
-  explaination: string;
+  translation: string;
   additional_info: string;
 }
 
@@ -15,7 +15,7 @@ export interface SentencesData {
   audio_url: string;
   chinese_text: string[];
   pinyin: string[];
-  translation: string;
+  explaination: string;
   additional_info: string;
 }
 
