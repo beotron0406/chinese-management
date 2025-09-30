@@ -218,6 +218,15 @@ getLessonItems: async (id: number): Promise<LessonItemsResponse> => {
     return response.data as LessonContent[];
   },
 
+  // Update lesson content/item
+  updateLessonItem: async (
+    itemId: number,
+    itemData: Partial<ContentFormValues>
+  ): Promise<LessonContent> => {
+    const response = await api.put(`/lessons/items/${itemId}`, itemData);
+    return response.data as LessonContent;
+  },
+
   // Delete lesson content
   deleteLessonContent: async (contentId: number): Promise<any> => {
     const response = await api.delete(`/lessons/items/${contentId}`);
