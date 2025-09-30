@@ -8,6 +8,7 @@ import { lessonApi } from '@/services/lessonApi';
 import { Course } from '@/types';
 import { Lesson } from '@/types/lessonTypes';
 import { useLessonCache } from '@/context/LessonCacheContext';
+import LessonFormModal from '@/components/lessons/LessonFormModal';
 
 const { Title, Text, Paragraph } = Typography;
 
@@ -24,6 +25,7 @@ export default function CourseLessonsPage() {
   const [lessons, setLessons] = useState<Lesson[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [lessonModalVisible, setLessonModalVisible] = useState(false);
 
   // Early return for invalid course ID
   if (!courseIdParam || isNaN(courseId)) {
@@ -99,6 +101,29 @@ export default function CourseLessonsPage() {
     // Cache the lesson data before navigating
     setCachedLesson(lesson);
     router.push(`/items?lessonId=${lesson.id}`);
+  };
+
+  const handleAddNewLesson = () => {
+    setLessonModalVisible(true);
+  };
+
+  const handleLessonModalClose = (refreshData: boolean) => {
+    setLessonModalVisible(false);
+    if (refreshData) {
+      // Reload lessons after creating a new one
+      const fetchLessons = async () => {
+        try {
+          setLoading(true);
+          const lessonsData = await lessonApi.getLessonsByCourse(courseId);
+          setLessons(lessonsData);
+        } catch (error) {
+          console.error('Failed to refresh lessons:', error);
+        } finally {
+          setLoading(false);
+        }
+      };
+      fetchLessons();
+    }
   };
 
   const columns = [
@@ -250,7 +275,7 @@ export default function CourseLessonsPage() {
       <Card
         title="Lessons"
         extra={
-          <Button type="primary" icon={<PlusOutlined />}>
+          <Button type="primary" icon={<PlusOutlined />} onClick={handleAddNewLesson}>
             Add New Lesson
           </Button>
         }
@@ -259,7 +284,7 @@ export default function CourseLessonsPage() {
           <div style={{ textAlign: 'center', padding: '40px' }}>
             <Text type="secondary">No lessons found for this course.</Text>
             <div style={{ marginTop: '16px' }}>
-              <Button type="primary" icon={<PlusOutlined />}>
+              <Button type="primary" icon={<PlusOutlined />} onClick={handleAddNewLesson}>
                 Create First Lesson
               </Button>
             </div>
@@ -278,6 +303,14 @@ export default function CourseLessonsPage() {
           />
         )}
       </Card>
+
+      {/* Add Lesson Modal */}
+      <LessonFormModal
+        visible={lessonModalVisible}
+        onClose={handleLessonModalClose}
+        lesson={null}
+        courseId={courseId}
+      />
     </div>
   );
 }

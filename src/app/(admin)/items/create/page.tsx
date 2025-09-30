@@ -10,6 +10,10 @@ import { questionApi } from "@/services/questionApi";
 import { Lesson } from "@/types/lessonTypes";
 import { QuestionFormValues } from "@/types/questionType";
 import MultipleChoiceForm from "@/components/question/forms/MultipleChoiceForm";
+import AudioImageForm from "@/components/question/forms/AudioImageForm";
+import MatchingTextForm from "@/components/question/forms/MatchingTextForm";
+import FillBlankForm from "@/components/question/forms/FillBlankForm";
+import AudioBoolForm from "@/components/question/forms/AudioBoolForm";
 import WordDefinitionForm from "@/components/content/forms/WordDefinitionForm";
 import SentencesForm from "@/components/content/forms/SentencesForm";
 import JsonPreviewCard from "@/components/question/JsonPreviewCard";
@@ -165,6 +169,14 @@ export default function CreateItemPage() {
       switch (questionType) {
         case QuestionType.TEXT_SELECTION:
           return <MultipleChoiceForm form={form} />;
+        case QuestionType.AUDIO_IMAGE:
+          return <AudioImageForm form={form} />;
+        case QuestionType.MATCHING_TEXT:
+          return <MatchingTextForm form={form} />;
+        case QuestionType.FILL_BLANK:
+          return <FillBlankForm form={form} />;
+        case QuestionType.AUDIO_BOOL:
+          return <AudioBoolForm form={form} />;
         default:
           return (
             <Alert
