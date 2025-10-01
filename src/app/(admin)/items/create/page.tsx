@@ -13,10 +13,16 @@ import MultipleChoiceForm from "@/components/question/forms/MultipleChoiceForm";
 import MatchingTextForm from "@/components/question/forms/MatchingTextForm";
 import FillBlankForm from "@/components/question/forms/FillBlankForm";
 import AudioBoolForm from "@/components/question/forms/AudioBoolForm";
-import WordDefinitionForm, { WordDefinitionFormRef } from "@/components/content/forms/WordDefinitionForm";
-import SentencesForm, { SentencesFormRef } from "@/components/content/forms/SentencesForm";
+import WordDefinitionForm, {
+  WordDefinitionFormRef,
+} from "@/components/content/forms/WordDefinitionForm";
+import SentencesForm, {
+  SentencesFormRef,
+} from "@/components/content/forms/SentencesForm";
 import JsonPreviewCard from "@/components/question/JsonPreviewCard";
-import AudioImageQuestionForm, { AudioImageQuestionFormRef } from "@/components/question/forms/AudioImageQuestionForm";
+import AudioImageQuestionForm, {
+  AudioImageQuestionFormRef,
+} from "@/components/question/forms/AudioImageQuestionForm";
 
 const { Title, Text } = Typography;
 
@@ -36,8 +42,12 @@ export default function CreateItemPage() {
   const isQuestion = Object.values(QuestionType).includes(type as QuestionType);
   const isContent = Object.values(ContentType).includes(type as ContentType);
 
-  const questionType = isQuestion ? (type as QuestionType) : QuestionType.TEXT_SELECTION;
-  const contentType = isContent ? (type as ContentType) : ContentType.CONTENT_WORD_DEFINITION;
+  const questionType = isQuestion
+    ? (type as QuestionType)
+    : QuestionType.TEXT_SELECTION;
+  const contentType = isContent
+    ? (type as ContentType)
+    : ContentType.CONTENT_WORD_DEFINITION;
 
   const [form] = Form.useForm();
   const [lesson, setLesson] = useState<Lesson | null>(null);
@@ -74,12 +84,15 @@ export default function CreateItemPage() {
       // Upload files first
       let uploadSuccess = true;
       if (isQuestion && questionType === QuestionType.AUDIO_IMAGE) {
-        uploadSuccess = await audioImageQuestionFormRef.current?.uploadFiles() ?? false;
+        uploadSuccess =
+          (await audioImageQuestionFormRef.current?.uploadFiles()) ?? false;
       } else if (isContent) {
         if (contentType === ContentType.CONTENT_WORD_DEFINITION) {
-          uploadSuccess = await wordDefinitionFormRef.current?.uploadFiles() ?? false;
+          uploadSuccess =
+            (await wordDefinitionFormRef.current?.uploadFiles()) ?? false;
         } else if (contentType === ContentType.CONTENT_SENTENCES) {
-          uploadSuccess = await sentencesFormRef.current?.uploadFiles() ?? false;
+          uploadSuccess =
+            (await sentencesFormRef.current?.uploadFiles()) ?? false;
         }
       }
 
@@ -109,7 +122,6 @@ export default function CreateItemPage() {
         const questionData: QuestionFormValues = {
           lessonId,
           questionType,
-          orderIndex: 0,
           isActive: updatedValues.isActive ?? true,
           data: cleanData,
         };
@@ -153,17 +165,18 @@ export default function CreateItemPage() {
       const cleanPreviewData = { ...formValues.data } || {};
       delete cleanPreviewData.transcript_input;
       if (cleanPreviewData.answers) {
-        cleanPreviewData.answers = cleanPreviewData.answers.map((answer: any) => {
-          if (!answer) return answer;
-          const { label_zh_input, ...rest } = answer;
-          return rest;
-        });
+        cleanPreviewData.answers = cleanPreviewData.answers.map(
+          (answer: any) => {
+            if (!answer) return answer;
+            const { label_zh_input, ...rest } = answer;
+            return rest;
+          }
+        );
       }
 
       return {
         lessonId,
         questionType,
-        orderIndex: "Auto-assigned by backend",
         isActive: formValues.isActive ?? true,
         data: cleanPreviewData,
       };
@@ -219,7 +232,12 @@ export default function CreateItemPage() {
         case QuestionType.TEXT_SELECTION:
           return <MultipleChoiceForm form={form} />;
         case QuestionType.AUDIO_IMAGE:
-          return <AudioImageQuestionForm form={form} />;
+          return (
+            <AudioImageQuestionForm
+              ref={audioImageQuestionFormRef}
+              form={form}
+            />
+          );
         case QuestionType.MATCHING_TEXT:
           return <MatchingTextForm form={form} />;
         case QuestionType.FILL_BLANK:
@@ -239,9 +257,21 @@ export default function CreateItemPage() {
     } else if (isContent) {
       switch (contentType) {
         case ContentType.CONTENT_WORD_DEFINITION:
-          return <WordDefinitionForm ref={wordDefinitionFormRef} form={form} contentType={contentType} />;
+          return (
+            <WordDefinitionForm
+              ref={wordDefinitionFormRef}
+              form={form}
+              contentType={contentType}
+            />
+          );
         case ContentType.CONTENT_SENTENCES:
-          return <SentencesForm ref={sentencesFormRef} form={form} contentType={contentType} />;
+          return (
+            <SentencesForm
+              ref={sentencesFormRef}
+              form={form}
+              contentType={contentType}
+            />
+          );
         default:
           return (
             <Alert
@@ -299,9 +329,7 @@ export default function CreateItemPage() {
       )}
 
       {/* Item Form */}
-      <div
-        style={{ display: "flex", flexDirection: "column", gap: "24px" }}
-      >
+      <div style={{ display: "flex", flexDirection: "column", gap: "24px" }}>
         {/* Main Form */}
         <Card>
           <Form
