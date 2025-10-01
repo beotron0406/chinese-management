@@ -59,7 +59,7 @@ interface WordDefinitionContent extends RawLessonContentItem {
   audio_url: string;
   picture_url: string;
   chinese_text: string;
-  explaination: string; // Note: this is spelled "explaination" in the API
+  translation: string;
 }
 
 // You can add more specific content types here as needed

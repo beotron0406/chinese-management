@@ -1,22 +1,30 @@
 "use client";
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, forwardRef, useImperativeHandle } from 'react';
 import { Form, Input, Card, Typography, Row, Col, Upload, Button, message } from 'antd';
 import { SoundOutlined, PictureOutlined, UploadOutlined, DeleteOutlined } from '@ant-design/icons';
 import { pinyin } from 'pinyin-pro';
 import type { FormInstance } from 'antd/es/form';
 import { WordDefinitionData } from '@/types/contentTypes';
-import { uploadWordImageToS3, uploadWordAudioToS3, validateFile, UploadProgress } from '@/utils/s3Upload';
+import { uploadImageByType, uploadAudioByType, validateFile, UploadProgress } from '@/utils/s3Upload';
 import UploadModal from '@/components/common/UploadModal';
 
 const { Text } = Typography;
 const { TextArea } = Input;
 
+// Dev mode flag - set to false to hide individual upload buttons
+const DEV_MODE = true;
+
 interface WordDefinitionFormProps {
   form: FormInstance;
   initialValues?: WordDefinitionData;
+  contentType?: string;
 }
 
-const WordDefinitionForm: React.FC<WordDefinitionFormProps> = ({ form, initialValues }) => {
+export interface WordDefinitionFormRef {
+  uploadFiles: () => Promise<boolean>;
+}
+
+const WordDefinitionForm = forwardRef<WordDefinitionFormRef, WordDefinitionFormProps>(({ form, initialValues, contentType = 'content_word_definition' }, ref) => {
   const [chineseText, setChineseText] = useState<string>('');
   const [generatedPinyin, setGeneratedPinyin] = useState<string>('');
   const [selectedImageFile, setSelectedImageFile] = useState<File | null>(null);
@@ -77,10 +85,14 @@ const WordDefinitionForm: React.FC<WordDefinitionFormProps> = ({ form, initialVa
     return false; // Prevent automatic upload
   };
 
-  const handleUploadFiles = async () => {
+  const handleUploadFiles = async (showModal: boolean = true): Promise<boolean> => {
     if (!selectedImageFile && !selectedAudioFile) {
+      if (uploadedUrls.imageUrl && uploadedUrls.audioUrl) {
+        // Already uploaded
+        return true;
+      }
       message.warning('Please select at least one file to upload');
-      return;
+      return false;
     }
 
     // Validate files
@@ -88,7 +100,7 @@ const WordDefinitionForm: React.FC<WordDefinitionFormProps> = ({ form, initialVa
       const imageValidation = validateFile(selectedImageFile, 'image', 10);
       if (!imageValidation.isValid) {
         message.error(imageValidation.error);
-        return;
+        return false;
       }
     }
 
@@ -96,11 +108,13 @@ const WordDefinitionForm: React.FC<WordDefinitionFormProps> = ({ form, initialVa
       const audioValidation = validateFile(selectedAudioFile, 'audio', 10);
       if (!audioValidation.isValid) {
         message.error(audioValidation.error);
-        return;
+        return false;
       }
     }
 
-    setUploadModalVisible(true);
+    if (showModal) {
+      setUploadModalVisible(true);
+    }
     setUploadStatus('uploading');
     setUploadProgress(0);
     setUploadError('');
@@ -112,8 +126,9 @@ const WordDefinitionForm: React.FC<WordDefinitionFormProps> = ({ form, initialVa
 
       // Upload image if selected
       if (selectedImageFile) {
-        const imageUploadPromise = uploadWordImageToS3(
+        const imageUploadPromise = uploadImageByType(
           selectedImageFile,
+          contentType,
           (progress: UploadProgress) => {
             setUploadProgress(Math.round(progress.percentage / 2)); // 50% for image
           }
@@ -123,8 +138,9 @@ const WordDefinitionForm: React.FC<WordDefinitionFormProps> = ({ form, initialVa
 
       // Upload audio if selected
       if (selectedAudioFile) {
-        const audioUploadPromise = uploadWordAudioToS3(
+        const audioUploadPromise = uploadAudioByType(
           selectedAudioFile,
+          contentType,
           (progress: UploadProgress) => {
             const baseProgress = selectedImageFile ? 50 : 0;
             const audioProgress = selectedImageFile ? progress.percentage / 2 : progress.percentage;
@@ -172,14 +188,23 @@ const WordDefinitionForm: React.FC<WordDefinitionFormProps> = ({ form, initialVa
       setSelectedImageFile(null);
       setSelectedAudioFile(null);
 
-      message.success('Files uploaded successfully!');
+      if (showModal) {
+        message.success('Files uploaded successfully!');
+      }
+      return true;
     } catch (error) {
       console.error('Upload error:', error);
       setUploadStatus('error');
       setUploadError(error instanceof Error ? error.message : 'Upload failed');
       message.error('Upload failed. Please try again.');
+      return false;
     }
   };
+
+  // Expose upload method to parent
+  useImperativeHandle(ref, () => ({
+    uploadFiles: () => handleUploadFiles(false),
+  }));
 
   const handleRemoveImage = () => {
     setSelectedImageFile(null);
@@ -245,9 +270,9 @@ const WordDefinitionForm: React.FC<WordDefinitionFormProps> = ({ form, initialVa
         </Form.Item>
 
         <Form.Item
-          label="Explanation"
-          name={['data', 'explaination']}
-          rules={[{ required: true, message: 'Please enter the explanation' }]}
+          label="Translation"
+          name={['data', 'translation']}
+          rules={[{ required: true, message: 'Please enter the translation' }]}
         >
           <TextArea rows={3} />
         </Form.Item>
@@ -363,16 +388,16 @@ const WordDefinitionForm: React.FC<WordDefinitionFormProps> = ({ form, initialVa
           </Col>
         </Row>
 
-        {(selectedImageFile || selectedAudioFile) && (
+        {DEV_MODE && (selectedImageFile || selectedAudioFile) && (
           <div style={{ textAlign: 'center', marginTop: 16 }}>
             <Button
               type="primary"
               icon={<UploadOutlined />}
-              onClick={handleUploadFiles}
+              onClick={() => handleUploadFiles(true)}
               loading={uploadStatus === 'uploading'}
               size="large"
             >
-              Upload to S3
+              Upload to S3 (Dev Mode)
             </Button>
           </div>
         )}
@@ -390,8 +415,8 @@ const WordDefinitionForm: React.FC<WordDefinitionFormProps> = ({ form, initialVa
               <Text>{form.getFieldValue(['data', 'speech']) || 'Not specified'}</Text>
             </div>
             <div>
-              <Text strong>Explanation: </Text>
-              <Text>{form.getFieldValue(['data', 'explaination']) || 'Not specified'}</Text>
+              <Text strong>Translation: </Text>
+              <Text>{form.getFieldValue(['data', 'translation']) || 'Not specified'}</Text>
             </div>
           </div>
         </Card>
@@ -411,6 +436,8 @@ const WordDefinitionForm: React.FC<WordDefinitionFormProps> = ({ form, initialVa
       />
     </div>
   );
-};
+});
+
+WordDefinitionForm.displayName = 'WordDefinitionForm';
 
 export default WordDefinitionForm;

@@ -1,5 +1,5 @@
 "use client";
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Card, Typography, Button, Form, Space, Alert, message } from "antd";
 import { ArrowLeftOutlined, SaveOutlined } from "@ant-design/icons";
@@ -10,13 +10,13 @@ import { questionApi } from "@/services/questionApi";
 import { Lesson } from "@/types/lessonTypes";
 import { QuestionFormValues } from "@/types/questionType";
 import MultipleChoiceForm from "@/components/question/forms/MultipleChoiceForm";
-import AudioImageForm from "@/components/question/forms/AudioImageForm";
 import MatchingTextForm from "@/components/question/forms/MatchingTextForm";
 import FillBlankForm from "@/components/question/forms/FillBlankForm";
 import AudioBoolForm from "@/components/question/forms/AudioBoolForm";
-import WordDefinitionForm from "@/components/content/forms/WordDefinitionForm";
-import SentencesForm from "@/components/content/forms/SentencesForm";
+import WordDefinitionForm, { WordDefinitionFormRef } from "@/components/content/forms/WordDefinitionForm";
+import SentencesForm, { SentencesFormRef } from "@/components/content/forms/SentencesForm";
 import JsonPreviewCard from "@/components/question/JsonPreviewCard";
+import AudioImageQuestionForm, { AudioImageQuestionFormRef } from "@/components/question/forms/AudioImageQuestionForm";
 
 const { Title, Text } = Typography;
 
@@ -26,6 +26,11 @@ export default function CreateItemPage() {
   const lessonId = parseInt(searchParams.get("lessonId") || "1");
   const courseId = parseInt(searchParams.get("courseId") || "1");
   const type = searchParams.get("type");
+
+  // Refs for form components
+  const wordDefinitionFormRef = useRef<WordDefinitionFormRef>(null);
+  const sentencesFormRef = useRef<SentencesFormRef>(null);
+  const audioImageQuestionFormRef = useRef<AudioImageQuestionFormRef>(null);
 
   // Determine if this is a question or content type
   const isQuestion = Object.values(QuestionType).includes(type as QuestionType);
@@ -66,21 +71,54 @@ export default function CreateItemPage() {
   const handleSubmit = async (values: any) => {
     setLoading(true);
     try {
+      // Upload files first
+      let uploadSuccess = true;
+      if (isQuestion && questionType === QuestionType.AUDIO_IMAGE) {
+        uploadSuccess = await audioImageQuestionFormRef.current?.uploadFiles() ?? false;
+      } else if (isContent) {
+        if (contentType === ContentType.CONTENT_WORD_DEFINITION) {
+          uploadSuccess = await wordDefinitionFormRef.current?.uploadFiles() ?? false;
+        } else if (contentType === ContentType.CONTENT_SENTENCES) {
+          uploadSuccess = await sentencesFormRef.current?.uploadFiles() ?? false;
+        }
+      }
+
+      if (!uploadSuccess) {
+        message.error("File upload failed. Please try again.");
+        setLoading(false);
+        return;
+      }
+
+      // Get the latest form values after upload (which updates the form with URLs)
+      const updatedValues = form.getFieldsValue();
+
       if (isQuestion) {
-        // Handle question creation
+        // Handle question creation - clean the data first
+        const cleanData = { ...updatedValues.data };
+
+        // Remove temporary form fields that shouldn't be sent to backend
+        delete cleanData.transcript_input;
+        if (cleanData.answers) {
+          cleanData.answers = cleanData.answers.map((answer: any) => {
+            if (!answer) return answer;
+            const { label_zh_input, ...rest } = answer;
+            return rest;
+          });
+        }
+
         const questionData: QuestionFormValues = {
           lessonId,
           questionType,
           orderIndex: 0,
-          isActive: values.isActive ?? true,
-          data: values.data,
+          isActive: updatedValues.isActive ?? true,
+          data: cleanData,
         };
 
         await questionApi.createQuestion(questionData);
         message.success("Question created successfully!");
       } else if (isContent) {
         // Handle content creation - clean the data first
-        const cleanData = { ...values.data };
+        const cleanData = { ...updatedValues.data };
 
         // Remove temporary form fields that shouldn't be sent to backend
         delete cleanData.chinese_sentence_input;
@@ -111,12 +149,23 @@ export default function CreateItemPage() {
   // Generate preview data for JSON card
   const getPreviewData = () => {
     if (isQuestion) {
+      // Clean preview data for questions
+      const cleanPreviewData = { ...formValues.data } || {};
+      delete cleanPreviewData.transcript_input;
+      if (cleanPreviewData.answers) {
+        cleanPreviewData.answers = cleanPreviewData.answers.map((answer: any) => {
+          if (!answer) return answer;
+          const { label_zh_input, ...rest } = answer;
+          return rest;
+        });
+      }
+
       return {
         lessonId,
         questionType,
         orderIndex: "Auto-assigned by backend",
         isActive: formValues.isActive ?? true,
-        data: formValues.data || {},
+        data: cleanPreviewData,
       };
     } else {
       // Clean preview data for content
@@ -170,7 +219,7 @@ export default function CreateItemPage() {
         case QuestionType.TEXT_SELECTION:
           return <MultipleChoiceForm form={form} />;
         case QuestionType.AUDIO_IMAGE:
-          return <AudioImageForm form={form} />;
+          return <AudioImageQuestionForm form={form} />;
         case QuestionType.MATCHING_TEXT:
           return <MatchingTextForm form={form} />;
         case QuestionType.FILL_BLANK:
@@ -190,9 +239,9 @@ export default function CreateItemPage() {
     } else if (isContent) {
       switch (contentType) {
         case ContentType.CONTENT_WORD_DEFINITION:
-          return <WordDefinitionForm form={form} />;
+          return <WordDefinitionForm ref={wordDefinitionFormRef} form={form} contentType={contentType} />;
         case ContentType.CONTENT_SENTENCES:
-          return <SentencesForm form={form} />;
+          return <SentencesForm ref={sentencesFormRef} form={form} contentType={contentType} />;
         default:
           return (
             <Alert
@@ -251,9 +300,9 @@ export default function CreateItemPage() {
 
       {/* Item Form */}
       <div
-        style={{ display: "grid", gridTemplateColumns: "2fr 1fr", gap: "24px" }}
+        style={{ display: "flex", flexDirection: "column", gap: "24px" }}
       >
-        {/* Left Column - Main Form */}
+        {/* Main Form */}
         <Card>
           <Form
             form={form}
@@ -285,10 +334,8 @@ export default function CreateItemPage() {
           </Form>
         </Card>
 
-        {/* Right Column - JSON Preview */}
-        <div style={{ position: "sticky", top: "24px", height: "fit-content" }}>
-          <JsonPreviewCard data={getPreviewData()} />
-        </div>
+        {/* JSON Preview */}
+        <JsonPreviewCard data={getPreviewData()} />
       </div>
     </div>
   );
