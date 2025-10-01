@@ -1,5 +1,5 @@
 "use client";
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, forwardRef, useImperativeHandle } from "react";
 import {
   Form,
   Input,
@@ -32,6 +32,9 @@ import UploadModal from '@/components/common/UploadModal';
 const { Text } = Typography;
 const { TextArea } = Input;
 
+// Dev mode flag - set to false to hide individual upload buttons
+const DEV_MODE = true;
+
 interface AudioImageQuestionData {
   audio_url: string;
   transcript_zh: string[];
@@ -52,13 +55,17 @@ interface AudioImageQuestionFormProps {
   questionType?: string;
 }
 
+export interface AudioImageQuestionFormRef {
+  uploadFiles: () => Promise<boolean>;
+}
+
 type SegmentationMode = "character" | "word" | "phrase" | "long_phrase" | "manual";
 
-const AudioImageQuestionForm: React.FC<AudioImageQuestionFormProps> = ({
+const AudioImageQuestionForm = forwardRef<AudioImageQuestionFormRef, AudioImageQuestionFormProps>(({
   form,
   initialValues,
   questionType = 'question_audio_image',
-}) => {
+}, ref) => {
   // Transcript state
   const [transcriptText, setTranscriptText] = useState<string>("");
   const [segmentedTranscript, setSegmentedTranscript] = useState<string[]>([]);
@@ -124,8 +131,11 @@ const AudioImageQuestionForm: React.FC<AudioImageQuestionFormProps> = ({
         try {
           const segmentResult = pinyin(text, {
             toneType: "symbol",
+            type: "array",
             segmentit: segmentitLevel,
           });
+
+          console.log('Segmentation result:', segmentResult, 'for mode:', mode);
 
           if (Array.isArray(segmentResult)) {
             segmentResult.forEach((item: any) => {
@@ -136,8 +146,16 @@ const AudioImageQuestionForm: React.FC<AudioImageQuestionFormProps> = ({
             });
           }
 
+          // If segmentit doesn't return proper structure, fallback to character splitting
           if (zhSegments.length === 0) {
-            zhSegments = text.match(/[\u4e00-\u9fff]|[^\u4e00-\u9fff]/g) || [];
+            console.log('Fallback: segmentit did not return proper structure');
+            const fallbackPattern = mode === "phrase"
+              ? /[\u4e00-\u9fff]{2,4}|[\u4e00-\u9fff]|[^\u4e00-\u9fff]/g
+              : mode === "long_phrase"
+              ? /[\u4e00-\u9fff]{3,6}|[\u4e00-\u9fff]{1,2}|[^\u4e00-\u9fff]/g
+              : /[\u4e00-\u9fff]|[^\u4e00-\u9fff]/g;
+
+            zhSegments = text.match(fallbackPattern) || [];
             pinyinSegments = zhSegments.map((segment) => {
               if (/[\u4e00-\u9fff]/.test(segment)) {
                 return pinyin(segment, { toneType: "symbol" });
@@ -145,7 +163,8 @@ const AudioImageQuestionForm: React.FC<AudioImageQuestionFormProps> = ({
               return segment;
             });
           }
-        } catch {
+        } catch (error) {
+          console.error('Segmentation error:', error);
           zhSegments = Array.from(text);
           pinyinSegments = zhSegments.map((char) => {
             if (/[\u4e00-\u9fff]/.test(char)) {
@@ -339,6 +358,142 @@ const AudioImageQuestionForm: React.FC<AudioImageQuestionFormProps> = ({
     }
   };
 
+  // Unified upload method for all files
+  const handleUploadAllFiles = async (showModal: boolean = true): Promise<boolean> => {
+    // Check if we have files to upload
+    const hasAudioToUpload = selectedAudioFile && !uploadedAudioUrl;
+    const answerImagesToUpload = Object.entries(answerImageUploads)
+      .filter(([_, upload]) => upload.file && !upload.uploadedUrl);
+
+    if (!hasAudioToUpload && answerImagesToUpload.length === 0) {
+      // Check if everything is already uploaded
+      if (uploadedAudioUrl && Object.values(answerImageUploads).every(u => u.uploadedUrl)) {
+        return true;
+      }
+      message.warning('Please select files to upload');
+      return false;
+    }
+
+    // Validate all files
+    if (selectedAudioFile) {
+      const audioValidation = validateFile(selectedAudioFile, 'audio', 10);
+      if (!audioValidation.isValid) {
+        message.error(audioValidation.error);
+        return false;
+      }
+    }
+
+    for (const [index, upload] of answerImagesToUpload) {
+      if (upload.file) {
+        const imageValidation = validateFile(upload.file, 'image', 10);
+        if (!imageValidation.isValid) {
+          message.error(`Answer ${parseInt(index) + 1} image: ${imageValidation.error}`);
+          return false;
+        }
+      }
+    }
+
+    if (showModal) {
+      setUploadModalVisible(true);
+    }
+    setUploadStatus('uploading');
+    setUploadProgress(0);
+    setUploadError('');
+
+    try {
+      const uploadPromises: Promise<any>[] = [];
+      const totalFiles = (hasAudioToUpload ? 1 : 0) + answerImagesToUpload.length;
+      let completedFiles = 0;
+
+      // Upload audio if needed
+      if (hasAudioToUpload && selectedAudioFile) {
+        const audioPromise = uploadAudioByType(
+          selectedAudioFile,
+          questionType,
+          (progress: UploadProgress) => {
+            const fileProgress = progress.percentage / totalFiles;
+            setUploadProgress(Math.round((completedFiles / totalFiles) * 100 + fileProgress));
+          }
+        ).then(result => ({ type: 'audio', result }));
+        uploadPromises.push(audioPromise);
+      }
+
+      // Upload answer images if needed
+      for (const [index, upload] of answerImagesToUpload) {
+        if (upload.file) {
+          const imagePromise = uploadImageByType(
+            upload.file,
+            questionType,
+            (progress: UploadProgress) => {
+              const fileProgress = progress.percentage / totalFiles;
+              setUploadProgress(Math.round((completedFiles / totalFiles) * 100 + fileProgress));
+            }
+          ).then(result => ({ type: 'answer_image', index: parseInt(index), result }));
+          uploadPromises.push(imagePromise);
+        }
+      }
+
+      const results = await Promise.all(uploadPromises);
+
+      // Process results
+      let audioUrl = uploadedAudioUrl;
+      const newAnswerUploads = { ...answerImageUploads };
+      const answers = form.getFieldValue(['data', 'answers']) || [];
+
+      for (const item of results) {
+        if (item.type === 'audio') {
+          if (item.result.success) {
+            audioUrl = item.result.url;
+          } else {
+            throw new Error(`Audio upload failed: ${item.result.error}`);
+          }
+        } else if (item.type === 'answer_image') {
+          if (item.result.success) {
+            newAnswerUploads[item.index] = { file: null, uploadedUrl: item.result.url };
+            answers[item.index] = {
+              ...answers[item.index],
+              image_url: item.result.url,
+            };
+          } else {
+            throw new Error(`Answer ${item.index + 1} image upload failed: ${item.result.error}`);
+          }
+        }
+        completedFiles++;
+      }
+
+      // Update form and state
+      setUploadedAudioUrl(audioUrl);
+      setAnswerImageUploads(newAnswerUploads);
+      form.setFieldsValue({
+        data: {
+          ...form.getFieldValue('data'),
+          audio_url: audioUrl,
+          answers,
+        }
+      });
+
+      setUploadStatus('success');
+      setUploadProgress(100);
+      setSelectedAudioFile(null);
+
+      if (showModal) {
+        message.success('All files uploaded successfully!');
+      }
+      return true;
+    } catch (error) {
+      console.error('Upload error:', error);
+      setUploadStatus('error');
+      setUploadError(error instanceof Error ? error.message : 'Upload failed');
+      message.error('Upload failed. Please try again.');
+      return false;
+    }
+  };
+
+  // Expose upload method to parent
+  useImperativeHandle(ref, () => ({
+    uploadFiles: () => handleUploadAllFiles(false),
+  }));
+
   // Segment answer label
   const segmentAnswerLabel = (answerIndex: number, text: string) => {
     if (!text.trim()) return;
@@ -459,7 +614,7 @@ const AudioImageQuestionForm: React.FC<AudioImageQuestionFormProps> = ({
                 </div>
               </div>
             )}
-            {selectedAudioFile && !uploadedAudioUrl && (
+            {DEV_MODE && selectedAudioFile && !uploadedAudioUrl && (
               <div style={{ marginTop: 8 }}>
                 <Button
                   type="primary"
@@ -467,7 +622,7 @@ const AudioImageQuestionForm: React.FC<AudioImageQuestionFormProps> = ({
                   onClick={handleUploadAudio}
                   loading={uploadStatus === 'uploading'}
                 >
-                  Upload Audio to S3
+                  Upload Audio to S3 (Dev Mode)
                 </Button>
               </div>
             )}
@@ -685,7 +840,7 @@ const AudioImageQuestionForm: React.FC<AudioImageQuestionFormProps> = ({
                             </div>
                           </div>
                         )}
-                        {answerUpload?.file && !answerUpload?.uploadedUrl && (
+                        {DEV_MODE && answerUpload?.file && !answerUpload?.uploadedUrl && (
                           <div style={{ marginTop: 8 }}>
                             <Button
                               type="primary"
@@ -694,7 +849,7 @@ const AudioImageQuestionForm: React.FC<AudioImageQuestionFormProps> = ({
                               loading={uploadStatus === 'uploading'}
                               size="small"
                             >
-                              Upload Image to S3
+                              Upload Image to S3 (Dev Mode)
                             </Button>
                           </div>
                         )}
@@ -817,6 +972,8 @@ const AudioImageQuestionForm: React.FC<AudioImageQuestionFormProps> = ({
       />
     </div>
   );
-};
+});
+
+AudioImageQuestionForm.displayName = 'AudioImageQuestionForm';
 
 export default AudioImageQuestionForm;

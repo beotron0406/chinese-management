@@ -1,5 +1,5 @@
 "use client";
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, forwardRef, useImperativeHandle } from "react";
 import {
   Form,
   Input,
@@ -32,19 +32,26 @@ import UploadModal from '@/components/common/UploadModal';
 const { Text } = Typography;
 const { TextArea } = Input;
 
+// Dev mode flag - set to false to hide individual upload buttons
+const DEV_MODE = true;
+
 interface SentencesFormProps {
   form: FormInstance;
   initialValues?: SentencesData;
   contentType?: string;
 }
 
+export interface SentencesFormRef {
+  uploadFiles: () => Promise<boolean>;
+}
+
 type SegmentationMode = "character" | "word" | "phrase" | "long_phrase" | "manual";
 
-const SentencesForm: React.FC<SentencesFormProps> = ({
+const SentencesForm = forwardRef<SentencesFormRef, SentencesFormProps>(({
   form,
   initialValues,
   contentType = 'content_sentences',
-}) => {
+}, ref) => {
   const [chineseText, setChineseText] = useState<string>("");
   const [segmentedChinese, setSegmentedChinese] = useState<string[]>([]);
   const [segmentedPinyin, setSegmentedPinyin] = useState<string[]>([]);
@@ -298,10 +305,14 @@ const SentencesForm: React.FC<SentencesFormProps> = ({
     return false; // Prevent automatic upload
   };
 
-  const handleUploadFiles = async () => {
+  const handleUploadFiles = async (showModal: boolean = true): Promise<boolean> => {
     if (!selectedImageFile && !selectedAudioFile) {
+      if (uploadedUrls.imageUrl && uploadedUrls.audioUrl) {
+        // Already uploaded
+        return true;
+      }
       message.warning('Please select at least one file to upload');
-      return;
+      return false;
     }
 
     // Validate files
@@ -309,7 +320,7 @@ const SentencesForm: React.FC<SentencesFormProps> = ({
       const imageValidation = validateFile(selectedImageFile, 'image', 10);
       if (!imageValidation.isValid) {
         message.error(imageValidation.error);
-        return;
+        return false;
       }
     }
 
@@ -317,11 +328,13 @@ const SentencesForm: React.FC<SentencesFormProps> = ({
       const audioValidation = validateFile(selectedAudioFile, 'audio', 10);
       if (!audioValidation.isValid) {
         message.error(audioValidation.error);
-        return;
+        return false;
       }
     }
 
-    setUploadModalVisible(true);
+    if (showModal) {
+      setUploadModalVisible(true);
+    }
     setUploadStatus('uploading');
     setUploadProgress(0);
     setUploadError('');
@@ -395,14 +408,23 @@ const SentencesForm: React.FC<SentencesFormProps> = ({
       setSelectedImageFile(null);
       setSelectedAudioFile(null);
 
-      message.success('Files uploaded successfully!');
+      if (showModal) {
+        message.success('Files uploaded successfully!');
+      }
+      return true;
     } catch (error) {
       console.error('Upload error:', error);
       setUploadStatus('error');
       setUploadError(error instanceof Error ? error.message : 'Upload failed');
       message.error('Upload failed. Please try again.');
+      return false;
     }
   };
+
+  // Expose upload method to parent
+  useImperativeHandle(ref, () => ({
+    uploadFiles: () => handleUploadFiles(false),
+  }));
 
   const handleRemoveImage = () => {
     setSelectedImageFile(null);
@@ -704,16 +726,16 @@ const SentencesForm: React.FC<SentencesFormProps> = ({
           </Col>
         </Row>
 
-        {(selectedImageFile || selectedAudioFile) && (
+        {DEV_MODE && (selectedImageFile || selectedAudioFile) && (
           <div style={{ textAlign: 'center', marginTop: 16 }}>
             <Button
               type="primary"
               icon={<UploadOutlined />}
-              onClick={handleUploadFiles}
+              onClick={() => handleUploadFiles(true)}
               loading={uploadStatus === 'uploading'}
               size="large"
             >
-              Upload to S3
+              Upload to S3 (Dev Mode)
             </Button>
           </div>
         )}
@@ -767,6 +789,8 @@ const SentencesForm: React.FC<SentencesFormProps> = ({
       />
     </div>
   );
-};
+});
+
+SentencesForm.displayName = 'SentencesForm';
 
 export default SentencesForm;

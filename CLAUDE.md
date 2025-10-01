@@ -135,3 +135,5 @@ Both are managed through the `/items` route:
 - Form submissions should clean temporary fields (e.g., `chinese_sentence_input`) before sending to backend
 - S3 bucket CORS must allow PUT requests from frontend origins
 - Backend presigned URLs should not include ACL parameters (bucket uses bucket policy instead)
+- When implementing Chinese text segmentation with pinyin-pro library, always include type: "array" option along with segmentit to get an array of {origin, pinyin} objects instead of a
+  plain string, otherwise the segmentation will fail and fall back to simple word-by-word splitting.
