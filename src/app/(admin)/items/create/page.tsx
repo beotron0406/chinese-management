@@ -10,10 +10,13 @@ import { questionApi } from "@/services/questionApi";
 import { Lesson } from "@/types/lessonTypes";
 import { QuestionFormValues } from "@/types/questionType";
 import MultipleChoiceForm from "@/components/question/forms/MultipleChoiceForm";
-import AudioImageQuestionForm, { AudioImageQuestionFormRef } from "@/components/question/forms/AudioImageQuestionForm";
+import MatchingTextForm from "@/components/question/forms/MatchingTextForm";
+import FillBlankForm from "@/components/question/forms/FillBlankForm";
+import AudioBoolForm from "@/components/question/forms/AudioBoolForm";
 import WordDefinitionForm, { WordDefinitionFormRef } from "@/components/content/forms/WordDefinitionForm";
 import SentencesForm, { SentencesFormRef } from "@/components/content/forms/SentencesForm";
 import JsonPreviewCard from "@/components/question/JsonPreviewCard";
+import AudioImageQuestionForm, { AudioImageQuestionFormRef } from "@/components/question/forms/AudioImageQuestionForm";
 
 const { Title, Text } = Typography;
 
@@ -216,7 +219,13 @@ export default function CreateItemPage() {
         case QuestionType.TEXT_SELECTION:
           return <MultipleChoiceForm form={form} />;
         case QuestionType.AUDIO_IMAGE:
-          return <AudioImageQuestionForm ref={audioImageQuestionFormRef} form={form} questionType={questionType} />;
+          return <AudioImageQuestionForm form={form} />;
+        case QuestionType.MATCHING_TEXT:
+          return <MatchingTextForm form={form} />;
+        case QuestionType.FILL_BLANK:
+          return <FillBlankForm form={form} />;
+        case QuestionType.AUDIO_BOOL:
+          return <AudioBoolForm form={form} />;
         default:
           return (
             <Alert
