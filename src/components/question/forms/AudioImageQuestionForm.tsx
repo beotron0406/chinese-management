@@ -367,10 +367,22 @@ const AudioImageQuestionForm = forwardRef<AudioImageQuestionFormRef, AudioImageQ
 
     if (!hasAudioToUpload && answerImagesToUpload.length === 0) {
       // Check if everything is already uploaded
-      if (uploadedAudioUrl && Object.values(answerImageUploads).every(u => u.uploadedUrl)) {
+      const answers = form.getFieldValue(['data', 'answers']) || [];
+      const allAnswersHaveImages = answers.length > 0 && answers.every((answer: any) =>
+        answer && (answer.image_url || answerImageUploads[answers.indexOf(answer)]?.uploadedUrl)
+      );
+
+      if (uploadedAudioUrl && allAnswersHaveImages) {
+        console.log('All files already uploaded');
         return true;
       }
-      message.warning('Please select files to upload');
+
+      console.log('Missing files:', {
+        hasAudio: !!uploadedAudioUrl,
+        answerImagesUploaded: Object.values(answerImageUploads).filter(u => u.uploadedUrl).length,
+        totalAnswers: answers.length
+      });
+      message.warning('Please select and upload all required files (audio + all answer images)');
       return false;
     }
 
