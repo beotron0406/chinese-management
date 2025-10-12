@@ -23,6 +23,9 @@ import JsonPreviewCard from "@/components/question/JsonPreviewCard";
 import AudioImageQuestionForm, {
   AudioImageQuestionFormRef,
 } from "@/components/question/forms/AudioImageQuestionForm";
+import AudioMatchingQuestionForm, {
+  AudioMatchingQuestionFormRef,
+} from "@/components/question/forms/AudioMatchingQuestionForm";
 
 const { Title, Text } = Typography;
 
@@ -37,6 +40,7 @@ export default function CreateItemPage() {
   const wordDefinitionFormRef = useRef<WordDefinitionFormRef>(null);
   const sentencesFormRef = useRef<SentencesFormRef>(null);
   const audioImageQuestionFormRef = useRef<AudioImageQuestionFormRef>(null);
+  const audioMatchingQuestionFormRef = useRef<AudioMatchingQuestionFormRef>(null);
 
   // Determine if this is a question or content type
   const isQuestion = Object.values(QuestionType).includes(type as QuestionType);
@@ -83,9 +87,14 @@ export default function CreateItemPage() {
     try {
       // Upload files first
       let uploadSuccess = true;
-      if (isQuestion && questionType === QuestionType.AUDIO_IMAGE) {
-        uploadSuccess =
-          (await audioImageQuestionFormRef.current?.uploadFiles()) ?? false;
+      if (isQuestion) {
+        if (questionType === QuestionType.AUDIO_IMAGE) {
+          uploadSuccess =
+            (await audioImageQuestionFormRef.current?.uploadFiles()) ?? false;
+        } else if (questionType === QuestionType.MATCHING_AUDIO) {
+          uploadSuccess =
+            (await audioMatchingQuestionFormRef.current?.uploadFiles()) ?? false;
+        }
       } else if (isContent) {
         if (contentType === ContentType.CONTENT_WORD_DEFINITION) {
           uploadSuccess =
@@ -211,6 +220,8 @@ export default function CreateItemPage() {
           return "Fill in the Blank Question";
         case QuestionType.AUDIO_BOOL:
           return "Audio True/False Question";
+        case QuestionType.MATCHING_AUDIO:
+          return "Matching Audio Question";
         default:
           return "Question";
       }
@@ -244,6 +255,13 @@ export default function CreateItemPage() {
           return <FillBlankForm form={form} />;
         case QuestionType.AUDIO_BOOL:
           return <AudioBoolForm form={form} />;
+        case QuestionType.MATCHING_AUDIO:
+          return (
+            <AudioMatchingQuestionForm
+              ref={audioMatchingQuestionFormRef}
+              form={form}
+            />
+          );
         default:
           return (
             <Alert
