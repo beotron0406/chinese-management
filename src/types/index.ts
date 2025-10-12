@@ -62,12 +62,10 @@ export interface GrammarPattern {
   pattern: string;
   description: string;
   examples?: string[];
-  difficulty: 'beginner' | 'intermediate' | 'advanced';
+  difficulty: "beginner" | "intermediate" | "advanced";
   hskLevel?: number;
   isActive: boolean;
 }
-
-
 
 export interface CourseFormModalProps {
   visible: boolean;
@@ -79,7 +77,6 @@ export interface CourseFormModalProps {
 export interface LessonDetailViewProps {
   lessonId: number | string;
 }
-
 
 export interface ProtectedRouteProps {
   children: React.ReactNode;
@@ -157,4 +154,25 @@ export interface CourseStats {
     hskLevel: number;
     count: number;
   }[];
+}
+
+// Placeholder types for sequence cards (to be properly defined later)
+export interface DividerData {
+  [key: string]: any;
+}
+
+export interface ExerciseData {
+  [key: string]: any;
+}
+
+export interface GrammarCardData {
+  [key: string]: any;
+}
+
+export interface SentenceCardData {
+  [key: string]: any;
+}
+
+export interface VocabularyCardData {
+  [key: string]: any;
 }

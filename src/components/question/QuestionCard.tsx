@@ -1,4 +1,5 @@
 import React from 'react';
+import { useRouter } from 'next/navigation';
 import { Card, Divider, Tag, Space, Button } from 'antd';
 import { EditOutlined, DeleteOutlined, EyeOutlined } from '@ant-design/icons';
 import { QuestionType } from '@/enums/question-type.enum';
@@ -15,6 +16,7 @@ interface QuestionCardProps {
   onDelete?: (questionId: number) => void;
   onView?: (question: Question) => void;
   preview?: boolean;
+  courseId?: number;
 }
 
 const QuestionCard: React.FC<QuestionCardProps> = ({
@@ -23,7 +25,9 @@ const QuestionCard: React.FC<QuestionCardProps> = ({
   onDelete,
   onView,
   preview = false,
+  courseId,
 }) => {
+  const router = useRouter();
   const renderQuestionContent = () => {
     switch (question.questionType) {
       case QuestionType.AUDIO_IMAGE:
@@ -86,9 +90,21 @@ const QuestionCard: React.FC<QuestionCardProps> = ({
           {!preview && (
             <>
               <EyeOutlined onClick={() => onView && onView(question)} />
-              <EditOutlined onClick={() => onEdit && onEdit(question)} />
-              <DeleteOutlined 
-                onClick={() => onDelete && onDelete(question.id)} 
+              <EditOutlined
+                onClick={() => {
+                  if (onEdit) {
+                    onEdit(question);
+                  } else {
+                    // Navigate to edit page with course context
+                    const editUrl = courseId
+                      ? `/items/edit/${question.id}?lessonId=${question.lessonId}&courseId=${courseId}`
+                      : `/items/edit/${question.id}?lessonId=${question.lessonId}`;
+                    router.push(editUrl);
+                  }
+                }}
+              />
+              <DeleteOutlined
+                onClick={() => onDelete && onDelete(question.id)}
                 style={{ color: 'red' }}
               />
             </>

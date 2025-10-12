@@ -17,22 +17,12 @@ const menuItems = [
   {
     key: '/courses',
     icon: <BookOutlined />,
-    label: <Link href="/courses">Quản lý Khóa học</Link>,
-  },
-  {
-    key: '/lessons',
-    icon: <ReadOutlined />,
-    label: <Link href="/lessons">Quản lý Bài học</Link>,
-  },
-  {
-    key: '/question',
-    icon: <ReadOutlined />,
-    label: <Link href="/question">Quản lý Câu hỏi</Link>,
+    label: <Link href="/courses">Courses</Link>,
   },
   {
     key: '/settings',
     icon: <SettingOutlined />,
-    label: <Link href="/settings">Cài đặt</Link>,
+    label: <Link href="/settings">Settings</Link>,
   },
 ];
 
@@ -44,7 +34,7 @@ const AdminSidebar = () => {
 
   return (
     <Sider width={250} theme="dark" collapsible>
-      <div className="text-white text-2xl font-bold text-center my-4">CMS Admin</div>
+      <div className="text-white text-2xl font-bold text-center my-4">Chinese LMS</div>
       <Menu theme="dark" mode="inline" selectedKeys={[activeKey]} items={menuItems} />
     </Sider>
   );

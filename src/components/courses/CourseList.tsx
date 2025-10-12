@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import { 
   Table, 
   Button, 
@@ -35,6 +36,7 @@ interface CourseListProps {
 }
 
 const CourseList = ({ filterActive }: CourseListProps) => {
+  const router = useRouter();
   const [courses, setCourses] = useState<Course[]>([]);
   const [loading, setLoading] = useState(false);
   const [totalItems, setTotalItems] = useState(0);
@@ -147,6 +149,10 @@ const CourseList = ({ filterActive }: CourseListProps) => {
     setCurrentPage(1); // Reset to first page when filter changes
   };
 
+  const handleCourseClick = (course: Course) => {
+    router.push(`/courses/${course.id}/lessons`);
+  };
+
   const columns = [
     {
       title: 'ID',
@@ -155,21 +161,27 @@ const CourseList = ({ filterActive }: CourseListProps) => {
       width: 70,
     },
     {
-      title: 'Title',
+      title: 'Course Title',
       dataIndex: 'title',
       key: 'title',
       render: (text: string, record: Course) => (
-        <div>
-          <Text strong>{text}</Text>
+        <div
+          style={{ cursor: 'pointer' }}
+          onClick={() => handleCourseClick(record)}
+        >
+          <Text strong style={{ color: '#1890ff' }}>{text}</Text>
           {record.description && (
             <div>
               <Text type="secondary" style={{ fontSize: '0.9em' }}>
-                {record.description.length > 60 
-                  ? `${record.description.substring(0, 60)}...` 
+                {record.description.length > 60
+                  ? `${record.description.substring(0, 60)}...`
                   : record.description}
               </Text>
             </div>
           )}
+          <div style={{ fontSize: '0.8em', color: '#1890ff', marginTop: '4px' }}>
+            Click to view lessons →
+          </div>
         </div>
       ),
     },
@@ -285,13 +297,17 @@ const CourseList = ({ filterActive }: CourseListProps) => {
           </div>
         </div>
         
-        <Table 
-          columns={columns} 
-          dataSource={courses} 
-          rowKey="id" 
+        <Table
+          columns={columns}
+          dataSource={courses}
+          rowKey="id"
           loading={loading}
           pagination={false}
           size="middle"
+          onRow={(record) => ({
+            style: { cursor: 'pointer' },
+            onClick: () => handleCourseClick(record),
+          })}
         />
         
         <div style={{ marginTop: 16, display: 'flex', justifyContent: 'flex-end' }}>

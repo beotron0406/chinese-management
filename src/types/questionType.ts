@@ -38,6 +38,7 @@ export interface MatchingTextQuestionData {
   leftColumn: Array<{
     id: string;
     text: string;
+    pinyin: string;
   }>;
   rightColumn: Array<{
     id: string;
@@ -54,8 +55,12 @@ export interface FillBlankQuestionData {
   sentence: string;
   pinyin: string;
   english: string;
-  options: string[];
+  options: Array<{
+    text: string;
+    pinyin: string;
+  }>;
   correctAnswer: string;
+  correctAnswerPinyin: string;
   explanation?: string;
 }
 
