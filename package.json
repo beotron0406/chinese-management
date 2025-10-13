@@ -19,6 +19,7 @@
     "antd": "^5.11.0",
     "axios": "^1.6.0",
     "dayjs": "^1.11.10",
+    "lodash": "^4.17.21",
     "next": "^14.0.0",
     "pinyin-pro": "^3.27.0",
     "react": "^18.0.0",
@@ -29,6 +30,7 @@
     "zod": "^3.22.4"
   },
   "devDependencies": {
+    "@types/lodash": "^4.17.20",
     "@types/node": "^20.0.0",
     "@types/react": "^18.0.0",
     "@types/react-dom": "^18.0.0",
