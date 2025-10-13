@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { Table, Button, Input, Space, Modal, message, Tooltip, Tag } from 'antd';
 import { SearchOutlined, PlusOutlined, EditOutlined, DeleteOutlined } from '@ant-design/icons';
-import { PageHeader } from '@/components/common/PageHeader';
+import PageHeader from '@/components/common/PageHeader';
 import WordForm from '@/components/words/WordForm';
 import { fetchWords, deleteWord } from '@/services/wordApi';
 import { Word } from '@/types/wordTypes';
@@ -96,14 +96,14 @@ const WordPage = () => {
     {
       title: 'Senses',
       key: 'senses',
-      render: (_, record: Word) => (
+      render: (_:any, record: Word) => (
         <span>{record.senses?.length || 0} sense(s)</span>
       ),
     },
     {
       title: 'HSK Level',
       key: 'hskLevel',
-      render: (_, record: Word) => {
+      render: (_:any, record: Word) => {
         const primarySense = record.senses?.find(sense => sense.isPrimary) || record.senses?.[0];
         if (!primarySense?.hskLevel) return <span>-</span>;
         return (
@@ -116,7 +116,7 @@ const WordPage = () => {
     {
       title: 'Primary Meaning',
       key: 'meaning',
-      render: (_, record: Word) => {
+      render: (_:any, record: Word) => {
         const primarySense = record.senses?.find(sense => sense.isPrimary) || record.senses?.[0];
         const translation = primarySense?.translation?.translation || '-';
         const pinyin = primarySense?.pinyin || '';
@@ -132,7 +132,7 @@ const WordPage = () => {
       title: 'Actions',
       key: 'actions',
       width: 150,
-      render: (_, record: Word) => (
+      render: (_:any, record: Word) => (
         <Space size="middle">
           <Tooltip title="Edit Word">
             <Button 
