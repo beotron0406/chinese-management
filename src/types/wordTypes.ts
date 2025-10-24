@@ -1,5 +1,6 @@
 export interface WordTranslation {
   id?: number;
+  wordSenseId?: number;
   language: string;
   translation: string;
   additionalDetail?: string;
@@ -7,14 +8,15 @@ export interface WordTranslation {
 
 export interface WordSense {
   id?: number;
+  wordId?: number;
   senseNumber?: number;
-  pinyin: string;
+  pinyin?: string;
   partOfSpeech?: string;
   hskLevel?: number;
   isPrimary?: boolean;
-  imageUrl?: string;
-  audioUrl?: string;
-  translation?: WordTranslation;
+  imageUrl?: string | null;
+  audioUrl?: string | null;
+  translations?: WordTranslation[]; 
 }
 
 export interface Word {
@@ -38,8 +40,8 @@ export interface WordFormData {
     partOfSpeech?: string;
     hskLevel?: number;
     isPrimary?: boolean;
-    imageUrl?: string;
-    audioUrl?: string;
+    imageUrl?: string | null;
+    audioUrl?: string | null;
   };
   translation: {
     language?: string;
@@ -69,3 +71,4 @@ export interface WordsQueryParams {
   sortBy?: string;
   sortOrder?: 'ASC' | 'DESC';
 }
+// ...existing code...
