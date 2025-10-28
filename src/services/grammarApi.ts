@@ -32,10 +32,30 @@ export const grammarApi = {
 
   // Create complete grammar pattern (pattern + translation)
   // OR add translation to existing pattern (when patternId is provided)
-  createCompleteGrammarPattern: async (formData: GrammarPatternFormData): Promise<GrammarPattern> => {
+ // Create complete grammar pattern (pattern + translation)
+createCompleteGrammarPattern: async (formData: GrammarPatternFormData): Promise<GrammarPattern> => {
+  console.log('🔗 API Call: createCompleteGrammarPattern');
+  console.log('📦 FormData sent to API:', JSON.stringify(formData, null, 2));
+  console.log('🌐 API endpoint: POST /grammar-patterns/complete');
+  
+  try {
     const response = await api.post<GrammarPattern>('/grammar-patterns/complete', formData);
+    console.log('📨 Full API Response:', response);
+    console.log('📨 API Response data:', response.data);
+    
+    // FIX: Kiểm tra response structure
+    if (!response.data && response) {
+      console.log('⚠️ No response.data, returning response directly');
+      return response as any;
+    }
+    
     return response.data;
-  },
+  } catch (error) {
+    console.error('❌ API Error:', error);
+    throw error;
+  }
+},
+
 
   // Update grammar pattern and translation by translation ID
   updateGrammarPattern: async (

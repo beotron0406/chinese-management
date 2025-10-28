@@ -16,7 +16,7 @@ import {
 } from "antd";
 import { PlusOutlined, MinusCircleOutlined } from "@ant-design/icons";
 import { GrammarFormValues, GrammarPattern } from "@/types/grammarTypes";
-import { HSK_LEVEL_OPTIONS, HSKLevel } from "@/enums/hsk-level";
+import { HSK_LEVEL_OPTIONS, HSKLevel } from "@/enums/hsk-level.enum";
 
 const { TextArea } = Input;
 const { Option } = Select;
@@ -76,47 +76,52 @@ const GrammarFormModal: React.FC<GrammarFormModalProps> = ({
   }, [visible, initialData, form]);
 
   const handleSubmit = async () => {
-    try {
-      const values = await form.validateFields();
+  try {
+    const values = await form.validateFields();
+    
+    console.log('🔍 Form values from modal:', values);
 
-      // Convert pattern and pinyin strings to arrays
-      const patternArray = values.pattern
-        ? values.pattern.split(/\s+/).filter((p: string) => p.trim())
-        : [];
-      const pinyinArray = values.patternPinyin
-        ? values.patternPinyin.split(/\s+/).filter((p: string) => p.trim())
-        : [];
+    // Convert pattern and pinyin strings to arrays
+    const patternArray = values.pattern
+      ? values.pattern.split(/\s+/).filter((p: string) => p.trim())
+      : [];
+    const pinyinArray = values.patternPinyin
+      ? values.patternPinyin.split(/\s+/).filter((p: string) => p.trim())
+      : [];
 
-      // Convert examples to proper format
-      const examples = values.examples
-        ?.map((ex: any) => ({
-          chinese: ex.chinese ? ex.chinese.split("") : [],
-          pinyin: ex.pinyin ? ex.pinyin.split(/\s+/) : [],
-          translation: ex.translation,
-        }))
-        .filter((ex: any) => ex.chinese.length > 0 && ex.translation);
+    // Convert examples to proper format - FIX: Kiểm tra empty examples
+    const examples = values.examples
+      ?.filter((ex: any) => ex.chinese && ex.translation) // Filter empty examples first
+      ?.map((ex: any) => ({
+        chinese: ex.chinese,  // Giữ nguyên string, không split thành array ở đây
+        pinyin: ex.pinyin || '',
+        translation: ex.translation,
+      })) || [];
 
-      const formData: GrammarFormValues = {
-        id: initialData?.id,
-        translationId: initialData?.translations?.[0]?.id,
-        pattern: patternArray,
-        patternPinyin: pinyinArray.length > 0 ? pinyinArray : undefined,
-        patternFormula: values.patternFormula,
-        hskLevel: values.hskLevel,
-        language: values.language,
-        grammarPoint: values.grammarPoint,
-        explanation: values.explanation,
-        examples: examples || [],
-      };
+    const formData: GrammarFormValues = {
+      id: initialData?.id,
+      translationId: initialData?.translations?.[0]?.id,
+      pattern: patternArray,
+      patternPinyin: pinyinArray.length > 0 ? pinyinArray : undefined,
+      patternFormula: values.patternFormula,
+      hskLevel: values.hskLevel,
+      language: values.language,
+      grammarPoint: values.grammarPoint,
+      explanation: values.explanation,
+      examples: examples,
+    };
 
-      await onSubmit(formData);
-      form.resetFields();
-      setPatternInputs([""]);
-      setPinyinInputs([""]);
-    } catch (error) {
-      console.error("Form validation failed:", error);
-    }
-  };
+    console.log('📤 Final form data from modal:', formData);
+
+    await onSubmit(formData);
+    form.resetFields();
+    setPatternInputs([""]);
+    setPinyinInputs([""]);
+  } catch (error) {
+    console.error("❌ Form validation failed:", error);
+    message.error('Vui lòng kiểm tra lại thông tin form!');
+  }
+};
 
   const addPatternInput = () => {
     setPatternInputs([...patternInputs, ""]);
