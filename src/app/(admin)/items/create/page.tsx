@@ -155,7 +155,6 @@ export default function CreateItemPage() {
         message.success("Content created successfully!");
       }
 
-      // Navigate back to Items Management page after a short delay
       setTimeout(() => {
         router.push(`/items?lessonId=${lessonId}`);
       }, 1000);
@@ -167,10 +166,8 @@ export default function CreateItemPage() {
     }
   };
 
-  // Generate preview data for JSON card
   const getPreviewData = () => {
     if (isQuestion) {
-      // Clean preview data for questions
       const cleanPreviewData = { ...formValues.data } || {};
       delete cleanPreviewData.transcript_input;
       if (cleanPreviewData.answers) {

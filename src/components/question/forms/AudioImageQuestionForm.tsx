@@ -73,6 +73,12 @@ const AudioImageQuestionForm = forwardRef<AudioImageQuestionFormRef, AudioImageQ
   const [segmentationMode, setSegmentationMode] = useState<SegmentationMode>("word");
   const [manualMode, setManualMode] = useState<boolean>(false);
 
+  // Answer segmentation state (per answer)
+  const [answerSegmentationModes, setAnswerSegmentationModes] = useState<{[key: number]: SegmentationMode}>({});
+  const [answerManualModes, setAnswerManualModes] = useState<{[key: number]: boolean}>({});
+  const [answerSegmentedZh, setAnswerSegmentedZh] = useState<{[key: number]: string[]}>({});
+  const [answerSegmentedPinyin, setAnswerSegmentedPinyin] = useState<{[key: number]: string[]}>({});
+
   // Audio upload state
   const [selectedAudioFile, setSelectedAudioFile] = useState<File | null>(null);
   const [uploadModalVisible, setUploadModalVisible] = useState(false);
@@ -507,29 +513,35 @@ const AudioImageQuestionForm = forwardRef<AudioImageQuestionFormRef, AudioImageQ
   }));
 
   // Segment answer label
-  const segmentAnswerLabel = (answerIndex: number, text: string) => {
-    if (!text.trim()) return;
+  const segmentAnswerLabel = (
+    answerIndex: number,
+    text: string,
+    mode: SegmentationMode = answerSegmentationModes[answerIndex] || "word"
+  ) => {
+    if (!text.trim()) {
+      setAnswerSegmentedZh(prev => ({ ...prev, [answerIndex]: [] }));
+      setAnswerSegmentedPinyin(prev => ({ ...prev, [answerIndex]: [] }));
+      return;
+    }
 
     let zhSegments: string[] = [];
     let pinyinSegments: string[] = [];
 
     try {
-      // Use word-level segmentation for answer labels
-      const segmentResult = pinyin(text, {
-        toneType: "symbol",
-        segmentit: 1,
-      });
-
-      if (Array.isArray(segmentResult)) {
-        segmentResult.forEach((item: any) => {
-          if (typeof item === "object" && item.origin && item.pinyin) {
-            zhSegments.push(item.origin);
-            pinyinSegments.push(item.pinyin);
+      if (mode === "manual") {
+        // Manual mode - split by semicolons
+        zhSegments = text
+          .split(";")
+          .map((s) => s.trim())
+          .filter((s) => s);
+        pinyinSegments = zhSegments.map((segment) => {
+          if (/[\u4e00-\u9fff]/.test(segment)) {
+            return pinyin(segment, { toneType: "symbol" }).replace(/\s+/g, "");
           }
+          return segment;
         });
-      }
-
-      if (zhSegments.length === 0) {
+      } else if (mode === "character") {
+        // Character by character
         zhSegments = Array.from(text);
         pinyinSegments = zhSegments.map((char) => {
           if (/[\u4e00-\u9fff]/.test(char)) {
@@ -537,8 +549,58 @@ const AudioImageQuestionForm = forwardRef<AudioImageQuestionFormRef, AudioImageQ
           }
           return char;
         });
+      } else {
+        // Word/phrase segmentation
+        const segmentitLevel = mode === "word" ? 1 : mode === "phrase" ? 2 : 3;
+        try {
+          const segmentResult = pinyin(text, {
+            toneType: "symbol",
+            type: "array",
+            segmentit: segmentitLevel,
+          });
+
+          if (Array.isArray(segmentResult)) {
+            segmentResult.forEach((item: any) => {
+              if (typeof item === "object" && item.origin && item.pinyin) {
+                zhSegments.push(item.origin);
+                pinyinSegments.push(item.pinyin);
+              }
+            });
+          }
+
+          // If segmentit doesn't return proper structure, fallback to character splitting
+          if (zhSegments.length === 0) {
+            const fallbackPattern = mode === "phrase"
+              ? /[\u4e00-\u9fff]{2,4}|[\u4e00-\u9fff]|[^\u4e00-\u9fff]/g
+              : mode === "long_phrase"
+              ? /[\u4e00-\u9fff]{3,6}|[\u4e00-\u9fff]{1,2}|[^\u4e00-\u9fff]/g
+              : /[\u4e00-\u9fff]|[^\u4e00-\u9fff]/g;
+
+            zhSegments = text.match(fallbackPattern) || [];
+            pinyinSegments = zhSegments.map((segment) => {
+              if (/[\u4e00-\u9fff]/.test(segment)) {
+                return pinyin(segment, { toneType: "symbol" });
+              }
+              return segment;
+            });
+          }
+        } catch (error) {
+          console.error('Answer segmentation error:', error);
+          zhSegments = Array.from(text);
+          pinyinSegments = zhSegments.map((char) => {
+            if (/[\u4e00-\u9fff]/.test(char)) {
+              return pinyin(char, { toneType: "symbol" });
+            }
+            return char;
+          });
+        }
       }
 
+      // Update state for preview
+      setAnswerSegmentedZh(prev => ({ ...prev, [answerIndex]: zhSegments }));
+      setAnswerSegmentedPinyin(prev => ({ ...prev, [answerIndex]: pinyinSegments }));
+
+      // Update form
       const answers = form.getFieldValue(['data', 'answers']) || [];
       answers[answerIndex] = {
         ...answers[answerIndex],
@@ -556,6 +618,18 @@ const AudioImageQuestionForm = forwardRef<AudioImageQuestionFormRef, AudioImageQ
     }
   };
 
+  const handleAnswerSegmentationModeChange = (answerIndex: number, mode: SegmentationMode) => {
+    setAnswerSegmentationModes(prev => ({ ...prev, [answerIndex]: mode }));
+    setAnswerManualModes(prev => ({ ...prev, [answerIndex]: mode === "manual" }));
+
+    // Re-segment with new mode if there's text
+    const answers = form.getFieldValue(['data', 'answers']) || [];
+    const labelInput = answers[answerIndex]?.label_zh_input;
+    if (labelInput && mode !== "manual") {
+      segmentAnswerLabel(answerIndex, labelInput, mode);
+    }
+  };
+
   // Initialize values
   useEffect(() => {
     if (initialValues) {
@@ -567,12 +641,26 @@ const AudioImageQuestionForm = forwardRef<AudioImageQuestionFormRef, AudioImageQ
       }
       if (initialValues.answers) {
         const imageUploads: typeof answerImageUploads = {};
+        const segModes: typeof answerSegmentationModes = {};
+        const segZh: typeof answerSegmentedZh = {};
+        const segPinyin: typeof answerSegmentedPinyin = {};
+
         initialValues.answers.forEach((answer, index) => {
           if (answer.image_url) {
             imageUploads[index] = { file: null, uploadedUrl: answer.image_url };
           }
+          // Initialize segmentation data if available
+          if (answer.label_zh && answer.label_zh.length > 0) {
+            segZh[index] = answer.label_zh;
+            segPinyin[index] = answer.label_pinyin || [];
+            segModes[index] = "word"; // Default to word mode
+          }
         });
+
         setAnswerImageUploads(imageUploads);
+        setAnswerSegmentationModes(segModes);
+        setAnswerSegmentedZh(segZh);
+        setAnswerSegmentedPinyin(segPinyin);
       }
     }
   }, [initialValues]);
@@ -880,6 +968,113 @@ const AudioImageQuestionForm = forwardRef<AudioImageQuestionFormRef, AudioImageQ
                         onChange={(e) => segmentAnswerLabel(index, e.target.value)}
                       />
                     </Form.Item>
+
+                    {/* Segmentation Mode Controls */}
+                    <Form.Item label="Segmentation Mode">
+                      <Space>
+                        <Select
+                          value={answerSegmentationModes[index] || "word"}
+                          onChange={(mode) => handleAnswerSegmentationModeChange(index, mode)}
+                          style={{ width: 150 }}
+                        >
+                          <Select.Option value="character">Character (这 家 饭 店)</Select.Option>
+                          <Select.Option value="word">Word (这 家 饭 店)</Select.Option>
+                          <Select.Option value="phrase">Phrase (这家 饭店)</Select.Option>
+                          <Select.Option value="long_phrase">Long Phrase (这家饭店)</Select.Option>
+                          <Select.Option value="manual">Manual Override</Select.Option>
+                        </Select>
+                        {answerSegmentationModes[index] !== "manual" && form.getFieldValue(['data', 'answers', index, 'label_zh_input']) && (
+                          <Button
+                            icon={<ReloadOutlined />}
+                            onClick={() => {
+                              const labelInput = form.getFieldValue(['data', 'answers', index, 'label_zh_input']);
+                              segmentAnswerLabel(index, labelInput, answerSegmentationModes[index] || "word");
+                            }}
+                          >
+                            Re-segment
+                          </Button>
+                        )}
+                      </Space>
+                    </Form.Item>
+
+                    {/* Manual Segmentation Instructions */}
+                    {answerManualModes[index] && (
+                      <Card
+                        size="small"
+                        style={{
+                          marginBottom: "16px",
+                          backgroundColor: "#e6f7ff",
+                          borderColor: "#91d5ff",
+                        }}
+                      >
+                        <Space>
+                          <EditOutlined style={{ color: "#1890ff" }} />
+                          <div>
+                            <Text strong style={{ color: "#1890ff" }}>
+                              Manual Mode Active
+                            </Text>
+                            <Text type="secondary" style={{ display: "block" }}>
+                              Use semicolons (;) in your label to manually define segments.
+                            </Text>
+                            <Text type="secondary" style={{ fontSize: "12px" }}>
+                              Example: "这家饭店" → ["这家饭店"] or "这家;饭店" → ["这家", "饭店"]
+                            </Text>
+                          </div>
+                        </Space>
+                      </Card>
+                    )}
+
+                    {/* Segmentation Preview */}
+                    {answerSegmentedZh[index] && answerSegmentedZh[index].length > 0 && (
+                      <>
+                        <div style={{ marginBottom: "8px" }}>
+                          <Text strong>Segmented Chinese:</Text>
+                          <div
+                            style={{
+                              marginTop: "4px",
+                              padding: "8px",
+                              backgroundColor: "#f5f5f5",
+                              borderRadius: "4px",
+                            }}
+                          >
+                            <Space wrap>
+                              {answerSegmentedZh[index].map((segment, segIndex) => (
+                                <Tag
+                                  key={segIndex}
+                                  color="blue"
+                                  style={{ fontSize: "14px", padding: "2px 6px" }}
+                                >
+                                  {segment}
+                                </Tag>
+                              ))}
+                            </Space>
+                          </div>
+                        </div>
+                        <div style={{ marginBottom: "16px" }}>
+                          <Text strong>Segmented Pinyin:</Text>
+                          <div
+                            style={{
+                              marginTop: "4px",
+                              padding: "8px",
+                              backgroundColor: "#f5f5f5",
+                              borderRadius: "4px",
+                            }}
+                          >
+                            <Space wrap>
+                              {answerSegmentedPinyin[index] && answerSegmentedPinyin[index].map((segment, segIndex) => (
+                                <Tag
+                                  key={segIndex}
+                                  color="green"
+                                  style={{ fontSize: "12px", padding: "2px 6px" }}
+                                >
+                                  {segment}
+                                </Tag>
+                              ))}
+                            </Space>
+                          </div>
+                        </div>
+                      </>
+                    )}
 
                     {/* Label Vietnamese */}
                     <Form.Item

@@ -20,6 +20,11 @@ const menuItems = [
     label: <Link href="/courses">Courses</Link>,
   },
   {
+    key: '/words',
+    icon: <ReadOutlined />,
+    label: <Link href="/words">Words</Link>,
+  },
+  {
     key: '/settings',
     icon: <SettingOutlined />,
     label: <Link href="/settings">Settings</Link>,
