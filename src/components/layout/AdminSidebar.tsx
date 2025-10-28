@@ -1,8 +1,6 @@
-'use client';
-
 import React from 'react';
 import { Layout, Menu } from 'antd';
-import { DashboardOutlined, ReadOutlined, SettingOutlined, BookOutlined } from '@ant-design/icons';
+import { DashboardOutlined, ReadOutlined, SettingOutlined, BookOutlined, FileTextOutlined } from '@ant-design/icons';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 
@@ -25,6 +23,11 @@ const menuItems = [
     label: <Link href="/words">Words</Link>,
   },
   {
+    key: '/grammar',
+    icon: <FileTextOutlined />,
+    label: <Link href="/grammar">Grammar</Link>,
+  },
+  {
     key: '/settings',
     icon: <SettingOutlined />,
     label: <Link href="/settings">Settings</Link>,
@@ -34,7 +37,6 @@ const menuItems = [
 const AdminSidebar = () => {
   const pathname = usePathname();
 
-  // Tìm key active dựa trên pathname
   const activeKey = menuItems.find(item => pathname.startsWith(item.key))?.key || '/dashboard';
 
   return (
