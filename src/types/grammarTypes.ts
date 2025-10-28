@@ -1,4 +1,4 @@
-import { HSKLevel } from '@/enums/hsk-level';
+import { HSKLevel } from '@/enums/hsk-level.enum';
 
 // Example structure for grammar pattern examples
 export interface GrammarExample {

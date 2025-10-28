@@ -23,7 +23,7 @@ import {
   GrammarFormValues,
   GrammarPatternsQueryParams,
 } from "@/types/grammarTypes";
-import { HSK_LEVEL_OPTIONS, HSKLevel } from "@/enums/hsk-level";
+import { HSK_LEVEL_OPTIONS, HSKLevel } from "@/enums/hsk-level.enum";
 import { grammarApi } from "@/services/grammarApi";
 import GrammarFormModal from "./GrammarFormModal";
 import PageHeader from "@/components/common/PageHeader";
@@ -81,66 +81,85 @@ const GrammarList: React.FC = () => {
   };
 
   // Handle create/edit submit
-  const handleSubmit = async (values: GrammarFormValues) => {
-    try {
-      if (values.id) {
-        // Edit mode - chỉ gửi data theo format API yêu cầu
-        const formData = {
-          pattern: {
-            pattern: values.pattern,
-            patternPinyin: values.patternPinyin,
-            patternFormula: values.patternFormula,
-            hskLevel: values.hskLevel,
-          },
-          translation: {
-            language: values.language,
-            grammarPoint: values.grammarPoint,
-            explanation: values.explanation,
-            example:
-              values.examples?.map((ex) => ({
-                chinese: ex.chinese.split(""),
-                pinyin: ex.pinyin ? ex.pinyin.split(/\s+/) : undefined,
-                translation: ex.translation,
-              })) || [],
-          },
-        };
+  // Handle create/edit submit
+const handleSubmit = async (values: GrammarFormValues) => {
+  try {
+    console.log('🚀 HandleSubmit called with values:', values);
 
-        await grammarApi.updateGrammarPattern(values.translationId!, formData);
-        message.success("Cập nhật grammar pattern thành công!");
-      } else {
-        // Create mode - gửi data theo format API yêu cầu
-        const formData = {
-          pattern: {
-            pattern: values.pattern,
-            patternPinyin: values.patternPinyin,
-            patternFormula: values.patternFormula,
-            hskLevel: values.hskLevel,
-          },
-          translation: {
-            language: values.language || "vn",
-            grammarPoint: values.grammarPoint,
-            explanation: values.explanation,
-            example:
-              values.examples?.map((ex) => ({
-                chinese: ex.chinese.split(""),
-                pinyin: ex.pinyin ? ex.pinyin.split(/\s+/) : undefined,
-                translation: ex.translation,
-              })) || [],
-          },
-        };
+    if (values.id) {
+      // Edit mode
+      const formData = {
+        pattern: {
+          pattern: values.pattern,
+          patternPinyin: values.patternPinyin,
+          patternFormula: values.patternFormula,
+          hskLevel: values.hskLevel,
+        },
+        translation: {
+          language: values.language,
+          grammarPoint: values.grammarPoint,
+          explanation: values.explanation,
+          example: values.examples?.map((ex) => ({
+            chinese: ex.chinese.split(""), // Convert string to array here
+            pinyin: ex.pinyin ? ex.pinyin.split(/\s+/) : undefined,
+            translation: ex.translation,
+          })) || [],
+        },
+      };
 
-        await grammarApi.createCompleteGrammarPattern(formData);
-        message.success("Tạo grammar pattern thành công!");
+      console.log('📝 Edit mode - formData:', formData);
+      await grammarApi.updateGrammarPattern(values.translationId!, formData);
+      message.success("Cập nhật grammar pattern thành công!");
+    } else {
+      // Create mode - FIX: Đảm bảo có đủ dữ liệu required
+      if (!values.pattern || values.pattern.length === 0) {
+        message.error('Vui lòng nhập pattern!');
+        return;
+      }
+      if (!values.grammarPoint) {
+        message.error('Vui lòng nhập grammar point!');
+        return;
+      }
+      if (!values.explanation) {
+        message.error('Vui lòng nhập giải thích!');
+        return;
       }
 
-      setModalVisible(false);
-      setEditingPattern(null);
-      fetchData();
-    } catch (error) {
-      message.error("Có lỗi xảy ra khi lưu grammar pattern");
-      console.error("Error saving grammar pattern:", error);
+      const formData = {
+        pattern: {
+          pattern: values.pattern,
+          patternPinyin: values.patternPinyin,
+          patternFormula: values.patternFormula,
+          hskLevel: values.hskLevel,
+        },
+        translation: {
+          language: values.language || "vn",
+          grammarPoint: values.grammarPoint,
+          explanation: values.explanation,
+          example: values.examples?.map((ex) => ({
+            chinese: ex.chinese.split(""), // Convert string to array here
+            pinyin: ex.pinyin ? ex.pinyin.split(/\s+/) : undefined,
+            translation: ex.translation,
+          })) || [],
+        },
+      };
+
+      console.log('✨ Create mode - formData:', formData);
+      console.log('📡 About to call API...');
+
+      const result = await grammarApi.createCompleteGrammarPattern(formData);
+      console.log('✅ API result:', result);
+      message.success("Tạo grammar pattern thành công!");
     }
-  };
+
+    setModalVisible(false);
+    setEditingPattern(null);
+    fetchData();
+  } catch (error) {
+    console.error("❌ Error in handleSubmit:", error);
+   
+  }
+};
 
   // Handle delete
   const handleDelete = async (id: number) => {
