@@ -5,7 +5,7 @@ import { UploadOutlined, DeleteOutlined, SoundOutlined } from "@ant-design/icons
 import { uploadAudioByType, validateFile, UploadProgress } from '@/utils/s3Upload';
 import UploadModal from '@/components/common/UploadModal';
 import type { FormInstance } from "antd/es/form";
-import { pinyin } from "pinyin-pro"; // Import pinyin library
+import { pinyin } from "pinyin-pro";
 
 const { TextArea } = Input;
 
