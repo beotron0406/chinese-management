@@ -13,7 +13,6 @@ import {
   Input,
   Select,
   Pagination,
-  Spin,
   Typography,
   Badge,
 } from "antd";
@@ -23,7 +22,6 @@ import {
   UndoOutlined,
   PlusOutlined,
   SearchOutlined,
-  FilterOutlined,
 } from "@ant-design/icons";
 import { courseService } from "@/services/api";
 import { Course } from "@/types";
