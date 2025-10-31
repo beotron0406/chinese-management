@@ -340,70 +340,75 @@ const ItemModal: React.FC<ItemModalProps> = ({
   };
 
   const handleSubmit = async () => {
-  try {
-    setLoading(true);
+    try {
+      setLoading(true);
 
-    // Validate form
-    const values = await form.validateFields();
+      // Validate form
+      const values = await form.validateFields();
 
-    // Handle file uploads for forms that need it
-    if (
-      finalType === QuestionType.SelectionAudioImage &&
-      selectionAudioImageFormRef.current
-    ) {
-      const uploadSuccess =
-        await selectionAudioImageFormRef.current.uploadFiles();
-      if (!uploadSuccess) {
-        setLoading(false);
-        return;
+      // Handle file uploads for forms that need it
+      if (
+        finalType === QuestionType.SelectionAudioImage &&
+        selectionAudioImageFormRef.current
+      ) {
+        const uploadSuccess =
+          await selectionAudioImageFormRef.current.uploadFiles();
+        if (!uploadSuccess) {
+          setLoading(false);
+          return;
+        }
+      } else if (
+        finalType === QuestionType.MatchingAudioText &&
+        matchingAudioTextFormRef.current
+      ) {
+        const uploadSuccess =
+          await matchingAudioTextFormRef.current.uploadFiles();
+        if (!uploadSuccess) {
+          setLoading(false);
+          return;
+        }
+      } else if (
+        finalType === QuestionType.BoolAudioText &&
+        boolAudioTextFormRef.current
+      ) {
+        const uploadSuccess = await boolAudioTextFormRef.current.uploadFiles();
+        if (!uploadSuccess) {
+          setLoading(false);
+          return;
+        }
       }
-    } else if (
-      finalType === QuestionType.MatchingAudioText &&
-      matchingAudioTextFormRef.current
-    ) {
-      const uploadSuccess =
-        await matchingAudioTextFormRef.current.uploadFiles();
-      if (!uploadSuccess) {
-        setLoading(false);
-        return;
+
+      // Prepare data for submission
+      const submitData = {
+        ...values,
+        lessonId: parseInt(lessonId),
+        itemType: selectedCategory, // Add itemType field based on selected category
+        ...(selectedCategory === "content" && {
+          contentType: finalType, // Add contentType if it's content
+        }),
+        ...(selectedCategory === "question" && {
+          questionType: finalType, // Add questionType if it's question
+        }),
+      };
+
+      // Use lessonApi service methods instead of direct fetch
+      if (mode === "edit") {
+        await lessonApi.updateLessonItem(editItem.id, submitData);
+        message.success("Item updated successfully!");
+      } else {
+        await lessonApi.addLessonContent(parseInt(lessonId), submitData);
+        message.success("Item created successfully!");
       }
-    } else if (
-      finalType === QuestionType.BoolAudioText &&
-      boolAudioTextFormRef.current
-    ) {
-      const uploadSuccess = await boolAudioTextFormRef.current.uploadFiles();
-      if (!uploadSuccess) {
-        setLoading(false);
-        return;
-      }
+
+      onSuccess();
+      handleCancel();
+    } catch (error) {
+      console.error(`Error ${mode}ing item:`, error);
+      message.error(`Failed to ${mode} item. Please try again.`);
+    } finally {
+      setLoading(false);
     }
-
-    // Prepare data for submission
-    const submitData = {
-      ...values,
-      type: finalType,
-      courseId,
-      lessonId: parseInt(lessonId),
-    };
-
-    // Use lessonApi service methods instead of direct fetch
-    if (mode === "edit") {
-      await lessonApi.updateLessonItem(editItem.id, submitData);
-      message.success("Item updated successfully!");
-    } else {
-      await lessonApi.addLessonContent(parseInt(lessonId), submitData);
-      message.success("Item created successfully!");
-    }
-
-    onSuccess();
-    handleCancel();
-  } catch (error) {
-    console.error(`Error ${mode}ing item:`, error);
-    message.error(`Failed to ${mode} item. Please try again.`);
-  } finally {
-    setLoading(false);
-  }
-};
+  };
 
   const handleCancel = () => {
     form.resetFields();
