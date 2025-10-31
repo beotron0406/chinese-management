@@ -26,8 +26,8 @@ import {
   FilterOutlined,
 } from "@ant-design/icons";
 import { courseService } from "@/services/api";
-import CourseFormModal from "./CourseFormModal";
 import { Course } from "@/types";
+import CourseFormModal from "@/components/courses/CourseFormModal";
 
 const { Text, Title } = Typography;
 const { Option } = Select;

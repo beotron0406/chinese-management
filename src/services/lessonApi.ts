@@ -88,59 +88,56 @@ export const lessonApi = {
     return response.data as LessonContentResponse;
   },
 
-getLessonItems: async (id: number): Promise<LessonItemsResponse> => {
-  const response = await api.get(`/lessons/content/${id}`);
-  
-  const rawData = response.data || response;
-  
-  if (!rawData || typeof rawData !== 'object' || !('content' in rawData)) {
-    return { lesson: null, items: [] };
-  }
-  
-  const lessonData = rawData as RawLessonContentResponse;
+  getLessonItems: async (id: number): Promise<LessonItemsResponse> => {
+    const response = await api.get(`/lessons/content/${id}`);
 
-  const contentItems: LessonItem[] = lessonData.content.map((item: any, index: number) => {
-    // Map string type to ContentType enum
-    let contentType;
-    switch (item.type) {
-      case "question_audio_image":
-        contentType = ContentType.QUESTION_AUDIO_IMAGE;
-        break;
-      case "content_word_definition":
-        contentType = ContentType.CONTENT_WORD_DEFINITION;
-        break;
-      case "audio_image":
-        contentType = ContentType.AUDIO_IMAGE;
-        break;
-      default:
-        contentType = ContentType.UNKNOWN;
+    const rawData = response.data || response;
+
+    if (!rawData || typeof rawData !== "object" || !("content" in rawData)) {
+      return { lesson: null, items: [] };
     }
 
-    return {
-      id: item.id || `content-${id}-${index}`,
-      type: "content",
-      lessonId: id,
-      orderIndex: item.order_index || 0,
-      contentType: contentType,
-      data: item,
-      isActive: true,
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-    };
-  });
+    const lessonData = rawData as RawLessonContentResponse;
 
-  return {
-    lesson: {
-      id: lessonData.id,
-      name: lessonData.name,
-      description: lessonData.description,
-      courseId: 0,
-      orderIndex: 0,
-      isActive: true,
-    },
-    items: contentItems,
-  };
-},
+    const contentItems: LessonItem[] = lessonData.content.map(
+      (item: any, index: number) => {
+        // Map string type to ContentType enum
+        let contentType;
+        switch (item.type) {
+          case "content_word_definition":
+            contentType = ContentType.CONTENT_WORD_DEFINITION;
+            break;
+          case "content_sentence":
+            contentType = ContentType.CONTENT_SENTENCES;
+            break;
+        }
+
+        return {
+          id: item.id || `content-${id}-${index}`,
+          type: "content",
+          lessonId: id,
+          orderIndex: item.order_index || 0,
+          contentType: contentType,
+          data: item,
+          isActive: true,
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+        };
+      }
+    );
+
+    return {
+      lesson: {
+        id: lessonData.id,
+        name: lessonData.name,
+        description: lessonData.description,
+        courseId: 0,
+        orderIndex: 0,
+        isActive: true,
+      },
+      items: contentItems,
+    };
+  },
 
   // Get lessons by course ID (active only)
   getLessonsByCourse: async (courseId: number): Promise<Lesson[]> => {
@@ -159,10 +156,8 @@ getLessonItems: async (id: number): Promise<LessonItemsResponse> => {
         return [];
       }
 
-      console.log("Successfully retrieved lessons data:", response.data);
       return response.data as Lesson[];
     } catch (error) {
-      console.error("Error in getLessonsByCourse:", error);
       throw error;
     }
   },
@@ -200,7 +195,7 @@ getLessonItems: async (id: number): Promise<LessonItemsResponse> => {
     return response.data as Lesson;
   },
 
-  // Add content to a lesson
+  // Add content and questions to a lesson
   addLessonContent: async (
     lessonId: number,
     contentData: Omit<LessonContent, "id" | "lessonId">

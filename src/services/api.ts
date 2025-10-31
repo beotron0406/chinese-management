@@ -18,8 +18,6 @@ const apiRequest = async <T>(
   const token = localStorage.getItem("auth_token");
 
   const fullUrl = `${API_BASE_URL}${endpoint}`;
-  console.log(`🌐 API Request: ${options.method || "GET"} ${fullUrl}`);
-  console.log(`🔑 Auth Token: ${token ? "Present" : "Missing"}`);
 
   const headers: HeadersInit = {
     "Content-Type": "application/json",
@@ -34,13 +32,8 @@ const apiRequest = async <T>(
       cache: "no-store",
     });
 
-    console.log(
-      `📡 API Response: ${response.status} ${response.statusText} for ${fullUrl}`
-    );
-
     if (!response.ok) {
       const errorData = await response.json().catch(() => ({}));
-      console.error(`❌ API Error: ${response.status}`, errorData);
       throw new Error(
         errorData.message ||
           `API error: ${response.status} ${response.statusText}`
@@ -48,10 +41,8 @@ const apiRequest = async <T>(
     }
 
     const data = await response.json();
-    console.log(`✅ API Success: ${fullUrl}`, data);
     return data;
   } catch (error) {
-    console.error(`❌ API Request Failed: ${fullUrl}`, error);
     throw error;
   }
 };
