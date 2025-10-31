@@ -116,7 +116,7 @@ export default function ItemsPage() {
 
   const handleBackToLessons = () => {
     if (lesson && lesson.course?.id) {
-      router.push(`/courses/${lesson.course.id}/lessons`);
+      router.push(`/courses/${lesson.course.id}/lesson`);
     } else {
       router.push("/courses");
     }
