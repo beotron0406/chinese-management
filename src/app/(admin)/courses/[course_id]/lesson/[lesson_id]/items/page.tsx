@@ -3,13 +3,14 @@ import React, { useState, useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { QuestionType } from "@/enums/question-type.enum";
 import { ContentType } from "@/enums/content-type.enum";
-import { Button, Modal, Card, Typography, Tag, Spin, Alert } from "antd";
+import { Button, Card, Typography, Tag, Spin, Alert } from "antd";
 import {
   PlusOutlined,
   BookOutlined,
   ArrowLeftOutlined,
 } from "@ant-design/icons";
 import ItemList from "@/components/question/ItemList";
+import ItemModal from "@/components/items/ItemModal";
 import { lessonApi } from "@/services/lessonApi";
 import { Lesson } from "@/types/lessonTypes";
 import { useLessonCache } from "@/context/LessonCacheContext";
@@ -18,6 +19,7 @@ const { Title, Text, Paragraph } = Typography;
 
 export default function ItemsPage() {
   const searchParams = useSearchParams();
+  const courseId = parseInt(searchParams.get("courseId") || "1");
   const router = useRouter();
   const { getCachedLesson, setCachedLesson } = useLessonCache();
 
@@ -39,15 +41,20 @@ export default function ItemsPage() {
         const parsedStoredId = parseInt(storedLessonId);
         setLessonId(parsedStoredId);
         // Update URL to include the lessonId
-        router.replace(`/items?lessonId=${storedLessonId}`);
+        router.replace(`/courses/${courseId}/lesson/${parsedStoredId}/items`);
       }
     }
   }, [searchParams, router]);
 
+  // Modal states
   const [isModalVisible, setIsModalVisible] = useState(false);
+  const [modalMode, setModalMode] = useState<'create' | 'edit'>('create');
+  const [editingItem, setEditingItem] = useState<any>(null);
+  
   const [lesson, setLesson] = useState<Lesson | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [refreshItems, setRefreshItems] = useState(0);
 
   // Fetch lesson data - only if not already cached
   useEffect(() => {
@@ -83,23 +90,28 @@ export default function ItemsPage() {
     fetchLesson();
   }, [lessonId, getCachedLesson, setCachedLesson]);
 
-  const showModal = () => {
+  const handleCreateItem = () => {
+    setModalMode('create');
+    setEditingItem(null);
     setIsModalVisible(true);
   };
 
-  const handleCancel = () => {
-    setIsModalVisible(false);
+  const handleEditItem = (item: any) => {
+    setModalMode('edit');
+    setEditingItem(item);
+    setIsModalVisible(true);
   };
 
-  const handleQuestionTypeSelect = (questionType: QuestionType) => {
+  const handleModalCancel = () => {
     setIsModalVisible(false);
-    router.push(`/items/create?lessonId=${lessonId}&type=${questionType}`);
+    setEditingItem(null);
   };
 
-  const handleContentTypeSelect = (contentType: ContentType) => {
+  const handleModalSuccess = () => {
     setIsModalVisible(false);
-    // Navigate to unified items creation page
-    router.push(`/items/create?lessonId=${lessonId}&type=${contentType}`);
+    setEditingItem(null);
+    // Trigger ItemList refresh
+    setRefreshItems(prev => prev + 1);
   };
 
   const handleBackToLessons = () => {
@@ -109,30 +121,6 @@ export default function ItemsPage() {
       router.push("/courses");
     }
   };
-
-  // Map QuestionType enum to human-readable names
-  const questionTypeOptions = Object.entries(QuestionType).map(
-    ([key, value]) => ({
-      label: key
-        .replace(/_/g, " ")
-        .toLowerCase()
-        .replace(/\b\w/g, (l) => l.toUpperCase()),
-      value: value,
-      type: "question",
-    })
-  );
-
-  // Map ContentType enum to human-readable names
-  const contentTypeOptions = Object.entries(ContentType).map(
-    ([key, value]) => ({
-      label: key
-        .replace(/_/g, " ")
-        .toLowerCase()
-        .replace(/\b\w/g, (l) => l.toUpperCase()),
-      value: value,
-      type: "content",
-    })
-  );
 
   if (loading) {
     return (
@@ -239,78 +227,32 @@ export default function ItemsPage() {
           <Button
             type="primary"
             icon={<PlusOutlined />}
-            onClick={showModal}
+            onClick={handleCreateItem}
             size="large"
           >
             Add Item
           </Button>
         </div>
 
-        {/* Item List Component */}
+        {/* Item List Component */}     
         <div style={{ flex: 1, overflow: "auto" }}>
-          <ItemList lessonId={lessonId} />
+          <ItemList 
+            lessonId={lessonId} 
+            onEditItem={handleEditItem}
+          />
         </div>
       </div>
 
-      {/* Item Type Selection Modal */}
-      <Modal
-        title="Select Item Type"
-        open={isModalVisible}
-        onCancel={handleCancel}
-        footer={null}
-        width={600}
-      >
-        <div style={{ padding: "16px 0" }}>
-          <Typography.Title level={5} style={{ marginBottom: "12px" }}>
-            Content Types:
-          </Typography.Title>
-          <div
-            style={{
-              display: "grid",
-              gridTemplateColumns: "repeat(2, 1fr)",
-              gap: "12px",
-              marginBottom: "24px",
-            }}
-          >
-            {contentTypeOptions.map((option) => (
-              <Button
-                key={option.value}
-                size="large"
-                style={{ height: "60px", textAlign: "left" }}
-                onClick={() =>
-                  handleContentTypeSelect(option.value as ContentType)
-                }
-              >
-                {option.label}
-              </Button>
-            ))}
-          </div>
-
-          <Typography.Title level={5} style={{ marginBottom: "12px" }}>
-            Question Types:
-          </Typography.Title>
-          <div
-            style={{
-              display: "grid",
-              gridTemplateColumns: "repeat(2, 1fr)",
-              gap: "12px",
-            }}
-          >
-            {questionTypeOptions.map((option) => (
-              <Button
-                key={option.value}
-                size="large"
-                style={{ height: "60px", textAlign: "left" }}
-                onClick={() =>
-                  handleQuestionTypeSelect(option.value as QuestionType)
-                }
-              >
-                {option.label}
-              </Button>
-            ))}
-          </div>
-        </div>
-      </Modal>
+      {/* Item Modal for Create/Edit */}
+      <ItemModal
+        visible={isModalVisible}
+        onCancel={handleModalCancel}
+        onSuccess={handleModalSuccess}
+        courseId={courseId.toString()}
+        lessonId={lessonId.toString()}
+        editItem={editingItem}
+        mode={modalMode}
+      />
     </div>
   );
 }

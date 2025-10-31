@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Card, Typography, Button, Space, Tabs, Divider, Empty, message, Spin } from 'antd';
 import { PlusOutlined, EditOutlined } from '@ant-design/icons';
-import { useRouter } from 'next/navigation';
+import { useParams, useRouter } from 'next/navigation';
 import { Lesson, LessonContent } from '../../types/lessonTypes';
 import { lessonApi } from '../../services/lessonApi';
 // import CardFormModal from './CardFormModal'; // Removed - content creation moved to /items
@@ -16,6 +16,8 @@ interface LessonDetailViewProps {
 
 const LessonDetailView: React.FC<LessonDetailViewProps> = ({ lessonId }) => {
   const router = useRouter();
+  const params = useParams();
+  const courseId = parseInt(params.course_id as string);
   const [lesson, setLesson] = useState<Lesson | null>(null);
   const [contents, setContents] = useState<LessonContent[]>([]);
   const [loading, setLoading] = useState(true);
@@ -49,12 +51,12 @@ const LessonDetailView: React.FC<LessonDetailViewProps> = ({ lessonId }) => {
 
   const handleAddCard = () => {
     // Navigate to items management page for this lesson
-    router.push(`/items?lessonId=${lessonId}`);
+    router.push(`/courses/${courseId}/lesson/${lessonId}/items`);
   };
 
   const handleEditCard = (card: LessonContent) => {
     // Navigate to items management page for this lesson
-    router.push(`/items?lessonId=${lessonId}`);
+    router.push(`/courses/${courseId}/lesson/${lessonId}/items`);
   };
 
   const handleEditLesson = () => {

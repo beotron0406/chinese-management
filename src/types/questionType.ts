@@ -1,28 +1,7 @@
 import { QuestionType } from "@/enums/question-type.enum";
 
-export interface AudioImageQuestionData {
-  instruction?: string;
-  audio?: string;
-  audio_url?: string;
-  options?: Array<{
-    id: string;
-    image: string;
-    alt: string;
-  }>;
-  answers?: Array<{
-    id: number;
-    image_url: string;
-    label: string;
-    correct: boolean;
-  }>;
-  correctAnswer?: string;
-  explanation?: string;
-  audio_transcript_chinese?: string;
-  audio_transcript_pinyin?: string;
-  audio_transcript_translation?: string;
-}
-
-export interface TextSelectionQuestionData {
+// Selection Question Interfaces
+export interface SelectionTextTextQuestionData {
   instruction: string;
   question: string;
   options: Array<{
@@ -33,12 +12,68 @@ export interface TextSelectionQuestionData {
   explanation?: string;
 }
 
-export interface MatchingTextQuestionData {
+export interface SelectionTextImageQuestionData {
+  instruction: string;
+  question: string;
+  options: Array<{
+    id: string;
+    image: string;
+    alt: string;
+  }>;
+  correctAnswer: string;
+  explanation?: string;
+}
+
+export interface SelectionAudioTextQuestionData {
+  instruction: string;
+  audio: string;
+  audio_url?: string;
+  options: Array<{
+    id: string;
+    text: string;
+  }>;
+  correctAnswer: string;
+  explanation?: string;
+  audio_transcript_chinese?: string;
+  audio_transcript_pinyin?: string;
+  audio_transcript_translation?: string;
+}
+
+export interface SelectionAudioImageQuestionData {
+  instruction: string;
+  audio: string;
+  audio_url?: string;
+  options: Array<{
+    id: string;
+    image: string;
+    alt: string;
+  }>;
+  correctAnswer: string;
+  explanation?: string;
+  audio_transcript_chinese?: string;
+  audio_transcript_pinyin?: string;
+  audio_transcript_translation?: string;
+}
+
+export interface SelectionImageTextQuestionData {
+  instruction: string;
+  image: string;
+  alt: string;
+  options: Array<{
+    id: string;
+    text: string;
+  }>;
+  correctAnswer: string;
+  explanation?: string;
+}
+
+// Matching Question Interfaces
+export interface MatchingTextTextQuestionData {
   instruction: string;
   leftColumn: Array<{
     id: string;
     text: string;
-    pinyin: string;
+    pinyin?: string;
   }>;
   rightColumn: Array<{
     id: string;
@@ -50,36 +85,100 @@ export interface MatchingTextQuestionData {
   }>;
 }
 
-export interface FillBlankQuestionData {
+export interface MatchingTextImageQuestionData {
+  instruction: string;
+  leftColumn: Array<{
+    id: string;
+    text: string;
+    pinyin?: string;
+  }>;
+  rightColumn: Array<{
+    id: string;
+    image: string;
+    alt: string;
+  }>;
+  correctMatches: Array<{
+    left: string;
+    right: string;
+  }>;
+}
+
+export interface MatchingAudioTextQuestionData {
+  instruction: string;
+  leftColumn: Array<{
+    id: string;
+    audio: string;
+    audio_url?: string;
+    transcript?: string;
+  }>;
+  rightColumn: Array<{
+    id: string;
+    text: string;
+  }>;
+  correctMatches: Array<{
+    left: string;
+    right: string;
+  }>;
+}
+
+export interface MatchingAudioImageQuestionData {
+  instruction: string;
+  leftColumn: Array<{
+    id: string;
+    audio: string;
+    audio_url?: string;
+    transcript?: string;
+  }>;
+  rightColumn: Array<{
+    id: string;
+    image: string;
+    alt: string;
+  }>;
+  correctMatches: Array<{
+    left: string;
+    right: string;
+  }>;
+}
+
+// Fill Question Interfaces
+export interface FillTextTextQuestionData {
   instruction: string;
   sentence: string;
-  pinyin: string;
-  english: string;
+  pinyin?: string;
+  english?: string;
   options: Array<{
     text: string;
-    pinyin: string;
+    pinyin?: string;
   }>;
   correctAnswer: string;
-  correctAnswerPinyin: string;
+  correctAnswerPinyin?: string;
   explanation?: string;
 }
 
-export interface AudioBoolQuestionData {
+// Bool Question Interfaces
+export interface BoolAudioTextQuestionData {
   instruction: string;
   audio: string;
+  audio_url?: string;
   transcript: string;
-  pinyin: string;
-  english: string;
+  pinyin?: string;
+  english?: string;
   correctAnswer: boolean;
   explanation?: string;
 }
 
 export type QuestionData = 
-  | AudioImageQuestionData
-  | TextSelectionQuestionData
-  | MatchingTextQuestionData
-  | FillBlankQuestionData
-  | AudioBoolQuestionData;
+  | SelectionTextTextQuestionData
+  | SelectionTextImageQuestionData
+  | SelectionAudioTextQuestionData
+  | SelectionAudioImageQuestionData
+  | SelectionImageTextQuestionData
+  | MatchingTextTextQuestionData
+  | MatchingTextImageQuestionData
+  | MatchingAudioTextQuestionData
+  | MatchingAudioImageQuestionData
+  | FillTextTextQuestionData
+  | BoolAudioTextQuestionData;
 
 export interface Question {
   id: number;
@@ -91,10 +190,11 @@ export interface Question {
   createdAt?: string;
   updatedAt?: string;
 }
+
 export interface QuestionFormValues {
   lessonId: number;
   orderIndex: number;
   questionType: QuestionType;
-  data: any;
+  data: QuestionData;
   isActive?: boolean;
 }

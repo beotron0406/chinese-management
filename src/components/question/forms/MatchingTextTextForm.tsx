@@ -1,3 +1,4 @@
+"use client";
 import React, { useEffect, useState } from "react";
 import {
   Form,
@@ -8,44 +9,64 @@ import {
   Select,
   Typography,
   Tag,
+  Switch,
 } from "antd";
 import {
   MinusCircleOutlined,
   PlusOutlined,
   ReloadOutlined,
 } from "@ant-design/icons";
-import { MatchingTextQuestionData } from "@/types/questionType";
+import { MatchingTextTextQuestionData } from "@/types/questionType";
 import { pinyin } from "pinyin-pro";
+import type { FormInstance } from "antd/es/form";
 
 const { TextArea } = Input;
 const { Text } = Typography;
 const { Option } = Select;
 
-interface MatchingTextFormProps {
-  form: any;
-  initialValues?: Partial<MatchingTextQuestionData>;
+interface MatchingTextTextFormProps {
+  form: FormInstance;
+  initialValues?: {
+    data?: MatchingTextTextQuestionData;
+    isActive?: boolean;
+  };
 }
 
-type LeftColumnItem = MatchingTextQuestionData["leftColumn"][0];
-type RightColumnItem = MatchingTextQuestionData["rightColumn"][0];
-
-const MatchingTextForm: React.FC<MatchingTextFormProps> = ({
+const MatchingTextTextForm: React.FC<MatchingTextTextFormProps> = ({
   form,
   initialValues,
 }) => {
-  const [leftItems, setLeftItems] = useState<LeftColumnItem[]>([]);
-  const [rightItems, setRightItems] = useState<RightColumnItem[]>([]);
+  const [leftItems, setLeftItems] = useState<MatchingTextTextQuestionData['leftColumn']>([]);
+  const [rightItems, setRightItems] = useState<MatchingTextTextQuestionData['rightColumn']>([]);
 
   // Watch for changes in the columns to update the select options
   const leftValues = Form.useWatch(["data", "leftColumn"], form) || [];
   const rightValues = Form.useWatch(["data", "rightColumn"], form) || [];
+
+  // Initialize form with existing data
+  useEffect(() => {
+    if (initialValues?.data) {
+      const { data } = initialValues;
+      
+      if (data.leftColumn) {
+        setLeftItems(data.leftColumn);
+      }
+      
+      if (data.rightColumn) {
+        setRightItems(data.rightColumn);
+      }
+    }
+  }, [initialValues]);
 
   // Generate pinyin for Chinese text
   const generatePinyin = (text: string): string => {
     if (!text || !text.trim()) return "";
 
     try {
-      return pinyin(text, { toneType: "symbol" });
+      return pinyin(text, { 
+        toneType: "symbol",
+        type: 'array'
+      }).join(' ');
     } catch (error) {
       console.warn("Failed to generate pinyin:", error);
       return "";
@@ -129,21 +150,24 @@ const MatchingTextForm: React.FC<MatchingTextFormProps> = ({
 
   return (
     <div>
-      <Form.Item
-        label="Instruction"
-        name={["data", "instruction"]}
-        rules={[{ required: true, message: "Please enter instruction" }]}
-      >
-        <TextArea
-          placeholder="Enter instruction for the student (e.g., 'Match the Chinese words with their English meaning')"
-          autoSize={{ minRows: 2, maxRows: 4 }}
-        />
-      </Form.Item>
+      {/* Question Setup */}
+      <Card title="Question Setup" style={{ marginBottom: '24px' }}>
+        <Form.Item
+          label="Question Instruction"
+          name={["data", "instruction"]}
+          rules={[{ required: true, message: "Please enter the question instruction" }]}
+        >
+          <TextArea
+            placeholder="Enter instruction for the student (e.g., 'Match the Chinese words with their English meaning')"
+            autoSize={{ minRows: 2, maxRows: 4 }}
+          />
+        </Form.Item>
+      </Card>
 
+      {/* Left Column */}
       <Card
         title="Left Column (Chinese)"
-        bordered={false}
-        style={{ marginBottom: 16 }}
+        style={{ marginBottom: '24px' }}
       >
         <Form.List
           name={["data", "leftColumn"]}
@@ -191,11 +215,19 @@ const MatchingTextForm: React.FC<MatchingTextFormProps> = ({
                       icon={<ReloadOutlined />}
                       onClick={() => regeneratePinyin(index)}
                       size="small"
+                      type="default"
                     >
                       Regenerate Pinyin
                     </Button>
 
-                    <MinusCircleOutlined onClick={() => remove(name)} />
+                    {fields.length > 1 && (
+                      <Button
+                        danger
+                        size="small"
+                        icon={<MinusCircleOutlined />}
+                        onClick={() => remove(name)}
+                      />
+                    )}
                   </Space>
 
                   {/* Display Pinyin Tag if exists */}
@@ -205,9 +237,9 @@ const MatchingTextForm: React.FC<MatchingTextFormProps> = ({
                     index,
                     "pinyin",
                   ]) && (
-                    <div style={{ marginLeft: 68, marginTop: -8 }}>
+                    <div style={{ marginLeft: 68, marginTop: -8, marginBottom: 8 }}>
                       <Tag color="blue">
-                        {form.getFieldValue([
+                        Pinyin: {form.getFieldValue([
                           "data",
                           "leftColumn",
                           index,
@@ -216,6 +248,15 @@ const MatchingTextForm: React.FC<MatchingTextFormProps> = ({
                       </Tag>
                     </div>
                   )}
+
+                  {/* Hidden pinyin field */}
+                  <Form.Item
+                    {...restField}
+                    name={[name, "pinyin"]}
+                    style={{ display: 'none' }}
+                  >
+                    <Input />
+                  </Form.Item>
                 </div>
               ))}
               <Form.Item>
@@ -235,10 +276,10 @@ const MatchingTextForm: React.FC<MatchingTextFormProps> = ({
         </Form.List>
       </Card>
 
+      {/* Right Column */}
       <Card
-        title="Right Column (English)"
-        bordered={false}
-        style={{ marginBottom: 16 }}
+        title="Right Column (English/Translation)"
+        style={{ marginBottom: '24px' }}
       >
         <Form.List
           name={["data", "rightColumn"]}
@@ -273,10 +314,17 @@ const MatchingTextForm: React.FC<MatchingTextFormProps> = ({
                     rules={[{ required: true, message: "Missing text" }]}
                     style={{ width: "300px" }}
                   >
-                    <Input placeholder="Enter English text" />
+                    <Input placeholder="Enter English/translation text" />
                   </Form.Item>
 
-                  <MinusCircleOutlined onClick={() => remove(name)} />
+                  {fields.length > 1 && (
+                    <Button
+                      danger
+                      size="small"
+                      icon={<MinusCircleOutlined />}
+                      onClick={() => remove(name)}
+                    />
+                  )}
                 </Space>
               ))}
               <Form.Item>
@@ -299,14 +347,15 @@ const MatchingTextForm: React.FC<MatchingTextFormProps> = ({
         </Form.List>
       </Card>
 
+      {/* Correct Matches */}
       <Card
         title="Correct Matches"
-        bordered={false}
         extra={
           <Text type="secondary">
             Select matching pairs from the left and right columns
           </Text>
         }
+        style={{ marginBottom: '24px' }}
       >
         <Form.List
           name={["data", "correctMatches"]}
@@ -314,12 +363,13 @@ const MatchingTextForm: React.FC<MatchingTextFormProps> = ({
         >
           {(fields, { add, remove }) => (
             <>
-              {fields.map(({ key, name, ...restField }) => (
+              {fields.map(({ key, name, ...restField }, index) => (
                 <Space
                   key={key}
                   style={{ display: "flex", marginBottom: 8 }}
                   align="baseline"
                 >
+                  <Text strong>Match {index + 1}:</Text>
                   <Form.Item
                     {...restField}
                     name={[name, "left"]}
@@ -327,14 +377,19 @@ const MatchingTextForm: React.FC<MatchingTextFormProps> = ({
                     style={{ width: "200px" }}
                   >
                     <Select placeholder="Select left item">
-                      {leftItems.map((item, index) => (
-                        <Option key={`left-option-${index}`} value={item.id}>
+                      {leftItems.map((item, itemIndex) => (
+                        <Option key={`left-option-${item.id}-${itemIndex}`} value={item.id}>
                           {item.id}: {item.text}
+                          {item.pinyin && (
+                            <span style={{ color: '#666', fontSize: '12px' }}>
+                              {' '}({item.pinyin})
+                            </span>
+                          )}
                         </Option>
                       ))}
                     </Select>
                   </Form.Item>
-                  <Text type="secondary">matches</Text>
+                  <Text type="secondary">matches with</Text>
                   <Form.Item
                     {...restField}
                     name={[name, "right"]}
@@ -342,14 +397,21 @@ const MatchingTextForm: React.FC<MatchingTextFormProps> = ({
                     style={{ width: "200px" }}
                   >
                     <Select placeholder="Select right item">
-                      {rightItems.map((item, index) => (
-                        <Option key={`right-option-${index}`} value={item.id}>
+                      {rightItems.map((item, itemIndex) => (
+                        <Option key={`right-option-${item.id}-${itemIndex}`} value={item.id}>
                           {item.id}: {item.text}
                         </Option>
                       ))}
                     </Select>
                   </Form.Item>
-                  <MinusCircleOutlined onClick={() => remove(name)} />
+                  {fields.length > 1 && (
+                    <Button
+                      danger
+                      size="small"
+                      icon={<MinusCircleOutlined />}
+                      onClick={() => remove(name)}
+                    />
+                  )}
                 </Space>
               ))}
               <Form.Item>
@@ -365,9 +427,59 @@ const MatchingTextForm: React.FC<MatchingTextFormProps> = ({
             </>
           )}
         </Form.List>
+
+        {/* Match Preview */}
+        {form.getFieldValue(['data', 'correctMatches'])?.length > 0 && (
+          <div style={{ marginTop: '16px', padding: '12px', backgroundColor: '#e6f7ff', borderRadius: '6px' }}>
+            <Text strong>Match Summary:</Text>
+            <div style={{ marginTop: '8px' }}>
+              {form.getFieldValue(['data', 'correctMatches'])?.map((match: any, index: number) => {
+                const leftItem = leftItems.find(item => item.id === match.left);
+                const rightItem = rightItems.find(item => item.id === match.right);
+                
+                if (leftItem && rightItem) {
+                  return (
+                    <div key={index} style={{ marginBottom: '4px' }}>
+                      <Text>
+                        {leftItem.id}: {leftItem.text} 
+                        {leftItem.pinyin && <span style={{ color: '#666' }}> ({leftItem.pinyin})</span>}
+                        {' → '}
+                        {rightItem.id}: {rightItem.text}
+                      </Text>
+                    </div>
+                  );
+                }
+                return null;
+              })}
+            </div>
+          </div>
+        )}
+      </Card>
+
+      {/* Additional Settings */}
+      <Card title="Additional Settings" style={{ marginBottom: '24px' }}>
+        <Form.Item
+          label="Explanation (Optional)"
+          name={['data', 'explanation']}
+          help="Provide an explanation that will be shown after the student answers"
+        >
+          <TextArea
+            rows={3}
+            placeholder="Explain the matching logic or provide additional context..."
+          />
+        </Form.Item>
+
+        <Form.Item
+          label="Active"
+          name="isActive"
+          valuePropName="checked"
+          initialValue={true}
+        >
+          <Switch />
+        </Form.Item>
       </Card>
     </div>
   );
 };
 
-export default MatchingTextForm;
+export default MatchingTextTextForm;

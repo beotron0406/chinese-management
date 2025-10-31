@@ -6,7 +6,7 @@ import React, {
   useImperativeHandle,
   useRef,
 } from "react";
-import { List, Typography, Spin, Button, Empty, Card, Space, Tag } from "antd";
+import { List, Typography, Spin, Button, Empty, Card, Space, Tag, Form } from "antd";
 import {
   PlusOutlined,
   EditOutlined,
@@ -20,7 +20,19 @@ import { QuestionType } from "@/enums/question-type.enum";
 import { ContentType } from "@/enums/content-type.enum";
 import { Question } from "@/types/questionType";
 import { LessonItem } from "@/types/lessonTypes";
-import QuestionCard from "./QuestionCard";
+
+// Import form components with correct names
+import SelectionTextTextForm from './forms/SelectionTextTextForm';
+import SelectionTextImageForm from "./forms/SelectionTextImageForm";
+import SelectionAudioTextForm from "./forms/SelectionAudioTextForm";
+import SelectionAudioImageForm from './forms/SelectionAudioImageForm';
+import SelectionImageTextForm from './forms/SelectionImageTextForm';
+import MatchingTextTextForm from './forms/MatchingTextTextForm';
+import MatchingTextImageForm from './forms/MatchingTextImageForm';
+import MatchingAudioTextForm from './forms/MatchingAudioTextForm';
+import MatchingAudioImageForm from './forms/MatchingAudioImageForm';
+import FillTextTextForm from './forms/FillTextTextForm';
+import BoolAudioTextForm from './forms/BoolAudioTextForm';
 
 const { Title, Text } = Typography;
 
@@ -38,236 +50,6 @@ export interface ItemListRef {
   fetchItems: () => Promise<void>;
 }
 
-interface ContentItemCardProps {
-  item: LessonItem;
-  onEdit?: (item: LessonItem) => void;
-  onDelete?: (itemId: number) => void;
-  onView?: (item: LessonItem) => void;
-}
-
-const ContentItemCard: React.FC<ContentItemCardProps> = ({
-  item,
-  onEdit,
-  onDelete,
-  onView,
-}) => {
-  const getContentTypeLabel = (type: string) => {
-    switch (type) {
-      case "question_audio_image":
-        return "Audio Image Question";
-      case ContentType.CONTENT_WORD_DEFINITION:
-        return "Word Definition";
-      case ContentType.CONTENT_SENTENCES:
-        return "Sentences";
-      case "audio_image":
-        return "Audio Image Question";
-      case "question":
-        return "Question";
-      default:
-        // Convert snake_case or camelCase to readable format
-        return (type || "Content")
-          .replace(/question_|_question/g, "")
-          .replace(/_/g, " ")
-          .replace(/([a-z])([A-Z])/g, "$1 $2")
-          .split(" ")
-          .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
-          .join(" ");
-    }
-  };
-
-  // Safe function to render any data structure
-  // Fixed renderDataContent function with better null checks
-  const renderDataContent = (data: unknown) => {
-    // More robust null/undefined check
-    if (!data || typeof data !== "object" || data === null) {
-      return <Text type="secondary">No content data</Text>;
-    }
-
-    // Additional check for arrays (though arrays are objects in JS)
-    if (Array.isArray(data) && data.length === 0) {
-      return <Text type="secondary">Empty content data</Text>;
-    }
-
-    try {
-      return (
-        <div style={{ marginTop: "8px" }}>
-          {Object.entries(data).map(([key, value]) => {
-            // Skip internal fields and order_index since it's already shown in the tag
-            if (
-              ["id", "type", "lessonId", "orderIndex", "order_index"].includes(
-                key
-              )
-            ) {
-              return null;
-            }
-
-            if (value === null || value === undefined) return null;
-
-            // Handle arrays
-            if (Array.isArray(value)) {
-              return (
-                <div key={key} style={{ marginBottom: "4px" }}>
-                  <Text strong>
-                    {key
-                      .replace(/_/g, " ")
-                      .replace(/([A-Z])/g, " $1")
-                      .toLowerCase()
-                      .replace(/^\w/, (c) => c.toUpperCase())}
-                    :{" "}
-                  </Text>
-                  <div style={{ marginLeft: "16px" }}>
-                    {value.slice(0, 3).map((item, index) => (
-                      <div key={index}>
-                        <Text>
-                          •{" "}
-                          {typeof item === "string"
-                            ? item
-                            : JSON.stringify(item)}
-                        </Text>
-                      </div>
-                    ))}
-                    {value.length > 3 && (
-                      <Text type="secondary">
-                        ... and {value.length - 3} more
-                      </Text>
-                    )}
-                  </div>
-                </div>
-              );
-            }
-
-            // Handle primitives
-            if (
-              typeof value === "string" ||
-              typeof value === "number" ||
-              typeof value === "boolean"
-            ) {
-              const displayKey = key
-                .replace(/_/g, " ")
-                .replace(/([A-Z])/g, " $1")
-                .toLowerCase()
-                .replace(/^\w/, (c) => c.toUpperCase());
-
-              return (
-                <div key={key} style={{ marginBottom: "4px" }}>
-                  <Text strong>{displayKey}: </Text>
-                  {key.toLowerCase().includes("audio") &&
-                  typeof value === "string" ? (
-                    <Text code>{value}</Text>
-                  ) : key.toLowerCase().includes("correct") &&
-                    typeof value === "boolean" ? (
-                    <Text style={{ color: value ? "#52c41a" : "#ff4d4f" }}>
-                      {value ? "✓ True" : "✗ False"}
-                    </Text>
-                  ) : key === "pinyin" && typeof value === "string" ? (
-                    <Text italic style={{ color: "#1890ff" }}>
-                      {value}
-                    </Text>
-                  ) : key === "transcript" && typeof value === "string" ? (
-                    <Text style={{ fontWeight: "bold", color: "#722ed1" }}>
-                      {value}
-                    </Text>
-                  ) : (
-                    <Text>{String(value)}</Text>
-                  )}
-                </div>
-              );
-            }
-
-            // Handle objects (with additional null check)
-            if (typeof value === "object" && value !== null) {
-              return (
-                <div key={key} style={{ marginBottom: "4px" }}>
-                  <Text strong>
-                    {key
-                      .replace(/_/g, " ")
-                      .replace(/([A-Z])/g, " $1")
-                      .toLowerCase()
-                      .replace(/^\w/, (c) => c.toUpperCase())}
-                    :{" "}
-                  </Text>
-                  <Text type="secondary">
-                    {JSON.stringify(value).substring(0, 100)}...
-                  </Text>
-                </div>
-              );
-            }
-
-            return null;
-          })}
-        </div>
-      );
-    } catch (error) {
-      console.error("Error in renderDataContent:", error);
-      return (
-        <Text type="secondary" style={{ color: "red" }}>
-          Error displaying content:{" "}
-          {error instanceof Error ? error.message : String(error)}
-        </Text>
-      );
-    }
-  };
-
-  return (
-    <List.Item key={item.id}>
-      <Card
-        style={{ width: "100%", marginBottom: "8px" }}
-        size="small"
-        title={
-          <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-            <FileTextOutlined style={{ color: "#1890ff" }} />
-            <span>Content - {getContentTypeLabel(item.contentType || "")}</span>
-            <Tag color="blue">Order: {item.orderIndex || 0}</Tag>
-          </div>
-        }
-        extra={
-          <Space>
-            {onView && (
-              <Button
-                type="text"
-                icon={<EyeOutlined />}
-                onClick={() => onView(item)}
-                size="small"
-              >
-                View
-              </Button>
-            )}
-            {onEdit && (
-              <Button
-                type="text"
-                icon={<EditOutlined />}
-                onClick={() => onEdit(item)}
-                size="small"
-              >
-                Edit
-              </Button>
-            )}
-            {onDelete && (
-              <Button
-                type="text"
-                danger
-                icon={<DeleteOutlined />}
-                onClick={() => onDelete(item.id)}
-                size="small"
-              >
-                Delete
-              </Button>
-            )}
-          </Space>
-        }
-      >
-        <div style={{ padding: "8px 0" }}>
-          <Text type="secondary">
-            Content Type: {getContentTypeLabel(item.contentType || "")}
-          </Text>
-          <br />
-          {renderDataContent(item.data)}
-        </div>
-      </Card>
-    </List.Item>
-  );
-};
-
 const ItemList = forwardRef<ItemListRef, ItemListProps>(
   (
     {
@@ -282,72 +64,34 @@ const ItemList = forwardRef<ItemListRef, ItemListProps>(
     ref
   ) => {
     const [items, setItems] = useState<LessonItem[]>([]);
-    const [loading, setLoading] = useState<boolean>(true); // Start with loading true
+    const [loading, setLoading] = useState<boolean>(true);
     const [error, setError] = useState<string | null>(null);
     const loadingRef = useRef<boolean>(false);
 
     const fetchItems = useCallback(async () => {
       if (!lessonId) {
-        console.log("⚠️ No lessonId provided, skipping fetch");
         setLoading(false);
         return;
       }
 
-      // Prevent duplicate calls using ref
-      if (loadingRef.current) {
-        console.log("⚠️ Already loading, skipping duplicate fetch");
-        return;
-      }
+      if (loadingRef.current) return;
 
       loadingRef.current = true;
       setLoading(true);
       setError(null);
 
       try {
-        console.log("📥 Fetching lesson items for lessonId:", lessonId);
-
-        // Use the correct API endpoint to get lesson content and questions
         const lessonItemsData = await lessonApi.getLessonItems(lessonId);
-
-        // The API should return both content and questions
-        if (
-          lessonItemsData &&
-          lessonItemsData.items &&
-          Array.isArray(lessonItemsData.items)
-        ) {
-          console.log(
-            "✅ Found items in response:",
-            lessonItemsData.items.length
-          );
+        
+        if (lessonItemsData?.items && Array.isArray(lessonItemsData.items)) {
           setItems(lessonItemsData.items);
         } else {
-          console.log(
-            "📝 No items found for this lesson - lesson exists but is empty"
-          );
           setItems([]);
         }
       } catch (err) {
-        console.error("❌ Failed to fetch items - Full error:", err);
-
-        setItems([]); // Set empty array on error
+        setItems([]);
         if (err instanceof Error) {
-          if (
-            err.message.includes("401") ||
-            err.message.includes("Unauthorized")
-          ) {
-            setError("Authentication required. Please log in again.");
-          } else if (err.message.includes("404")) {
-            setError("Lesson not found.");
-          } else if (
-            err.message.includes("Network Error") ||
-            err.message.includes("Failed to fetch")
-          ) {
-            setError(
-              "Network error. Please check your connection and backend server."
-            );
-          } else {
-            setError(`Failed to load items: ${err.message}`);
-          }
+          setError(`Failed to load items: ${err.message}`);
         } else {
           setError("Failed to load items. Please try again.");
         }
@@ -355,21 +99,319 @@ const ItemList = forwardRef<ItemListRef, ItemListProps>(
         loadingRef.current = false;
         setLoading(false);
       }
-    }, [lessonId]); // Removed loading from dependencies to prevent infinite loop
+    }, [lessonId]);
 
-    // Expose the fetchItems method to parent components
-    useImperativeHandle(ref, () => ({
-      fetchItems,
-    }));
+    useImperativeHandle(ref, () => ({ fetchItems }));
 
     useEffect(() => {
       fetchItems();
     }, [fetchItems]);
 
-    // Reset loading ref when lessonId changes
     useEffect(() => {
       loadingRef.current = false;
     }, [lessonId]);
+
+    // Helper functions
+    const getContentTypeLabel = (type: string) => {
+      switch (type) {
+        case ContentType.CONTENT_WORD_DEFINITION:
+          return "Word Definition";
+        case ContentType.CONTENT_SENTENCES:
+          return "Sentences";
+        default:
+          return (type || "Content")
+            .replace(/content_|_content/g, "")
+            .replace(/_/g, " ")
+            .replace(/([a-z])([A-Z])/g, "$1 $2")
+            .split(" ")
+            .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+            .join(" ");
+      }
+    };
+
+    const getQuestionTypeDisplay = (type: string) => {
+      switch (type) {
+        // Selection Types
+        case QuestionType.SelectionTextText:
+          return 'Multiple Choice (Text → Text)';
+        case QuestionType.SelectionTextImage:
+          return 'Selection (Text → Image)';
+        case QuestionType.SelectionAudioText:
+          return 'Selection (Audio → Text)';
+        case QuestionType.SelectionAudioImage:
+          return 'Selection (Audio → Image)';
+        case QuestionType.SelectionImageText:
+          return 'Selection (Image → Text)';
+        
+        // Matching Types
+        case QuestionType.MatchingTextText:
+          return 'Matching (Text ↔ Text)';
+        case QuestionType.MatchingTextImage:
+          return 'Matching (Text ↔ Image)';
+        case QuestionType.MatchingAudioText:
+          return 'Matching (Audio ↔ Text)';
+        case QuestionType.MatchingAudioImage:
+          return 'Matching (Audio ↔ Image)';
+        
+        // Fill Types
+        case QuestionType.FillTextText:
+          return 'Fill in the Blank';
+        
+        // Bool Types
+        case QuestionType.BoolAudioText:
+          return 'True/False (Audio)';
+        
+        default:
+          return (type || "Question")
+            .replace(/question_|_question/g, "")
+            .replace(/_/g, " ")
+            .replace(/([a-z])([A-Z])/g, "$1 $2")
+            .split(" ")
+            .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+            .join(" ");
+      }
+    };
+
+    const getTagColor = (type: string) => {
+      // Selection colors
+      if (type?.includes('selection')) {
+        if (type.includes('text_text')) return 'green';
+        if (type.includes('text_image')) return 'blue';
+        if (type.includes('audio_text')) return 'cyan';
+        if (type.includes('audio_image')) return 'geekblue';
+        if (type.includes('image_text')) return 'purple';
+      }
+      
+      // Matching colors
+      if (type?.includes('matching')) {
+        if (type.includes('text_text')) return 'orange';
+        if (type.includes('text_image')) return 'red';
+        if (type.includes('audio_text')) return 'volcano';
+        if (type.includes('audio_image')) return 'magenta';
+      }
+      
+      // Fill colors
+      if (type?.includes('fill')) return 'gold';
+      
+      // Bool colors
+      if (type?.includes('bool')) return 'lime';
+      
+      return 'default';
+    };
+
+    // Render question form
+    const renderQuestionForm = (item: LessonItem) => {
+      const [form] = Form.useForm();
+      
+      React.useEffect(() => {
+        if (item.data) {
+          form.setFieldsValue({ data: item.data });
+        }
+      }, [item.data, form]);
+
+      const formProps = {
+        form,
+        initialValues: { data: item.data as any, isActive: item.isActive },
+        questionType: item.questionType,
+      };
+
+      const questionType = item.questionType as string;
+
+      // Selection Forms
+      if (questionType === QuestionType.SelectionTextText) {
+        return <SelectionTextTextForm {...formProps} />;
+      }
+      if (questionType === QuestionType.SelectionTextImage) {
+        return <SelectionTextImageForm {...formProps} />;
+      }
+      if (questionType === QuestionType.SelectionAudioText) {
+        return <SelectionAudioTextForm {...formProps} />;
+      }
+      if (questionType === QuestionType.SelectionAudioImage) {
+        return <SelectionAudioImageForm {...formProps} />;
+      }
+      if (questionType === QuestionType.SelectionImageText) {
+        return <SelectionImageTextForm {...formProps} />;
+      }
+
+      // Matching Forms
+      if (questionType === QuestionType.MatchingTextText) {
+        return <MatchingTextTextForm {...formProps} />;
+      }
+      if (questionType === QuestionType.MatchingTextImage) {
+        return <MatchingTextImageForm {...formProps} />;
+      }
+      if (questionType === QuestionType.MatchingAudioText) {
+        return <MatchingAudioTextForm {...formProps} />;
+      }
+      if (questionType === QuestionType.MatchingAudioImage) {
+        return <MatchingAudioImageForm {...formProps} />;
+      }
+
+      // Fill Forms
+      if (questionType === QuestionType.FillTextText) {
+        return <FillTextTextForm {...formProps} />;
+      }
+
+      // Bool Forms
+      if (questionType === QuestionType.BoolAudioText) {
+        return <BoolAudioTextForm {...formProps} />;
+      }
+
+      // Unknown type
+      return (
+        <div style={{ padding: '16px', backgroundColor: '#f5f5f5', borderRadius: '4px' }}>
+          <Text type="secondary">Unknown Question Type: {questionType}</Text>
+        </div>
+      );
+    };
+
+    // Render content data
+    const renderContentData = (data: unknown) => {
+      if (!data || typeof data !== "object" || data === null) {
+        return <Text type="secondary">No content data</Text>;
+      }
+
+      try {
+        return (
+          <div style={{ marginTop: "8px" }}>
+            {Object.entries(data).slice(0, 3).map(([key, value]) => {
+              if (["id", "type", "lessonId", "orderIndex"].includes(key) || 
+                  value === null || value === undefined) {
+                return null;
+              }
+
+              const displayKey = key
+                .replace(/_/g, " ")
+                .replace(/([A-Z])/g, " $1")
+                .toLowerCase()
+                .replace(/^\w/, (c) => c.toUpperCase());
+
+              let displayValue = String(value);
+              if (Array.isArray(value)) {
+                displayValue = value.join(", ");
+              } else if (typeof value === 'object') {
+                displayValue = JSON.stringify(value, null, 2);
+              }
+
+              // Truncate long values
+              if (displayValue.length > 100) {
+                displayValue = displayValue.substring(0, 100) + "...";
+              }
+
+              return (
+                <div key={key} style={{ marginBottom: "4px" }}>
+                  <Text strong>{displayKey}: </Text>
+                  <Text>{displayValue}</Text>
+                </div>
+              );
+            })}
+          </div>
+        );
+      } catch (error) {
+        return <Text type="secondary">Error displaying content</Text>;
+      }
+    };
+
+    // Get question category for better organization
+    const getQuestionCategory = (type: string) => {
+      if (type?.includes('selection')) return 'Selection';
+      if (type?.includes('matching')) return 'Matching';
+      if (type?.includes('fill')) return 'Fill';
+      if (type?.includes('bool')) return 'True/False';
+      return 'Other';
+    };
+
+    // Render individual item
+    const renderItem = (item: LessonItem) => {
+      const isQuestion = item.type === "question";
+      const questionCategory = isQuestion ? getQuestionCategory(item.questionType || '') : '';
+      
+      return (
+        <List.Item key={item.id}>
+          <Card
+            style={{ width: "100%", marginBottom: "8px" }}
+            size="small"
+            title={
+              <div style={{ display: "flex", alignItems: "center", gap: "8px", flexWrap: "wrap" }}>
+                {isQuestion ? (
+                  <QuestionCircleOutlined style={{ color: "#722ed1" }} />
+                ) : (
+                  <FileTextOutlined style={{ color: "#1890ff" }} />
+                )}
+                <span>
+                  {isQuestion 
+                    ? `Question #${item.orderIndex}`
+                    : `Content - ${getContentTypeLabel(item.contentType || "")}`
+                  }
+                </span>
+                {isQuestion && questionCategory && (
+                  <Tag color="purple" >{questionCategory}</Tag>
+                )}
+                <Tag color={isQuestion ? getTagColor(item.questionType || '') : "blue"} >
+                  Order: {item.orderIndex || 0}
+                </Tag>
+                {item.isActive !== undefined && (
+                  <Tag color={item.isActive ? "green" : "red"} >
+                    {item.isActive ? "Active" : "Inactive"}
+                  </Tag>
+                )}
+              </div>
+            }
+            extra={
+              <Space>
+                {onView && (
+                  <Button
+                    type="text"
+                    icon={<EyeOutlined />}
+                    onClick={() => onView(item)}
+                    size="small"
+                    title="View"
+                  />
+                )}
+                {editable && onEditItem && (
+                  <Button
+                    type="text"
+                    icon={<EditOutlined />}
+                    onClick={() => onEditItem(item)}
+                    size="small"
+                    title="Edit"
+                  />
+                )}
+                {editable && onDeleteItem && (
+                  <Button
+                    type="text"
+                    danger
+                    icon={<DeleteOutlined />}
+                    onClick={() => onDeleteItem(item.id)}
+                    size="small"
+                    title="Delete"
+                  />
+                )}
+              </Space>
+            }
+          >
+            {isQuestion ? (
+              <div style={{ pointerEvents: 'none', opacity: 0.8 }}>
+                <div style={{ marginBottom: '8px' }}>
+                  <Text strong>Type: </Text>
+                  <Text>{getQuestionTypeDisplay(item.questionType || '')}</Text>
+                </div>
+                <div style={{ maxHeight: '400px', overflow: 'auto' }}>
+                  <Form layout="vertical" size="small">
+                    {renderQuestionForm(item)}
+                  </Form>
+                </div>
+              </div>
+            ) : (
+              <div style={{ padding: "8px 0" }}>
+                {renderContentData(item.data)}
+              </div>
+            )}
+          </Card>
+        </List.Item>
+      );
+    };
 
     if (loading) {
       return (
@@ -408,28 +450,37 @@ const ItemList = forwardRef<ItemListRef, ItemListProps>(
       );
     }
 
-    // Separate and sort items
-    const contentItems = items
-      .filter((item) => item.type === "content")
-      .sort((a, b) => (a.orderIndex || 0) - (b.orderIndex || 0));
-    const questionItems = items
-      .filter((item) => item.type === "question")
-      .sort((a, b) => (a.orderIndex || 0) - (b.orderIndex || 0));
+    // Sort items by order
+    const sortedItems = items.sort((a, b) => (a.orderIndex || 0) - (b.orderIndex || 0));
+    const contentItems = sortedItems.filter(item => item.type === "content");
+    const questionItems = sortedItems.filter(item => item.type === "question");
+
+    // Group questions by category for better stats
+    const questionsByCategory = questionItems.reduce((acc, item) => {
+      const category = getQuestionCategory(item.questionType || '');
+      acc[category] = (acc[category] || 0) + 1;
+      return acc;
+    }, {} as Record<string, number>);
 
     return (
       <div>
-        <div
-          style={{
-            display: "flex",
-            justifyContent: "space-between",
-            alignItems: "center",
-            marginBottom: 16,
-          }}
-        >
-          <Title level={4}>
-            Lesson Items ({contentItems.length} content, {questionItems.length}{" "}
-            questions)
-          </Title>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
+          <div>
+            <Title level={4}>
+              Lesson Items ({contentItems.length} content, {questionItems.length} questions)
+            </Title>
+            {Object.keys(questionsByCategory).length > 0 && (
+              <div style={{ marginTop: '4px' }}>
+                <Space size="small" wrap>
+                  {Object.entries(questionsByCategory).map(([category, count]) => (
+                    <Tag key={category} color="blue" >
+                      {category}: {count}
+                    </Tag>
+                  ))}
+                </Space>
+              </div>
+            )}
+          </div>
           {editable && onAddItem && (
             <Button type="primary" onClick={onAddItem} icon={<PlusOutlined />}>
               Add Item
@@ -437,77 +488,16 @@ const ItemList = forwardRef<ItemListRef, ItemListProps>(
           )}
         </div>
 
-        {contentItems.length > 0 && (
-          <>
-            <Title level={5} style={{ marginTop: 24, marginBottom: 16 }}>
-              <FileTextOutlined /> Content Items ({contentItems.length})
-            </Title>
-            <List
-              dataSource={contentItems}
-              renderItem={(item) => (
-                <ContentItemCard
-                  item={item}
-                  onEdit={editable ? onEditItem : undefined}
-                  onDelete={editable ? onDeleteItem : undefined}
-                  onView={onView}
-                />
-              )}
-            />
-          </>
-        )}
-
-        {questionItems.length > 0 && (
-          <>
-            <Title level={5} style={{ marginTop: 24, marginBottom: 16 }}>
-              <QuestionCircleOutlined /> Question Items ({questionItems.length})
-            </Title>
-            <List
-              dataSource={questionItems}
-              renderItem={(item) => {
-                // Convert LessonItem back to Question format for QuestionCard
-                const question: Question = {
-                  id: item.id,
-                  lessonId: item.lessonId,
-                  orderIndex: item.orderIndex || 0,
-                  questionType: item.questionType as QuestionType,
-                  data: item.data,
-                  isActive: item.isActive || true,
-                  createdAt: item.createdAt,
-                  updatedAt: item.updatedAt,
-                };
-
-                return (
-                  <QuestionCard
-                    question={question}
-                    onEdit={
-                      editable
-                        ? (q) =>
-                            onEditItem &&
-                            onEditItem({
-                              ...item,
-                              data: q.data,
-                              orderIndex: q.orderIndex,
-                            })
-                        : undefined
-                    }
-                    onDelete={editable ? onDeleteItem : undefined}
-                    onView={
-                      onView
-                        ? (q) =>
-                            onView({
-                              ...item,
-                              data: q.data,
-                              orderIndex: q.orderIndex,
-                            })
-                        : undefined
-                    }
-                    courseId={courseId}
-                  />
-                );
-              }}
-            />
-          </>
-        )}
+        <List
+          dataSource={sortedItems}
+          renderItem={renderItem}
+          pagination={sortedItems.length > 10 ? {
+            pageSize: 10,
+            showSizeChanger: true,
+            showQuickJumper: true,
+            showTotal: (total, range) => `${range[0]}-${range[1]} of ${total} items`,
+          } : false}
+        />
       </div>
     );
   }

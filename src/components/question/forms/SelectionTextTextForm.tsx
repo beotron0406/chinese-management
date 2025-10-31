@@ -1,34 +1,43 @@
 "use client";
-import React, { useState } from 'react';
-import { Form, Input, Button, Card, Space, Typography, Divider, Switch, Row, Col } from 'antd';
+import React, { useState, useEffect } from 'react';
+import { Form, Input, Button, Card, Space, Typography, Switch, Row, Col } from 'antd';
 import { PlusOutlined, DeleteOutlined, SoundOutlined } from '@ant-design/icons';
 import { pinyin } from 'pinyin-pro';
 import type { FormInstance } from 'antd/es/form';
+import { SelectionTextTextQuestionData } from '@/types/questionType';
 
-const { Title, Text, Paragraph } = Typography;
+const { Text } = Typography;
 const { TextArea } = Input;
 
-interface Option {
-  id: string;
-  text: string;
-  chinese?: string;
-  pinyin?: string;
-  translation?: string;
-}
-
-interface MultipleChoiceFormProps {
+interface SelectionTextTextFormProps {
   form: FormInstance;
-  initialValues?: any;
+  initialValues?: {
+    data?: SelectionTextTextQuestionData;
+    isActive?: boolean;
+  };
 }
 
-const MultipleChoiceForm: React.FC<MultipleChoiceFormProps> = ({ form, initialValues }) => {
-  const [options, setOptions] = useState<Option[]>([
+const SelectionTextTextForm: React.FC<SelectionTextTextFormProps> = ({ form, initialValues }) => {
+  const [options, setOptions] = useState<SelectionTextTextQuestionData['options']>([
     { id: '1', text: '' },
     { id: '2', text: '' },
     { id: '3', text: '' },
     { id: '4', text: '' }
   ]);
   const [correctAnswer, setCorrectAnswer] = useState<string>('1');
+
+  // Initialize form with existing data
+  useEffect(() => {
+    if (initialValues?.data) {
+      const { data } = initialValues;
+      if (data.options) {
+        setOptions(data.options);
+      }
+      if (data.correctAnswer) {
+        setCorrectAnswer(data.correctAnswer);
+      }
+    }
+  }, [initialValues]);
 
   const generatePinyin = (chinese: string): string => {
     try {
@@ -42,57 +51,35 @@ const MultipleChoiceForm: React.FC<MultipleChoiceFormProps> = ({ form, initialVa
     }
   };
 
-  const handleChineseTextChange = (optionId: string, value: string) => {
+  const updateFormData = (newOptions: SelectionTextTextQuestionData['options'], newCorrectAnswer: string) => {
+    form.setFieldsValue({
+      data: {
+        options: newOptions,
+        correctAnswer: newCorrectAnswer
+      }
+    });
+  };
+
+  const handleTextChange = (optionId: string, value: string) => {
     const updatedOptions = options.map(option => {
       if (option.id === optionId) {
-        const generatedPinyin = generatePinyin(value);
         return {
           ...option,
-          chinese: value,
-          pinyin: generatedPinyin,
-          text: value // Keep text as the main field for compatibility
+          text: value
         };
       }
       return option;
     });
 
     setOptions(updatedOptions);
-
-    // Update form values
-    form.setFieldsValue({
-      data: {
-        options: updatedOptions.map(opt => ({
-          id: opt.id,
-          text: opt.text
-        })),
-        correctAnswer: correctAnswer
-      }
-    });
-  };
-
-  const handlePinyinChange = (optionId: string, value: string) => {
-    const updatedOptions = options.map(option => {
-      if (option.id === optionId) {
-        return { ...option, pinyin: value };
-      }
-      return option;
-    });
-    setOptions(updatedOptions);
-  };
-
-  const handleTranslationChange = (optionId: string, value: string) => {
-    const updatedOptions = options.map(option => {
-      if (option.id === optionId) {
-        return { ...option, translation: value };
-      }
-      return option;
-    });
-    setOptions(updatedOptions);
+    updateFormData(updatedOptions, correctAnswer);
   };
 
   const addOption = () => {
     const newId = (options.length + 1).toString();
-    setOptions([...options, { id: newId, text: '' }]);
+    const newOptions = [...options, { id: newId, text: '' }];
+    setOptions(newOptions);
+    updateFormData(newOptions, correctAnswer);
   };
 
   const removeOption = (optionId: string) => {
@@ -102,18 +89,18 @@ const MultipleChoiceForm: React.FC<MultipleChoiceFormProps> = ({ form, initialVa
     setOptions(filteredOptions);
 
     // If removed option was correct answer, reset to first option
+    let newCorrectAnswer = correctAnswer;
     if (correctAnswer === optionId) {
-      setCorrectAnswer(filteredOptions[0]?.id || '1');
+      newCorrectAnswer = filteredOptions[0]?.id || '1';
+      setCorrectAnswer(newCorrectAnswer);
     }
+
+    updateFormData(filteredOptions, newCorrectAnswer);
   };
 
   const handleCorrectAnswerChange = (optionId: string) => {
     setCorrectAnswer(optionId);
-    form.setFieldsValue({
-      data: {
-        correctAnswer: optionId
-      }
-    });
+    updateFormData(options, optionId);
   };
 
   return (
@@ -135,7 +122,7 @@ const MultipleChoiceForm: React.FC<MultipleChoiceFormProps> = ({ form, initialVa
         >
           <TextArea
             rows={3}
-            placeholder="Enter your question here. You can include Chinese characters, they will be automatically processed."
+            placeholder="Enter your question here"
           />
         </Form.Item>
       </Card>
@@ -187,49 +174,21 @@ const MultipleChoiceForm: React.FC<MultipleChoiceFormProps> = ({ form, initialVa
                 </div>
               }
             >
-              <Row gutter={16}>
-                <Col span={12}>
-                  <div style={{ marginBottom: '12px' }}>
-                    <Text strong>Chinese Text</Text>
-                    <Input
-                      placeholder="Enter Chinese characters"
-                      value={option.chinese || ''}
-                      onChange={(e) => handleChineseTextChange(option.id, e.target.value)}
-                      style={{ marginTop: '4px' }}
-                    />
-                  </div>
-                </Col>
-                <Col span={12}>
-                  <div style={{ marginBottom: '12px' }}>
-                    <Text strong>Pinyin (Auto-generated)</Text>
-                    <Input
-                      placeholder="Pinyin will be generated automatically"
-                      value={option.pinyin || ''}
-                      onChange={(e) => handlePinyinChange(option.id, e.target.value)}
-                      style={{ marginTop: '4px' }}
-                      addonAfter={<SoundOutlined />}
-                    />
-                  </div>
-                </Col>
-              </Row>
-
               <div>
-                <Text strong>English Translation</Text>
+                <Text strong>Option Text</Text>
                 <Input
-                  placeholder="Enter English translation"
-                  value={option.translation || ''}
-                  onChange={(e) => handleTranslationChange(option.id, e.target.value)}
+                  placeholder="Enter option text"
+                  value={option.text}
+                  onChange={(e) => handleTextChange(option.id, e.target.value)}
                   style={{ marginTop: '4px' }}
                 />
               </div>
 
-              {/* Preview how the option will look */}
-              {option.chinese && (
+              {/* Preview */}
+              {option.text && (
                 <div style={{ marginTop: '12px', padding: '8px', backgroundColor: '#fafafa', borderRadius: '4px' }}>
                   <Text strong>Preview: </Text>
-                  <span style={{ fontSize: '16px', color: '#1890ff' }}>{option.chinese}</span>
-                  {option.pinyin && <span style={{ color: '#666', marginLeft: '8px' }}>({option.pinyin})</span>}
-                  {option.translation && <span style={{ color: '#999', marginLeft: '8px' }}>- {option.translation}</span>}
+                  <span style={{ fontSize: '16px', color: '#1890ff' }}>{option.text}</span>
                 </div>
               )}
             </Card>
@@ -240,8 +199,8 @@ const MultipleChoiceForm: React.FC<MultipleChoiceFormProps> = ({ form, initialVa
         <div style={{ marginTop: '16px', padding: '12px', backgroundColor: '#e6f7ff', borderRadius: '6px' }}>
           <Text strong>Correct Answer: </Text>
           <Text>Option {options.findIndex(opt => opt.id === correctAnswer) + 1}</Text>
-          {options.find(opt => opt.id === correctAnswer)?.chinese && (
-            <Text> - {options.find(opt => opt.id === correctAnswer)?.chinese}</Text>
+          {options.find(opt => opt.id === correctAnswer)?.text && (
+            <Text> - {options.find(opt => opt.id === correctAnswer)?.text}</Text>
           )}
         </div>
       </Card>
@@ -259,7 +218,6 @@ const MultipleChoiceForm: React.FC<MultipleChoiceFormProps> = ({ form, initialVa
           />
         </Form.Item>
 
-
         <Form.Item
           label="Active"
           name="isActive"
@@ -270,7 +228,7 @@ const MultipleChoiceForm: React.FC<MultipleChoiceFormProps> = ({ form, initialVa
         </Form.Item>
       </Card>
 
-      {/* Hidden form fields for data structure */}
+      {/* Hidden form fields for proper data structure */}
       <Form.Item name={['data', 'options']} style={{ display: 'none' }}>
         <Input />
       </Form.Item>
@@ -281,4 +239,4 @@ const MultipleChoiceForm: React.FC<MultipleChoiceFormProps> = ({ form, initialVa
   );
 };
 
-export default MultipleChoiceForm;
+export default SelectionTextTextForm;
