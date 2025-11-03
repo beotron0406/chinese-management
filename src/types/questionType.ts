@@ -143,16 +143,15 @@ export interface MatchingAudioImageQuestionData {
 // Fill Question Interfaces
 export interface FillTextTextQuestionData {
   instruction: string;
-  sentence: string;
-  pinyin?: string;
-  english?: string;
-  options: Array<{
-    text: string;
-    pinyin?: string;
-  }>;
-  correctAnswer: string;
-  correctAnswerPinyin?: string;
-  explanation?: string;
+  sentence: string[];
+  pinyin: string[];
+  vietnamese: string;
+  optionBank: string[];
+  blanks: {
+    index: number;
+    correct: string[];
+  }[];
+  explanation: string;
 }
 
 // Bool Question Interfaces

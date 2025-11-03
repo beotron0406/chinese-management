@@ -1,5 +1,5 @@
 "use client";
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { QuestionType } from "@/enums/question-type.enum";
 import { ContentType } from "@/enums/content-type.enum";
@@ -9,10 +9,11 @@ import {
   BookOutlined,
   ArrowLeftOutlined,
 } from "@ant-design/icons";
-import ItemList from "@/components/question/ItemList";
+import ItemList, { ItemListRef } from "@/components/question/ItemList";
 import ItemModal from "@/components/items/ItemModal";
 import { lessonApi } from "@/services/lessonApi";
 import { Lesson } from "@/types/lessonTypes";
+import { LessonItem } from "@/types/itemTypes";
 import { useLessonCache } from "@/context/LessonCacheContext";
 
 const { Title, Text, Paragraph } = Typography;
@@ -22,6 +23,7 @@ export default function ItemsPage() {
   const courseId = parseInt(searchParams.get("courseId") || "1");
   const router = useRouter();
   const { getCachedLesson, setCachedLesson } = useLessonCache();
+  const itemListRef = useRef<ItemListRef>(null);
 
   const [lessonId, setLessonId] = useState<number>(1);
 
@@ -44,17 +46,16 @@ export default function ItemsPage() {
         router.replace(`/courses/${courseId}/lesson/${parsedStoredId}/items`);
       }
     }
-  }, [searchParams, router]);
+  }, [searchParams, router, courseId]);
 
   // Modal states
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [modalMode, setModalMode] = useState<'create' | 'edit'>('create');
-  const [editingItem, setEditingItem] = useState<any>(null);
+  const [editingItem, setEditingItem] = useState<LessonItem | null>(null);
   
   const [lesson, setLesson] = useState<Lesson | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [refreshItems, setRefreshItems] = useState(0);
 
   // Fetch lesson data - only if not already cached
   useEffect(() => {
@@ -96,10 +97,30 @@ export default function ItemsPage() {
     setIsModalVisible(true);
   };
 
-  const handleEditItem = (item: any) => {
+  const handleEditItem = (item: LessonItem) => {
     setModalMode('edit');
     setEditingItem(item);
     setIsModalVisible(true);
+  };
+
+  const handleDeleteItem = async (itemId: number) => {
+    try {
+      // Add your delete API call here
+      // await lessonApi.deleteItem(itemId);
+      
+      // Refresh the item list after deletion
+      if (itemListRef.current) {
+        await itemListRef.current.fetchItems();
+      }
+    } catch (error) {
+      console.error("Failed to delete item:", error);
+      // Handle error (show notification, etc.)
+    }
+  };
+
+  const handleViewItem = (item: LessonItem) => {
+    // Handle view item logic (could open a preview modal, etc.)
+    console.log("Viewing item:", item);
   };
 
   const handleModalCancel = () => {
@@ -107,11 +128,14 @@ export default function ItemsPage() {
     setEditingItem(null);
   };
 
-  const handleModalSuccess = () => {
+  const handleModalSuccess = async () => {
     setIsModalVisible(false);
     setEditingItem(null);
-    // Trigger ItemList refresh
-    setRefreshItems(prev => prev + 1);
+    
+    // Refresh the item list after successful create/edit
+    if (itemListRef.current) {
+      await itemListRef.current.fetchItems();
+    }
   };
 
   const handleBackToLessons = () => {
@@ -237,8 +261,14 @@ export default function ItemsPage() {
         {/* Item List Component */}     
         <div style={{ flex: 1, overflow: "auto" }}>
           <ItemList 
+            ref={itemListRef}
             lessonId={lessonId} 
+            editable={true}
+            onAddItem={handleCreateItem}
             onEditItem={handleEditItem}
+            onDeleteItem={handleDeleteItem}
+            onView={handleViewItem}
+            courseId={courseId}
           />
         </div>
       </div>
