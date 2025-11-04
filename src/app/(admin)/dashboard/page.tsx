@@ -14,15 +14,24 @@ const { Title } = Typography;
 export default function DashboardPage() {
   const [overview, setOverview] = useState<PlatformOverview | null>(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchOverview = async () => {
       try {
         setLoading(true);
+        setError(null);
+        
+        console.log('🔄 Fetching dashboard overview...');
         const data = await adminProgressApi.getOverview();
+        console.log('✅ Dashboard data received:', data);
+        
         setOverview(data);
-      } catch (error) {
-        message.error('Không thể tải dữ liệu tổng quan');
+      } catch (error: any) {
+        console.error('❌ Dashboard fetch error:', error);
+        const errorMessage = error?.response?.data?.message || error?.message || 'Không thể tải dữ liệu tổng quan';
+        setError(errorMessage);
+        message.error(errorMessage);
       } finally {
         setLoading(false);
       }
@@ -30,6 +39,21 @@ export default function DashboardPage() {
 
     fetchOverview();
   }, []);
+
+  if (error && !loading) {
+    return (
+      <div style={{ padding: '24px' }}>
+        <Space direction="vertical" size="large" style={{ width: '100%' }}>
+          <Title level={2}>Dashboard - Tổng quan hệ thống</Title>
+          <div style={{ textAlign: 'center', padding: '40px' }}>
+            <Typography.Text type="danger">
+              {error}
+            </Typography.Text>
+          </div>
+        </Space>
+      </div>
+    );
+  }
 
   return (
     <div style={{ padding: '24px' }}>

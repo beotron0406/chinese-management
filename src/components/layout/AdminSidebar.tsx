@@ -8,27 +8,27 @@ const { Sider } = Layout;
 
 const menuItems = [
   {
-    key: '/dashboard',
+    key: 'dashboard',
     icon: <DashboardOutlined />,
     label: <Link href="/dashboard">Dashboard</Link>,
   },
   {
-    key: '/courses',
+    key: 'courses',
     icon: <BookOutlined />,
     label: <Link href="/courses">Courses</Link>,
   },
   {
-    key: '/words',
+    key: 'words',
     icon: <ReadOutlined />,
     label: <Link href="/words">Words</Link>,
   },
   {
-    key: '/grammar',
+    key: 'grammar',
     icon: <FileTextOutlined />,
     label: <Link href="/grammar">Grammar</Link>,
   },
   {
-    key: '/settings',
+    key: 'settings',
     icon: <SettingOutlined />,
     label: <Link href="/settings">Settings</Link>,
   },
@@ -36,13 +36,26 @@ const menuItems = [
 
 const AdminSidebar = () => {
   const pathname = usePathname();
-
-  const activeKey = menuItems.find(item => pathname.startsWith(item.key))?.key || '/dashboard';
+  
+  // Determine active key based on pathname
+  const getActiveKey = () => {
+    if (pathname === '/dashboard') return 'dashboard';
+    if (pathname.startsWith('/courses')) return 'courses';
+    if (pathname.startsWith('/words')) return 'words';
+    if (pathname.startsWith('/grammar')) return 'grammar';
+    if (pathname.startsWith('/settings')) return 'settings';
+    return 'dashboard'; // default
+  };
 
   return (
     <Sider width={250} theme="dark" collapsible>
       <div className="text-white text-2xl font-bold text-center my-4">Chinese LMS</div>
-      <Menu theme="dark" mode="inline" selectedKeys={[activeKey]} items={menuItems} />
+      <Menu 
+        theme="dark" 
+        mode="inline" 
+        selectedKeys={[getActiveKey()]} 
+        items={menuItems} 
+      />
     </Sider>
   );
 };
