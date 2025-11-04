@@ -7,7 +7,7 @@ import { adminProgressApi } from '@/services/userprogressApi';
 import OverviewCards from '@/components/progress/OverviewCards';
 import TopUsersWidget from '@/components/progress/TopUsersWidget';
 import LeaderboardTabs from '@/components/progress/LeaderboardTabs';
-import StudyStreakCard from '@/components/progress/StudyStreakCard';
+import StudyStreakCard from './StudyStreakCard';
 
 const { Title } = Typography;
 
