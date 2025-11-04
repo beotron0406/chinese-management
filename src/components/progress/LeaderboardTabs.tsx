@@ -1,71 +1,123 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { Row, Col, Typography, message, Space } from 'antd';
-import { PlatformOverview } from '@/types/userprogressTypes';
+import { Card, Tabs, List, Avatar, Typography, Tag, Spin, message } from 'antd';
+import { TrophyOutlined, BookOutlined, StarOutlined } from '@ant-design/icons';
+import { LeaderboardData } from '@/types/userprogressTypes';
 import { adminProgressApi } from '@/services/userprogressApi';
-import OverviewCards from '@/components/progress/OverviewCards';
-import TopUsersWidget from '@/components/progress/TopUsersWidget';
-import LeaderboardTabs from '@/components/progress/LeaderboardTabs';
-import StudyStreakCard from './StudyStreakCard';
 
-const { Title } = Typography;
+const { Text } = Typography;
 
-export default function DashboardPage() {
-  const [overview, setOverview] = useState<PlatformOverview | null>(null);
+export default function LeaderboardTabs() {
+  const [leaderboard, setLeaderboard] = useState<LeaderboardData | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const fetchOverview = async () => {
+    const fetchLeaderboard = async () => {
       try {
         setLoading(true);
-        const data = await adminProgressApi.getOverview();
-        setOverview(data);
+        const data = await adminProgressApi.getLeaderboard(10);
+        setLeaderboard(data);
       } catch (error) {
-        message.error('Không thể tải dữ liệu tổng quan');
+        console.error('Error fetching leaderboard:', error);
+        message.error('Không thể tải bảng xếp hạng');
       } finally {
         setLoading(false);
       }
     };
 
-    fetchOverview();
+    fetchLeaderboard();
   }, []);
 
-  return (
-    <div style={{ padding: '24px' }}>
-      <Space direction="vertical" size="large" style={{ width: '100%' }}>
-        <div>
-          <Title level={2}>Dashboard - Tổng quan hệ thống</Title>
+  const getRankIcon = (index: number) => {
+    switch (index) {
+      case 0:
+        return '🥇';
+      case 1:
+        return '🥈';
+      case 2:
+        return '🥉';
+      default:
+        return `${index + 1}.`;
+    }
+  };
+
+  const renderUserList = (users: any[], metricKey: string, suffix: string = '') => (
+    <List
+      itemLayout="horizontal"
+      dataSource={users}
+      renderItem={(user, index) => (
+        <List.Item>
+          <List.Item.Meta
+            avatar={
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                <span style={{ fontSize: '18px', minWidth: '30px' }}>
+                  {getRankIcon(index)}
+                </span>
+                <Avatar>{user.displayName?.charAt(0)?.toUpperCase() || 'U'}</Avatar>
+              </div>
+            }
+            title={<Text strong>{user.displayName || 'Unknown User'}</Text>}
+            description={`${user[metricKey] || 0}${suffix}`}
+          />
+        </List.Item>
+      )}
+    />
+  );
+
+  if (loading) {
+    return (
+      <Card title="Bảng xếp hạng">
+        <div style={{ textAlign: 'center', padding: '40px' }}>
+          <Spin size="large" />
         </div>
+      </Card>
+    );
+  }
 
-        {/* Overview Cards */}
-        <OverviewCards data={overview} loading={loading} />
+  if (!leaderboard) {
+    return (
+      <Card title="Bảng xếp hạng">
+        <div style={{ textAlign: 'center', padding: '40px' }}>
+          <Text type="secondary">Không có dữ liệu</Text>
+        </div>
+      </Card>
+    );
+  }
 
-        <Row gutter={[16, 16]}>
-          {/* Top Users */}
-          <Col xs={24} lg={12}>
-            <TopUsersWidget 
-              topUsers={overview?.topUsers || []} 
-              loading={loading} 
-            />
-          </Col>
+  const tabItems = [
+    {
+      key: 'streak',
+      label: (
+        <span>
+          <TrophyOutlined /> Streak dài nhất
+        </span>
+      ),
+      children: renderUserList(leaderboard.byStreak || [], 'longestStreak', ' ngày'),
+    },
+    {
+      key: 'lessons',
+      label: (
+        <span>
+          <BookOutlined /> Nhiều bài nhất
+        </span>
+      ),
+      children: renderUserList(leaderboard.byLessonsCompleted || [], 'lessonsCompleted', ' bài'),
+    },
+    {
+      key: 'score',
+      label: (
+        <span>
+          <StarOutlined /> Điểm cao nhất
+        </span>
+      ),
+      children: renderUserList(leaderboard.byAverageScore || [], 'averageScore', '%'),
+    },
+  ];
 
-          {/* Study Streak Summary */}
-          <Col xs={24} lg={12}>
-            <StudyStreakCard 
-              averageStreak={overview?.averageStreak || 0}
-              loading={loading}
-            />
-          </Col>
-        </Row>
-
-        {/* Leaderboard */}
-        <Row>
-          <Col span={24}>
-            <LeaderboardTabs />
-          </Col>
-        </Row>
-      </Space>
-    </div>
+  return (
+    <Card title="Bảng xếp hạng" extra={<TrophyOutlined />}>
+      <Tabs items={tabItems} />
+    </Card>
   );
 }

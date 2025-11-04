@@ -5,7 +5,7 @@ import { Card, List, Avatar, Typography, Tag } from 'antd';
 import { TrophyOutlined, CrownOutlined, MailOutlined } from '@ant-design/icons';
 import { PlatformOverview } from '@/types/userprogressTypes';
 
-const { Text, Title } = Typography;
+const { Text } = Typography;
 
 interface TopUsersWidgetProps {
   topUsers: PlatformOverview['topUsers'];
@@ -39,6 +39,35 @@ export default function TopUsersWidget({ topUsers, loading }: TopUsersWidgetProp
     }
   };
 
+  if (loading) {
+    return (
+      <Card
+        title={
+          <div>
+            <TrophyOutlined /> Top người dùng theo streak
+          </div>
+        }
+        loading={true}
+      />
+    );
+  }
+
+  if (!topUsers || topUsers.length === 0) {
+    return (
+      <Card
+        title={
+          <div>
+            <TrophyOutlined /> Top người dùng theo streak
+          </div>
+        }
+      >
+        <div style={{ textAlign: 'center', padding: '20px' }}>
+          <Text type="secondary">Chưa có dữ liệu người dùng</Text>
+        </div>
+      </Card>
+    );
+  }
+
   return (
     <Card
       title={
@@ -46,7 +75,6 @@ export default function TopUsersWidget({ topUsers, loading }: TopUsersWidgetProp
           <TrophyOutlined /> Top người dùng theo streak
         </div>
       }
-      loading={loading}
     >
       <List
         itemLayout="horizontal"
@@ -56,7 +84,9 @@ export default function TopUsersWidget({ topUsers, loading }: TopUsersWidgetProp
             <List.Item.Meta
               avatar={
                 <div style={{ position: 'relative' }}>
-                  <Avatar size="large">{user.displayName.charAt(0).toUpperCase()}</Avatar>
+                  <Avatar size="large">
+                    {user.displayName?.charAt(0)?.toUpperCase() || 'U'}
+                  </Avatar>
                   {index < 3 && (
                     <div
                       style={{
@@ -73,11 +103,11 @@ export default function TopUsersWidget({ topUsers, loading }: TopUsersWidgetProp
               }
               title={
                 <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                  <Text strong>{user.displayName}</Text>
+                  <Text strong>{user.displayName || 'Unknown User'}</Text>
                   <Tag color={getRankColor(index)}>#{index + 1}</Tag>
                 </div>
               }
-              description={`Streak: ${user.metric} ngày`}
+              description={`Streak: ${user.metric || 0} ngày`}
             />
           </List.Item>
         )}
