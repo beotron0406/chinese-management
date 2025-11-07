@@ -71,6 +71,45 @@ export interface LeaderboardData {
   }>;
 }
 
+export interface CourseAnalytics {
+  course: {
+    id: number;
+    title: string;
+    hskLevel: number;
+  };
+  totalLessons: number;
+  usersStarted: number;
+  usersCompleted: number;
+  averageCompletionRate: number;
+  lessonStats: Array<{
+    lessonId: number;
+    lessonTitle: string;
+    completionCount: number;
+    averageScore: number;
+  }>;
+}
+
+export interface LessonAnalytics {
+  lesson: {
+    id: number;
+    title: string;
+    courseId: number;
+    courseTitle: string;
+  };
+  totalCompletions: number;
+  averageScore: number;
+  scoreDistribution: Array<{
+    range: string;
+    count: number;
+  }>;
+  recentCompletions: Array<{
+    userId: number;
+    displayName: string;
+    scorePercentage: number;
+    completedAt: string;
+  }>;
+}
+
 export interface CompleteListsonRequest {
   lessonId: number;
   scorePercentage: number;
