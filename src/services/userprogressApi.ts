@@ -5,66 +5,119 @@ import {
   PlatformOverview,
   UserProgressDetail,
   LeaderboardData,
+  CourseAnalytics,
+  LessonAnalytics,
   CompleteListsonRequest,
   UserProgressResponse,
 } from '@/types/userprogressTypes';
 
-// User Progress APIs
-export const userProgressApi = {
-  // Complete a lesson
-  completeLesson: async (data: CompleteListsonRequest): Promise<UserProgressResponse> => {
-    const response = await api.put('/users/progress/complete', data);
-    return response.data as UserProgressResponse;
+// Admin Statistics APIs
+export const adminProgressApi = {
+  // 1. Platform overview
+  getOverview: async (): Promise<PlatformOverview> => {
+    try {
+      console.log('🔄 API Service: Calling API...');
+      const response = await api.get('/admin/progress/overview');
+      
+      console.log('🔄 API Service: Full response object:', response);
+      console.log('🔄 API Service: Response type:', typeof response);
+      
+      // Kiểm tra xem response có data property không
+      if (response && typeof response === 'object' && 'data' in response) {
+        console.log('✅ API Service: Using response.data');
+        return (response as any).data as PlatformOverview;
+      } else {
+        console.log('✅ API Service: Using response directly');
+        return response as PlatformOverview;
+      }
+      
+    } catch (error: any) {
+      console.error('❌ API Service Error:', error);
+      throw error;
+    }
   },
 
-  // Get course progress
-  getCourseProgress: async (courseId: number): Promise<LessonProgress[]> => {
-    const response = await api.get(`/users/progress/course/${courseId}`);
-    return response.data as LessonProgress[];
+  // 2. User progress details
+  getUserProgress: async (userId: number): Promise<UserProgressDetail> => {
+    const response = await api.get(`/admin/progress/user/${userId}`);
+    console.log('getUserProgress response:', response);
+    
+    // Xử lý response một cách an toàn
+    if (response && typeof response === 'object' && 'data' in response) {
+      return (response as any).data as UserProgressDetail;
+    }
+    return response as UserProgressDetail;
   },
 
-  // Get study info
-  getStudyInfo: async (): Promise<StudyInfo> => {
-    const response = await api.get('/users/progress/study-info');
-    return response.data as StudyInfo;
+  // 3. Course analytics
+  getCourseAnalytics: async (courseId: number): Promise<CourseAnalytics> => {
+    const response = await api.get(`/admin/progress/course/${courseId}/analytics`);
+    console.log('getCourseAnalytics response:', response);
+    
+    if (response && typeof response === 'object' && 'data' in response) {
+      return (response as any).data as CourseAnalytics;
+    }
+    return response as CourseAnalytics;
   },
 
-  // Get lesson progress
-  getLessonProgress: async (lessonId: number): Promise<UserProgressResponse | null> => {
-    const response = await api.get(`/users/progress/lesson/${lessonId}`);
-    return response.data as UserProgressResponse | null;
+  // 4. Lesson analytics
+  getLessonAnalytics: async (lessonId: number): Promise<LessonAnalytics> => {
+    const response = await api.get(`/admin/progress/lesson/${lessonId}/analytics`);
+    console.log('getLessonAnalytics response:', response);
+    
+    if (response && typeof response === 'object' && 'data' in response) {
+      return (response as any).data as LessonAnalytics;
+    }
+    return response as LessonAnalytics;
+  },
+
+  // 5. Leaderboard
+  getLeaderboard: async (limit: number = 20): Promise<LeaderboardData> => {
+    const response = await api.get(`/admin/progress/leaderboard?limit=${limit}`);
+    console.log('getLeaderboard response:', response);
+    
+    if (response && typeof response === 'object' && 'data' in response) {
+      return (response as any).data as LeaderboardData;
+    }
+    return response as LeaderboardData;
   },
 };
 
-// Admin Statistics APIs
-export const adminProgressApi = {
-  // Platform overview
-  getOverview: async (): Promise<PlatformOverview> => {
-    const response = await api.get('/admin/progress/overview');
-    return response.data as PlatformOverview;
+// User Progress APIs
+export const userProgressApi = {
+  completeLesson: async (data: CompleteListsonRequest): Promise<UserProgressResponse> => {
+    const response = await api.put('/users/progress/complete', data);
+    
+    if (response && typeof response === 'object' && 'data' in response) {
+      return (response as any).data as UserProgressResponse;
+    }
+    return response as UserProgressResponse;
   },
 
-  // User progress details
-  getUserProgress: async (userId: number): Promise<UserProgressDetail> => {
-    const response = await api.get(`/admin/progress/user/${userId}`);
-    return response.data as UserProgressDetail;
+  getCourseProgress: async (courseId: number): Promise<LessonProgress[]> => {
+    const response = await api.get(`/users/progress/course/${courseId}`);
+    
+    if (response && typeof response === 'object' && 'data' in response) {
+      return (response as any).data as LessonProgress[];
+    }
+    return response as LessonProgress[];
   },
 
-  // Course analytics
-  getCourseAnalytics: async (courseId: number): Promise<any> => {
-    const response = await api.get(`/admin/progress/course/${courseId}/analytics`);
-    return response.data;
+  getStudyInfo: async (): Promise<StudyInfo> => {
+    const response = await api.get('/users/progress/study-info');
+    
+    if (response && typeof response === 'object' && 'data' in response) {
+      return (response as any).data as StudyInfo;
+    }
+    return response as StudyInfo;
   },
 
-  // Lesson analytics
-  getLessonAnalytics: async (lessonId: number): Promise<any> => {
-    const response = await api.get(`/admin/progress/lesson/${lessonId}/analytics`);
-    return response.data;
-  },
-
-  // Leaderboard
-  getLeaderboard: async (limit: number = 20): Promise<LeaderboardData> => {
-    const response = await api.get(`/admin/progress/leaderboard?limit=${limit}`);
-    return response.data as LeaderboardData;
+  getLessonProgress: async (lessonId: number): Promise<UserProgressResponse | null> => {
+    const response = await api.get(`/users/progress/lesson/${lessonId}`);
+    
+    if (response && typeof response === 'object' && 'data' in response) {
+      return (response as any).data as UserProgressResponse | null;
+    }
+    return response as UserProgressResponse | null;
   },
 };
