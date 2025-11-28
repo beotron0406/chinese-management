@@ -32,7 +32,7 @@ import {
 import PageHeader from "@/components/common/PageHeader";
 import { fetchWords, deleteWord } from "@/services/wordApi";
 import { Word } from "@/types/wordTypes";
-import WordForm from "@/components/shared/form/words/WordForm";
+import WordForm from "@/components/words/WordForm";
 
 const WordPage = () => {
   const [words, setWords] = useState<Word[]>([]);

@@ -14,7 +14,8 @@ import {
   Card,
   Divider,
 } from "antd";
-import { PlusOutlined, MinusCircleOutlined } from "@ant-design/icons";
+import { PlusOutlined, MinusCircleOutlined, SoundOutlined } from "@ant-design/icons";
+import { pinyin } from "pinyin-pro";
 import { GrammarFormValues, GrammarPattern } from "@/types/grammarTypes";
 import { HSK_LEVEL_OPTIONS, HSKLevel } from "@/enums/hsk-level.enum";
 
@@ -40,11 +41,58 @@ const GrammarFormModal: React.FC<GrammarFormModalProps> = ({
   const [patternInputs, setPatternInputs] = useState<string[]>([""]);
   const [pinyinInputs, setPinyinInputs] = useState<string[]>([""]);
 
+  // Generate pinyin function
+  const generatePinyin = (chinese: string): string => {
+    try {
+      return pinyin(chinese, {
+        toneType: 'symbol',
+        type: 'array'
+      }).join(' ');
+    } catch (error) {
+      console.warn('Failed to generate pinyin:', error);
+      return '';
+    }
+  };
+
+  // Auto generate pinyin for pattern
+  const handlePatternChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const chineseText = e.target.value;
+    form.setFieldsValue({ pattern: chineseText });
+    
+    if (chineseText.trim()) {
+      const generatedPinyin = generatePinyin(chineseText);
+      form.setFieldsValue({ patternPinyin: generatedPinyin });
+    } else {
+      form.setFieldsValue({ patternPinyin: '' });
+    }
+  };
+
+  // Auto generate pinyin for examples
+  const handleExampleChineseChange = (value: string, fieldName: number) => {
+    // Update the chinese field
+    const currentExamples = form.getFieldValue('examples') || [];
+    const updatedExamples = [...currentExamples];
+    if (!updatedExamples[fieldName]) {
+      updatedExamples[fieldName] = {};
+    }
+    updatedExamples[fieldName].chinese = value;
+
+    // Auto generate pinyin
+    if (value.trim()) {
+      const generatedPinyin = generatePinyin(value);
+      updatedExamples[fieldName].pinyin = generatedPinyin;
+    } else {
+      updatedExamples[fieldName].pinyin = '';
+    }
+
+    form.setFieldsValue({ examples: updatedExamples });
+  };
+
   // Reset form when modal opens/closes or data changes
   useEffect(() => {
     if (visible && initialData) {
       // Edit mode
-      const translation = initialData.translations?.[0]; // Assume first translation for editing
+      const translation = initialData.translations?.[0];
 
       setPatternInputs(initialData.pattern || [""]);
       setPinyinInputs(initialData.patternPinyin || [""]);
@@ -76,52 +124,52 @@ const GrammarFormModal: React.FC<GrammarFormModalProps> = ({
   }, [visible, initialData, form]);
 
   const handleSubmit = async () => {
-  try {
-    const values = await form.validateFields();
-    
-    console.log('🔍 Form values from modal:', values);
+    try {
+      const values = await form.validateFields();
+      
+      console.log('🔍 Form values from modal:', values);
 
-    // Convert pattern and pinyin strings to arrays
-    const patternArray = values.pattern
-      ? values.pattern.split(/\s+/).filter((p: string) => p.trim())
-      : [];
-    const pinyinArray = values.patternPinyin
-      ? values.patternPinyin.split(/\s+/).filter((p: string) => p.trim())
-      : [];
+      // Convert pattern and pinyin strings to arrays
+      const patternArray = values.pattern
+        ? values.pattern.split(/\s+/).filter((p: string) => p.trim())
+        : [];
+      const pinyinArray = values.patternPinyin
+        ? values.patternPinyin.split(/\s+/).filter((p: string) => p.trim())
+        : [];
 
-    // Convert examples to proper format - FIX: Kiểm tra empty examples
-    const examples = values.examples
-      ?.filter((ex: any) => ex.chinese && ex.translation) // Filter empty examples first
-      ?.map((ex: any) => ({
-        chinese: ex.chinese,  // Giữ nguyên string, không split thành array ở đây
-        pinyin: ex.pinyin || '',
-        translation: ex.translation,
-      })) || [];
+      // Convert examples to proper format - FIX: Kiểm tra empty examples
+      const examples = values.examples
+        ?.filter((ex: any) => ex.chinese && ex.translation) // Filter empty examples first
+        ?.map((ex: any) => ({
+          chinese: ex.chinese,  // Giữ nguyên string, không split thành array ở đây
+          pinyin: ex.pinyin || '',
+          translation: ex.translation,
+        })) || [];
 
-    const formData: GrammarFormValues = {
-      id: initialData?.id,
-      translationId: initialData?.translations?.[0]?.id,
-      pattern: patternArray,
-      patternPinyin: pinyinArray.length > 0 ? pinyinArray : undefined,
-      patternFormula: values.patternFormula,
-      hskLevel: values.hskLevel,
-      language: values.language,
-      grammarPoint: values.grammarPoint,
-      explanation: values.explanation,
-      examples: examples,
-    };
+      const formData: GrammarFormValues = {
+        id: initialData?.id,
+        translationId: initialData?.translations?.[0]?.id,
+        pattern: patternArray,
+        patternPinyin: pinyinArray.length > 0 ? pinyinArray : undefined,
+        patternFormula: values.patternFormula,
+        hskLevel: values.hskLevel,
+        language: values.language,
+        grammarPoint: values.grammarPoint,
+        explanation: values.explanation,
+        examples: examples,
+      };
 
-    console.log('📤 Final form data from modal:', formData);
+      console.log('📤 Final form data from modal:', formData);
 
-    await onSubmit(formData);
-    form.resetFields();
-    setPatternInputs([""]);
-    setPinyinInputs([""]);
-  } catch (error) {
-    console.error("❌ Form validation failed:", error);
-    message.error('Vui lòng kiểm tra lại thông tin form!');
-  }
-};
+      await onSubmit(formData);
+      form.resetFields();
+      setPatternInputs([""]);
+      setPinyinInputs([""]);
+    } catch (error) {
+      console.error("❌ Form validation failed:", error);
+      message.error('Vui lòng kiểm tra lại thông tin form!');
+    }
+  };
 
   const addPatternInput = () => {
     setPatternInputs([...patternInputs, ""]);
@@ -164,12 +212,52 @@ const GrammarFormModal: React.FC<GrammarFormModalProps> = ({
             label="Pattern (cách nhau bằng dấu cách)"
             rules={[{ required: true, message: "Vui lòng nhập pattern!" }]}
           >
-            <Input placeholder="例如: 帮忙 & 帮" />
+            <Input 
+              placeholder="例如: 帮忙 & 帮"
+              onChange={handlePatternChange}
+              suffix={
+                <Button 
+                  type="text" 
+                  icon={<SoundOutlined />} 
+                  size="small"
+                  onClick={() => {
+                    const patternValue = form.getFieldValue('pattern');
+                    if (patternValue) {
+                      const generatedPinyin = generatePinyin(patternValue);
+                      form.setFieldsValue({ patternPinyin: generatedPinyin });
+                      message.success('Đã tự động tạo pinyin!');
+                    }
+                  }}
+                  title="Tự động tạo pinyin"
+                />
+              }
+            />
           </Form.Item>
 
           <Form.Item
             name="patternPinyin"
-            label="Pattern Pinyin (cách nhau bằng dấu cách)"
+            label={
+              <Space>
+                <span>Pattern Pinyin (cách nhau bằng dấu cách)</span>
+                <Button 
+                  type="link" 
+                  size="small"
+                  icon={<SoundOutlined />}
+                  onClick={() => {
+                    const patternValue = form.getFieldValue('pattern');
+                    if (patternValue) {
+                      const generatedPinyin = generatePinyin(patternValue);
+                      form.setFieldsValue({ patternPinyin: generatedPinyin });
+                      message.success('Đã tự động tạo pinyin!');
+                    } else {
+                      message.warning('Vui lòng nhập pattern trước!');
+                    }
+                  }}
+                >
+                  Auto Generate
+                </Button>
+              </Space>
+            }
           >
             <Input placeholder="例如: bāngmáng & bāng" />
           </Form.Item>
@@ -225,24 +313,56 @@ const GrammarFormModal: React.FC<GrammarFormModalProps> = ({
             {(fields, { add, remove }) => (
               <>
                 {fields.map(({ key, name, ...restField }) => (
-                  <Card key={key} size="small" style={{ marginBottom: 16 }}>
+                  <Card 
+                    key={key} 
+                    size="small" 
+                    style={{ marginBottom: 16 }}
+                    title={`Ví dụ ${name + 1}`}
+                  >
                     <Row gutter={16}>
                       <Col span={8}>
                         <Form.Item
                           {...restField}
                           name={[name, "chinese"]}
-                          label="Tiếng Trung"
+                          label={
+                            <Space>
+                              <span>Tiếng Trung</span>
+                              <Button 
+                                type="link" 
+                                size="small"
+                                icon={<SoundOutlined />}
+                                onClick={() => {
+                                  const examples = form.getFieldValue('examples');
+                                  const currentExample = examples[name];
+                                  if (currentExample?.chinese) {
+                                    handleExampleChineseChange(currentExample.chinese, name);
+                                    message.success('Đã tự động tạo pinyin!');
+                                  } else {
+                                    message.warning('Vui lòng nhập tiếng Trung trước!');
+                                  }
+                                }}
+                              >
+                                Auto Pinyin
+                              </Button>
+                            </Space>
+                          }
                         >
-                          <Input placeholder="他帮忙做了这件事。" />
+                          <Input 
+                            placeholder="他帮忙做了这件事。"
+                            onChange={(e) => handleExampleChineseChange(e.target.value, name)}
+                          />
                         </Form.Item>
                       </Col>
                       <Col span={8}>
                         <Form.Item
                           {...restField}
                           name={[name, "pinyin"]}
-                          label="Pinyin"
+                          label="Pinyin (Auto Generated)"
                         >
-                          <Input placeholder="Tā bāngmáng zuò le zhè jiàn shì" />
+                          <Input 
+                            placeholder="Tā bāngmáng zuò le zhè jiàn shì"
+                            style={{ backgroundColor: '#f0f0f0' }}
+                          />
                         </Form.Item>
                       </Col>
                       <Col span={6}>

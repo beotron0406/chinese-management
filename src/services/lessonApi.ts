@@ -5,6 +5,7 @@ import {
   LessonFormValues,
   LessonItem,
   ContentFormValues,
+  LessonContentResponse,
 } from "../types/lessonTypes";
 import { ContentType } from "@/enums/content-type.enum";
 
@@ -14,12 +15,6 @@ interface PaginatedLessonResponse {
   total: number;
   page: number;
   limit: number;
-}
-
-interface LessonContentResponse {
-  lesson: Lesson;
-  content: LessonContent[];
-  questions: unknown[];
 }
 
 interface LessonItemsResponse {
@@ -69,6 +64,54 @@ interface LessonItemsResponse {
   lesson?: Lesson | null;
   items: LessonItem[];
 }
+export interface LessonWord {
+  id: number;
+  lessonId: number;
+  wordSenseId: number;
+  orderIndex: number;
+  wordSense: {
+    id: number;
+    pinyin?: string;
+    partOfSpeech?: string;
+    hskLevel?: number;
+    translations?: Array<{
+      language: string;
+      translation: string;
+      additionalDetail?: string;
+    }>;
+    word: {
+      id: number;
+      simplified: string;
+      traditional?: string;
+    };
+  };
+}
+export interface AddLessonWordDto {
+  wordSenseId: number;
+}
+
+export interface AddLessonGrammarPatternDto {
+  grammarPatternId: number;
+}
+
+export interface LessonGrammarPattern {
+  id: number;
+  lessonId: number;
+  grammarPatternId: number;
+  orderIndex: number;
+  grammarPattern: {
+    id: number;
+    pattern: string[];
+    patternPinyin?: string[];
+    patternFormula?: string;
+    hskLevel?: number;
+    translations?: Array<{
+      language: string;
+      grammarPoint: string;
+      explanation: string;
+    }>;
+  };
+}
 export const lessonApi = {
   // Get paginated lessons
   getAllLessons: async (page: number, pageSize: number): Promise<any> => {
@@ -84,9 +127,34 @@ export const lessonApi = {
 
   // Get complete lesson with content
   getLessonWithContent: async (id: number): Promise<LessonContentResponse> => {
+  console.log("🔍 getLessonWithContent called with id:", id);
+  console.log("📡 Making request to: /lessons/content/" + id);
+  
+  try {
     const response = await api.get(`/lessons/content/${id}`);
+    
+    console.log("📦 Raw API response:", response);
+    console.log("📦 Response data:", response.data);
+    
+    // Check what's actually in response
+    if (!response) {
+      console.log("❌ Response is falsy");
+      return { id: 0, name: '', description: '', content: [], words: [], grammarPatterns: [] } as LessonContentResponse;
+    }
+    
+    if (!response.data) {
+      console.log("❌ Response.data is falsy");
+      console.log("Returning response.data (may be undefined):", response.data);
+      return response.data as LessonContentResponse;
+    }
+    
+    console.log("✅ Returning response.data");  
     return response.data as LessonContentResponse;
-  },
+  } catch (error) {
+    console.error("❌ Error in getLessonWithContent:", error);
+    throw error;
+  }
+},
 
   getLessonItems: async (id: number): Promise<LessonItemsResponse> => {
     const response = await api.get(`/lessons/content/${id}`);
@@ -234,5 +302,62 @@ export const lessonApi = {
   ): Promise<LessonContent> => {
     const response = await api.post("/content", contentData);
     return response.data as LessonContent;
+  },
+  getLessonWords: async (lessonId: number): Promise<LessonWord[]> => {
+    const response = await api.get<LessonWord[]>(`/lessons/${lessonId}/words`);
+    return response.data;
+  },
+
+  addWordsToLesson: async (
+    lessonId: number,
+    words: AddLessonWordDto[]
+  ): Promise<any> => {
+    const response = await api.post(`/lessons/${lessonId}/words`, words);
+    return response.data || response;
+  },
+
+  removeWordsFromLesson: async (
+    lessonId: number,
+    wordSenseIds: number[]
+  ): Promise<any> => {
+    const query = wordSenseIds.length
+      ? `?wordSenseIds=${wordSenseIds.join(",")}`
+      : "";
+    const response = await api.delete(`/lessons/${lessonId}/words${query}`);
+    return response.data || response;
+  },
+
+  // Lesson Grammar Patterns
+  getLessonGrammarPatterns: async (
+    lessonId: number
+  ): Promise<LessonGrammarPattern[]> => {
+    const response = await api.get<LessonGrammarPattern[]>(
+      `/lessons/${lessonId}/grammar-patterns`
+    );
+    return response.data;
+  },
+
+  addGrammarPatternsToLesson: async (
+    lessonId: number,
+    patterns: AddLessonGrammarPatternDto[]
+  ): Promise<any> => {
+    const response = await api.post(
+      `/lessons/${lessonId}/grammar-patterns`,
+      patterns
+    );
+    return response.data || response;
+  },
+
+  removeGrammarPatternsFromLesson: async (
+    lessonId: number,
+    grammarPatternIds: number[]
+  ): Promise<any> => {
+    const query = grammarPatternIds.length
+      ? `?grammarPatternIds=${grammarPatternIds.join(",")}`
+      : "";
+    const response = await api.delete(
+      `/lessons/${lessonId}/grammar-patterns${query}`
+    );
+    return response.data || response;
   },
 };

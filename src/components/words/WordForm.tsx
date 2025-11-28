@@ -53,16 +53,17 @@ const WordForm: React.FC<WordFormProps> = ({ wordData, onSuccess }) => {
   };
 
   // Generate pinyin for Chinese text
-  const generatePinyin = (text: string): string => {
-    if (!text || !text.trim()) return "";
-
-    try {
-      return pinyin(text, { toneType: "symbol" });
-    } catch (error) {
-      console.warn("Failed to generate pinyin:", error);
-      return "";
-    }
-  };
+  const generatePinyin = (chinese: string): string => {
+      try {
+        return pinyin(chinese, {
+          toneType: 'symbol',
+          type: 'array'
+        }).join(' ');
+      } catch (error) {
+        console.warn('Failed to generate pinyin:', error);
+        return '';
+      }
+    };
 
   // Auto-generate pinyin when simplified Chinese changes
   const handleSimplifiedChange = (value: string) => {

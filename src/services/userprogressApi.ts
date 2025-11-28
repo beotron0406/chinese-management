@@ -16,7 +16,7 @@ export const adminProgressApi = {
   // 1. Platform overview
   getOverview: async (): Promise<PlatformOverview> => {
     try {
-      console.log('🔄 API Service: Calling API...');
+      console.log('🔄 API Service: Calling Next.js API...');
       const response = await api.get('/admin/progress/overview');
       
       console.log('🔄 API Service: Full response object:', response);
@@ -86,6 +86,8 @@ export const adminProgressApi = {
 // User Progress APIs
 export const userProgressApi = {
   completeLesson: async (data: CompleteListsonRequest): Promise<UserProgressResponse> => {
+    console.log('🔄 Completing lesson via Next.js API:', data);
+    
     const response = await api.put('/users/progress/complete', data);
     
     if (response && typeof response === 'object' && 'data' in response) {
@@ -95,6 +97,8 @@ export const userProgressApi = {
   },
 
   getCourseProgress: async (courseId: number): Promise<LessonProgress[]> => {
+    console.log(`🔄 Fetching course progress via Next.js API: ${courseId}`);
+    
     const response = await api.get(`/users/progress/course/${courseId}`);
     
     if (response && typeof response === 'object' && 'data' in response) {
@@ -104,6 +108,8 @@ export const userProgressApi = {
   },
 
   getStudyInfo: async (): Promise<StudyInfo> => {
+    console.log('🔄 Fetching study info via Next.js API');
+    
     const response = await api.get('/users/progress/study-info');
     
     if (response && typeof response === 'object' && 'data' in response) {
@@ -113,6 +119,8 @@ export const userProgressApi = {
   },
 
   getLessonProgress: async (lessonId: number): Promise<UserProgressResponse | null> => {
+    console.log(`🔄 Fetching lesson progress via Next.js API: ${lessonId}`);
+    
     const response = await api.get(`/users/progress/lesson/${lessonId}`);
     
     if (response && typeof response === 'object' && 'data' in response) {
