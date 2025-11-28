@@ -1,0 +1,41 @@
+import { NextRequest, NextResponse } from 'next/server';
+import { Lesson } from '@/types/lessonTypes';
+
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || "http://26.112.47.221:3000";
+
+export async function GET(
+  request: NextRequest,
+  { params }: { params: { courseId: string } }
+) {
+  try {
+    const courseId = params.courseId;
+    console.log(`🔄 Fetching lessons by course: ${courseId}`);
+
+    const response = await fetch(`${API_BASE_URL}/lessons/course/${courseId}`, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: request.headers.get('authorization') || '',
+      },
+      cache: 'no-store',
+    });
+
+    if (!response.ok) {
+      throw new Error(`API error: ${response.status} ${response.statusText}`);
+    }
+
+    const responseBody: Lesson[] = await response.json();
+    console.log('✅ Lessons by course fetched successfully');
+    
+    return NextResponse.json(responseBody);
+  } catch (error) {
+    console.error('❌ Error fetching lessons by course:', error);
+    return NextResponse.json(
+      { 
+        status: false, 
+        message: error instanceof Error ? error.message : 'Failed to fetch lessons by course' 
+      },
+      { status: 500 }
+    );
+  }
+}

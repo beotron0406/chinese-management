@@ -1,0 +1,386 @@
+{
+  "description": "Sample API Payloads for Lesson Words & Grammar Patterns",
+  "baseUrl": "http://localhost:3000",
+  "note": "Replace lessonId, wordSenseId, and grammarPatternId with actual IDs from your database",
+
+  "lessonWords": {
+    "addWords_autoOrderIndex": {
+      "endpoint": "POST /lessons/:id/words",
+      "description": "Add words with auto-incremented orderIndex",
+      "payload": [
+        {
+          "wordSenseId": 1
+        },
+        {
+          "wordSenseId": 2
+        },
+        {
+          "wordSenseId": 3
+        }
+      ],
+      "note": "orderIndex will be auto-assigned as 0, 1, 2 (or max+1, max+2, max+3 if words exist)"
+    },
+
+    "addWords_explicitOrderIndex": {
+      "endpoint": "POST /lessons/:id/words",
+      "description": "Add words with explicit orderIndex values",
+      "payload": [
+        {
+          "wordSenseId": 10,
+          "orderIndex": 0
+        },
+        {
+          "wordSenseId": 11,
+          "orderIndex": 1
+        },
+        {
+          "wordSenseId": 12,
+          "orderIndex": 2
+        }
+      ],
+      "note": "Use this when you need specific ordering"
+    },
+
+    "addWords_mixedOrdering": {
+      "endpoint": "POST /lessons/:id/words",
+      "description": "Mix of auto and explicit orderIndex",
+      "payload": [
+        {
+          "wordSenseId": 20,
+          "orderIndex": 5
+        },
+        {
+          "wordSenseId": 21
+        },
+        {
+          "wordSenseId": 22,
+          "orderIndex": 10
+        }
+      ],
+      "note": "Word with ID 21 will get auto-assigned orderIndex (max+1)"
+    },
+
+    "addWords_realistic": {
+      "endpoint": "POST /lessons/5/words",
+      "description": "Realistic example: Adding HSK1 vocabulary for 'Greetings' lesson",
+      "payload": [
+        {
+          "wordSenseId": 42,
+          "orderIndex": 0
+        },
+        {
+          "wordSenseId": 43,
+          "orderIndex": 1
+        },
+        {
+          "wordSenseId": 44,
+          "orderIndex": 2
+        },
+        {
+          "wordSenseId": 45,
+          "orderIndex": 3
+        }
+      ],
+      "note": "Example: 你好, 再见, 谢谢, 对不起"
+    },
+
+    "removeWords": {
+      "endpoint": "DELETE /lessons/:id/words",
+      "description": "Remove multiple words from a lesson",
+      "payload": {
+        "wordSenseIds": [42, 43, 44]
+      }
+    },
+
+    "removeWords_single": {
+      "endpoint": "DELETE /lessons/5/words",
+      "description": "Remove a single word",
+      "payload": {
+        "wordSenseIds": [42]
+      }
+    }
+  },
+
+  "lessonGrammarPatterns": {
+    "addGrammarPatterns_autoOrderIndex": {
+      "endpoint": "POST /lessons/:id/grammar-patterns",
+      "description": "Add grammar patterns with auto-incremented orderIndex",
+      "payload": [
+        {
+          "grammarPatternId": 1
+        },
+        {
+          "grammarPatternId": 2
+        },
+        {
+          "grammarPatternId": 3
+        }
+      ],
+      "note": "orderIndex will be auto-assigned as 0, 1, 2"
+    },
+
+    "addGrammarPatterns_explicitOrderIndex": {
+      "endpoint": "POST /lessons/:id/grammar-patterns",
+      "description": "Add grammar patterns with explicit orderIndex",
+      "payload": [
+        {
+          "grammarPatternId": 10,
+          "orderIndex": 0
+        },
+        {
+          "grammarPatternId": 11,
+          "orderIndex": 1
+        }
+      ]
+    },
+
+    "addGrammarPatterns_realistic": {
+      "endpoint": "POST /lessons/5/grammar-patterns",
+      "description": "Realistic example: Adding HSK1 grammar patterns",
+      "payload": [
+        {
+          "grammarPatternId": 15,
+          "orderIndex": 0
+        },
+        {
+          "grammarPatternId": 16,
+          "orderIndex": 1
+        },
+        {
+          "grammarPatternId": 17,
+          "orderIndex": 2
+        }
+      ],
+      "note": "Example: Subject + 是 + Noun, Subject + Verb + Object, etc."
+    },
+
+    "removeGrammarPatterns": {
+      "endpoint": "DELETE /lessons/:id/grammar-patterns",
+      "description": "Remove multiple grammar patterns from a lesson",
+      "payload": {
+        "grammarPatternIds": [15, 16, 17]
+      }
+    },
+
+    "removeGrammarPatterns_single": {
+      "endpoint": "DELETE /lessons/5/grammar-patterns",
+      "description": "Remove a single grammar pattern",
+      "payload": {
+        "grammarPatternIds": [15]
+      }
+    }
+  },
+
+  "createLessonWithWordsAndGrammar": {
+    "endpoint": "POST /lessons",
+    "description": "Create a new lesson with words and grammar patterns (optional orderIndex)",
+    "payload": {
+      "name": "HSK1 Lesson 1: Greetings",
+      "description": "Learn basic Chinese greetings and introductions",
+      "courseId": 1,
+      "hskLevel": 1,
+      "orderIndex": 1,
+      "words": [
+        {
+          "wordSenseId": 42
+        },
+        {
+          "wordSenseId": 43
+        },
+        {
+          "wordSenseId": 44
+        }
+      ],
+      "grammarPatterns": [
+        {
+          "grammarPatternId": 15
+        },
+        {
+          "grammarPatternId": 16
+        }
+      ]
+    },
+    "note": "Words and grammar patterns will have auto-assigned orderIndex starting from 0"
+  },
+
+  "updateLessonWordsAndGrammar": {
+    "endpoint": "PATCH /lessons/:id",
+    "description": "Update lesson and replace all words/grammar patterns",
+    "payload": {
+      "name": "Updated Lesson Name",
+      "words": [
+        {
+          "wordSenseId": 50
+        },
+        {
+          "wordSenseId": 51,
+          "orderIndex": 10
+        }
+      ],
+      "grammarPatterns": [
+        {
+          "grammarPatternId": 20
+        }
+      ]
+    },
+    "note": "This replaces ALL existing words/patterns. Use POST /lessons/:id/words to add without replacing."
+  },
+
+  "curlExamples": {
+    "addWords": {
+      "description": "cURL command to add words to lesson ID 5",
+      "command": "curl -X POST \"http://localhost:3000/lessons/5/words\" \\\n  -H \"Authorization: Bearer YOUR_ADMIN_TOKEN\" \\\n  -H \"Content-Type: application/json\" \\\n  -d '[{\"wordSenseId\": 42}, {\"wordSenseId\": 43}]'"
+    },
+    "getWords": {
+      "description": "cURL command to get all words for lesson ID 5",
+      "command": "curl -X GET \"http://localhost:3000/lessons/5/words\" \\\n  -H \"Authorization: Bearer YOUR_TOKEN\""
+    },
+    "removeWords": {
+      "description": "cURL command to remove words from lesson ID 5",
+      "command": "curl -X DELETE \"http://localhost:3000/lessons/5/words\" \\\n  -H \"Authorization: Bearer YOUR_ADMIN_TOKEN\" \\\n  -H \"Content-Type: application/json\" \\\n  -d '{\"wordSenseIds\": [42, 43]}'"
+    },
+    "addGrammarPatterns": {
+      "description": "cURL command to add grammar patterns to lesson ID 5",
+      "command": "curl -X POST \"http://localhost:3000/lessons/5/grammar-patterns\" \\\n  -H \"Authorization: Bearer YOUR_ADMIN_TOKEN\" \\\n  -H \"Content-Type: application/json\" \\\n  -d '[{\"grammarPatternId\": 15}, {\"grammarPatternId\": 16}]'"
+    },
+    "getGrammarPatterns": {
+      "description": "cURL command to get all grammar patterns for lesson ID 5",
+      "command": "curl -X GET \"http://localhost:3000/lessons/5/grammar-patterns\" \\\n  -H \"Authorization: Bearer YOUR_TOKEN\""
+    },
+    "removeGrammarPatterns": {
+      "description": "cURL command to remove grammar patterns from lesson ID 5",
+      "command": "curl -X DELETE \"http://localhost:3000/lessons/5/grammar-patterns\" \\\n  -H \"Authorization: Bearer YOUR_ADMIN_TOKEN\" \\\n  -H \"Content-Type: application/json\" \\\n  -d '{\"grammarPatternIds\": [15, 16]}'"
+    }
+  },
+
+  "postmanCollection": {
+    "note": "You can import these examples into Postman using the collection format below",
+    "variables": {
+      "baseUrl": "http://localhost:3000",
+      "adminToken": "YOUR_ADMIN_JWT_TOKEN",
+      "userToken": "YOUR_USER_JWT_TOKEN",
+      "lessonId": "5"
+    }
+  },
+
+  "commonScenarios": {
+    "scenario1_buildLessonVocabulary": {
+      "description": "Scenario: Building vocabulary for a new lesson",
+      "steps": [
+        {
+          "step": 1,
+          "action": "Create the lesson",
+          "endpoint": "POST /lessons",
+          "payload": {
+            "name": "HSK1 Lesson 1",
+            "courseId": 1,
+            "hskLevel": 1
+          }
+        },
+        {
+          "step": 2,
+          "action": "Add initial words",
+          "endpoint": "POST /lessons/{{lessonId}}/words",
+          "payload": [
+            {"wordSenseId": 1},
+            {"wordSenseId": 2},
+            {"wordSenseId": 3}
+          ]
+        },
+        {
+          "step": 3,
+          "action": "Add grammar patterns",
+          "endpoint": "POST /lessons/{{lessonId}}/grammar-patterns",
+          "payload": [
+            {"grammarPatternId": 1},
+            {"grammarPatternId": 2}
+          ]
+        }
+      ]
+    },
+
+    "scenario2_reorderWords": {
+      "description": "Scenario: Change the order of words in a lesson",
+      "steps": [
+        {
+          "step": 1,
+          "action": "Get current words",
+          "endpoint": "GET /lessons/5/words",
+          "note": "Get current words to know their IDs"
+        },
+        {
+          "step": 2,
+          "action": "Remove all words",
+          "endpoint": "DELETE /lessons/5/words",
+          "payload": {
+            "wordSenseIds": [1, 2, 3, 4]
+          }
+        },
+        {
+          "step": 3,
+          "action": "Add words in new order",
+          "endpoint": "POST /lessons/5/words",
+          "payload": [
+            {"wordSenseId": 4, "orderIndex": 0},
+            {"wordSenseId": 1, "orderIndex": 1},
+            {"wordSenseId": 3, "orderIndex": 2},
+            {"wordSenseId": 2, "orderIndex": 3}
+          ]
+        }
+      ]
+    },
+
+    "scenario3_appendNewWords": {
+      "description": "Scenario: Add more words to an existing lesson without changing order",
+      "steps": [
+        {
+          "step": 1,
+          "action": "Add new words (orderIndex auto-increments)",
+          "endpoint": "POST /lessons/5/words",
+          "payload": [
+            {"wordSenseId": 100},
+            {"wordSenseId": 101},
+            {"wordSenseId": 102}
+          ],
+          "note": "These will be appended after existing words"
+        }
+      ]
+    }
+  },
+
+  "errorExamples": {
+    "error_duplicateWord": {
+      "scenario": "Try to add a word that's already in the lesson",
+      "endpoint": "POST /lessons/5/words",
+      "payload": [
+        {"wordSenseId": 42}
+      ],
+      "expectedError": {
+        "statusCode": 400,
+        "message": "WordSense IDs already assigned to this lesson: 42"
+      }
+    },
+    "error_invalidWordSenseId": {
+      "scenario": "Try to add a word sense that doesn't exist",
+      "endpoint": "POST /lessons/5/words",
+      "payload": [
+        {"wordSenseId": 99999}
+      ],
+      "expectedError": {
+        "statusCode": 400,
+        "message": "WordSense IDs not found: 99999"
+      }
+    },
+    "error_notAdmin": {
+      "scenario": "Try to add words with User role (not Admin)",
+      "endpoint": "POST /lessons/5/words",
+      "payload": [
+        {"wordSenseId": 42}
+      ],
+      "expectedError": {
+        "statusCode": 403,
+        "message": "Forbidden"
+      }
+    }
+  }
+}

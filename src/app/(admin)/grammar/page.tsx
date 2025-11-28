@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import GrammarList from '@/components/grammar/GrammarList';
+import GrammarList from './grammarList';
 
 const GrammarPage = () => {
   return <GrammarList />;
