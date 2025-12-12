@@ -127,35 +127,24 @@ export const lessonApi = {
 
   // Get complete lesson with content
   getLessonWithContent: async (id: number): Promise<LessonContentResponse> => {
-  console.log("🔍 getLessonWithContent called with id:", id);
-  console.log("📡 Making request to: /lessons/content/" + id);
-  
-  try {
-    const response = await api.get(`/lessons/content/${id}`);
-    
-    console.log("📦 Raw API response:", response);
-    console.log("📦 Response data:", response.data);
-    
-    // Check what's actually in response
-    if (!response) {
-      console.log("❌ Response is falsy");
-      return { id: 0, name: '', description: '', content: [], words: [], grammarPatterns: [] } as LessonContentResponse;
-    }
-    
-    if (!response.data) {
-      console.log("❌ Response.data is falsy");
-      console.log("Returning response.data (may be undefined):", response.data);
-      return response.data as LessonContentResponse;
-    }
-    
-    console.log("✅ Returning response.data");  
-    return response.data as LessonContentResponse;
-  } catch (error) {
-    console.error("❌ Error in getLessonWithContent:", error);
-    throw error;
-  }
-},
+    try {
+      const response = await api.get(`/lessons/content/${id}`);
+      if (!response) {
+        return {
+          id: 0,
+          name: "",
+          description: "",
+          content: [],
+          words: [],
+          grammarPatterns: [],
+        } as LessonContentResponse;
+      }
 
+      return response as unknown as LessonContentResponse;
+    } catch (error) {
+      throw error;
+    }
+  },
   getLessonItems: async (id: number): Promise<LessonItemsResponse> => {
     const response = await api.get(`/lessons/content/${id}`);
 
