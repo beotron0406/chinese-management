@@ -111,7 +111,9 @@ export default function LessonItemsPage() {
 
   const [items, setItems] = useState<ContentItem[]>([]);
   const [lessonWords, setLessonWords] = useState<LessonWord[]>([]);
-  const [lessonGrammar, setLessonGrammar] = useState<LessonGrammarPattern[]>([]);
+  const [lessonGrammar, setLessonGrammar] = useState<LessonGrammarPattern[]>(
+    []
+  );
   const [loading, setLoading] = useState(false);
   const [modalVisible, setModalVisible] = useState(false);
   const [addWordsModalVisible, setAddWordsModalVisible] = useState(false);
@@ -123,7 +125,7 @@ export default function LessonItemsPage() {
   const fetchData = useCallback(async () => {
     console.log("=== fetchData START ===");
     console.log("lessonId:", lessonId);
-    
+
     if (!lessonId) {
       console.log("❌ No lessonId, returning");
       return;
@@ -133,7 +135,7 @@ export default function LessonItemsPage() {
     try {
       console.log("📡 Calling API: lessonApi.getLessonWithContent");
       const response = await lessonApi.getLessonWithContent(parseInt(lessonId));
-      
+
       console.log("✅ API Response:", response);
       console.log("Response type:", typeof response);
       console.log("Response keys:", Object.keys(response || {}));
@@ -236,10 +238,15 @@ export default function LessonItemsPage() {
     }
   };
 
-  const handleDeleteGrammarPattern = async (patternId: number, grammarPatternId: number) => {
+  const handleDeleteGrammarPattern = async (
+    patternId: number,
+    grammarPatternId: number
+  ) => {
     console.log("🗑️ Deleting grammar pattern:", patternId, grammarPatternId);
     try {
-      await lessonApi.removeGrammarPatternsFromLesson(parseInt(lessonId), [grammarPatternId]);
+      await lessonApi.removeGrammarPatternsFromLesson(parseInt(lessonId), [
+        grammarPatternId,
+      ]);
       message.success("Grammar pattern removed successfully");
       fetchData();
     } catch (error) {
@@ -249,19 +256,33 @@ export default function LessonItemsPage() {
   };
 
   // Render content cards based on type
+  // ...existing code...
+
+  // Render content cards based on type
   const renderContentCard = (item: ContentItem) => {
     console.log("🎨 Rendering card for type:", item.type, "item:", item);
     const { type, data } = item;
+
+    const cardStyle = { marginBottom: 12, fontSize: "0.85em" };
+    const titleLevel = 5;
+    const smallTextStyle = { fontSize: 14 };
 
     if (type === "content_word_definition") {
       return (
         <Card
           hoverable
-          style={{ marginBottom: 16 }}
+          style={cardStyle}
+          size="small"
           extra={
-            <Space>
-              <Tag color="green">Word Definition</Tag>
-              <Button size="small" icon={<EditOutlined />} onClick={() => handleEditItem(item)} />
+            <Space size="small">
+              <Tag color="green" style={{ fontSize: 11 }}>
+                Word Definition
+              </Tag>
+              <Button
+                size="small"
+                icon={<EditOutlined />}
+                onClick={() => handleEditItem(item)}
+              />
               <Popconfirm
                 title="Delete this item?"
                 onConfirm={() => handleDeleteItem(item.id)}
@@ -271,20 +292,38 @@ export default function LessonItemsPage() {
             </Space>
           }
         >
-          <Row gutter={16}>
+          <Row gutter={12}>
             {data.picture_url && (
               <Col span={6}>
-                <Image src={data.picture_url} alt="word" style={{ width: "100%" }} />
+                <Image
+                  src={data.picture_url}
+                  alt="word"
+                  style={{ width: "100%", maxHeight: 120, objectFit: "cover" }}
+                />
               </Col>
             )}
             <Col span={data.picture_url ? 18 : 24}>
-              <Title level={2}>{data.chinese_text}</Title>
-              <Text type="secondary" style={{ fontSize: 18 }}>{data.pinyin}</Text>
+              <Title level={3} style={{ marginBottom: 4 }}>
+                {data.chinese_text}
+              </Title>
+              <Text type="secondary" style={{ fontSize: 14 }}>
+                {data.pinyin}
+              </Text>
               <br />
-              <Tag color="blue">{data.speech}</Tag>
-              <Paragraph style={{ marginTop: 12 }}>{data.translation}</Paragraph>
+              <Tag color="blue" style={{ fontSize: 11, marginTop: 4 }}>
+                {data.speech}
+              </Tag>
+              <Paragraph
+                style={{ marginTop: 8, marginBottom: 0, fontSize: 13 }}
+              >
+                {data.translation}
+              </Paragraph>
               {data.audio_url && (
-                <audio controls src={data.audio_url} style={{ width: "100%", marginTop: 8 }} />
+                <audio
+                  controls
+                  src={data.audio_url}
+                  style={{ width: "100%", marginTop: 8, height: 32 }}
+                />
               )}
             </Col>
           </Row>
@@ -296,11 +335,18 @@ export default function LessonItemsPage() {
       return (
         <Card
           hoverable
-          style={{ marginBottom: 16 }}
+          style={cardStyle}
+          size="small"
           extra={
-            <Space>
-              <Tag color="cyan">Sentences</Tag>
-              <Button size="small" icon={<EditOutlined />} onClick={() => handleEditItem(item)} />
+            <Space size="small">
+              <Tag color="cyan" style={{ fontSize: 11 }}>
+                Sentences
+              </Tag>
+              <Button
+                size="small"
+                icon={<EditOutlined />}
+                onClick={() => handleEditItem(item)}
+              />
               <Popconfirm
                 title="Delete this item?"
                 onConfirm={() => handleDeleteItem(item.id)}
@@ -311,19 +357,46 @@ export default function LessonItemsPage() {
           }
         >
           {data.picture_url && (
-            <Image src={data.picture_url} alt="sentences" style={{ marginBottom: 16, maxWidth: 300 }} />
+            <Image
+              src={data.picture_url}
+              alt="sentences"
+              style={{
+                marginBottom: 12,
+                maxWidth: 200,
+                maxHeight: 120,
+                objectFit: "cover",
+              }}
+            />
           )}
-          {Array.isArray(data.chinese_text) && data.chinese_text.map((text: string, index: number) => (
-            <div key={index} style={{ marginBottom: 12 }}>
-              <Title level={4}>{text}</Title>
-              <Text type="secondary">{data.pinyin?.[index]}</Text>
-            </div>
-          ))}
+          {Array.isArray(data.chinese_text) &&
+            data.chinese_text.map((text: string, index: number) => (
+              <div key={index} style={{ marginBottom: 8 }}>
+                <Title level={titleLevel} style={{ marginBottom: 2 }}>
+                  {text}
+                </Title>
+                <Text type="secondary" style={{ fontSize: 12 }}>
+                  {data.pinyin?.[index]}
+                </Text>
+              </div>
+            ))}
           {data.explaination && (
-            <Paragraph style={{ marginTop: 16, fontStyle: "italic" }}>{data.explaination}</Paragraph>
+            <Paragraph
+              style={{
+                marginTop: 12,
+                fontStyle: "italic",
+                fontSize: 12,
+                marginBottom: 0,
+              }}
+            >
+              {data.explaination}
+            </Paragraph>
           )}
           {data.audio_url && (
-            <audio controls src={data.audio_url} style={{ width: "100%", marginTop: 8 }} />
+            <audio
+              controls
+              src={data.audio_url}
+              style={{ width: "100%", marginTop: 8, height: 32 }}
+            />
           )}
         </Card>
       );
@@ -333,11 +406,18 @@ export default function LessonItemsPage() {
       return (
         <Card
           hoverable
-          style={{ marginBottom: 16 }}
+          style={cardStyle}
+          size="small"
           extra={
-            <Space>
-              <Tag color="blue">Selection Question</Tag>
-              <Button size="small" icon={<EditOutlined />} onClick={() => handleEditItem(item)} />
+            <Space size="small">
+              <Tag color="blue" style={{ fontSize: 11 }}>
+                Selection Question
+              </Tag>
+              <Button
+                size="small"
+                icon={<EditOutlined />}
+                onClick={() => handleEditItem(item)}
+              />
               <Popconfirm
                 title="Delete this item?"
                 onConfirm={() => handleDeleteItem(item.id)}
@@ -347,23 +427,37 @@ export default function LessonItemsPage() {
             </Space>
           }
         >
-          <Title level={4}>{data.instruction}</Title>
-          {data.question && <Paragraph>{data.question}</Paragraph>}
-          
+          <Title level={titleLevel} style={{ marginBottom: 8 }}>
+            {data.instruction}
+          </Title>
+          {data.question && (
+            <Paragraph style={{ fontSize: 13, marginBottom: 12 }}>
+              {data.question}
+            </Paragraph>
+          )}
+
           {data.audio_url && (
-            <div style={{ marginBottom: 16 }}>
-              <audio controls src={data.audio_url} style={{ width: "100%" }} />
+            <div style={{ marginBottom: 12 }}>
+              <audio
+                controls
+                src={data.audio_url}
+                style={{ width: "100%", height: 32 }}
+              />
               {data.audio_transcript_chinese && (
-                <div style={{ marginTop: 8 }}>
-                  <Text>{data.audio_transcript_chinese}</Text>
+                <div style={{ marginTop: 6 }}>
+                  <Text style={{ fontSize: 12 }}>
+                    {data.audio_transcript_chinese}
+                  </Text>
                   <br />
-                  <Text type="secondary">{data.audio_transcript_pinyin}</Text>
+                  <Text type="secondary" style={{ fontSize: 11 }}>
+                    {data.audio_transcript_pinyin}
+                  </Text>
                 </div>
               )}
             </div>
           )}
 
-          <Row gutter={[16, 16]}>
+          <Row gutter={[12, 12]}>
             {data.options?.map((option: any) => {
               const isCorrect = option.id === data.correctAnswer;
               return (
@@ -371,15 +465,34 @@ export default function LessonItemsPage() {
                   <Card
                     size="small"
                     style={{
-                      border: isCorrect ? "2px solid #52c41a" : "1px solid #d9d9d9",
+                      border: isCorrect
+                        ? "2px solid #52c41a"
+                        : "1px solid #d9d9d9",
                     }}
+                    bodyStyle={{ padding: 8 }}
                   >
                     {option.image ? (
-                      <Image src={option.image} alt={option.alt} style={{ width: "100%" }} />
+                      <Image
+                        src={option.image}
+                        alt={option.alt}
+                        style={{
+                          width: "100%",
+                          maxHeight: 80,
+                          objectFit: "cover",
+                        }}
+                      />
                     ) : (
-                      <Text>{option.text}</Text>
+                      <Text style={{ fontSize: 12 }}>{option.text}</Text>
                     )}
-                    {isCorrect && <CheckCircleOutlined style={{ color: "#52c41a", marginLeft: 8 }} />}
+                    {isCorrect && (
+                      <CheckCircleOutlined
+                        style={{
+                          color: "#52c41a",
+                          marginLeft: 4,
+                          fontSize: 12,
+                        }}
+                      />
+                    )}
                   </Card>
                 </Col>
               );
@@ -387,8 +500,18 @@ export default function LessonItemsPage() {
           </Row>
 
           {data.explanation && (
-            <Paragraph style={{ marginTop: 16, padding: 12, background: "#f0f2f5" }}>
-              <Text strong>Explanation: </Text>
+            <Paragraph
+              style={{
+                marginTop: 12,
+                padding: 8,
+                background: "#f0f2f5",
+                fontSize: 12,
+                marginBottom: 0,
+              }}
+            >
+              <Text strong style={{ fontSize: 12 }}>
+                Explanation:{" "}
+              </Text>
               {data.explanation}
             </Paragraph>
           )}
@@ -400,11 +523,18 @@ export default function LessonItemsPage() {
       return (
         <Card
           hoverable
-          style={{ marginBottom: 16 }}
+          style={cardStyle}
+          size="small"
           extra={
-            <Space>
-              <Tag color="purple">Matching Question</Tag>
-              <Button size="small" icon={<EditOutlined />} onClick={() => handleEditItem(item)} />
+            <Space size="small">
+              <Tag color="purple" style={{ fontSize: 11 }}>
+                Matching Question
+              </Tag>
+              <Button
+                size="small"
+                icon={<EditOutlined />}
+                onClick={() => handleEditItem(item)}
+              />
               <Popconfirm
                 title="Delete this item?"
                 onConfirm={() => handleDeleteItem(item.id)}
@@ -414,40 +544,95 @@ export default function LessonItemsPage() {
             </Space>
           }
         >
-          <Title level={4}>{data.instruction}</Title>
-          
-          <Row gutter={16}>
+          <Title level={titleLevel} style={{ marginBottom: 12 }}>
+            {data.instruction}
+          </Title>
+
+          <Row gutter={12}>
             <Col span={12}>
-              <Title level={5}>Left Column</Title>
+              <Title level={5} style={{ fontSize: 13, marginBottom: 8 }}>
+                Left Column
+              </Title>
               {data.leftColumn?.map((item: any) => (
-                <Card key={item.id} size="small" style={{ marginBottom: 8 }}>
-                  {item.audio_url && <audio controls src={item.audio_url} style={{ width: "100%" }} />}
-                  {item.text && <Text>{item.text}</Text>}
-                  {item.pinyin && <Text type="secondary"> ({item.pinyin})</Text>}
+                <Card
+                  key={item.id}
+                  size="small"
+                  style={{ marginBottom: 6 }}
+                  bodyStyle={{ padding: 8 }}
+                >
+                  {item.audio_url && (
+                    <audio
+                      controls
+                      src={item.audio_url}
+                      style={{ width: "100%", height: 28 }}
+                    />
+                  )}
+                  {item.text && (
+                    <Text style={{ fontSize: 12 }}>{item.text}</Text>
+                  )}
+                  {item.pinyin && (
+                    <Text type="secondary" style={{ fontSize: 11 }}>
+                      {" "}
+                      ({item.pinyin})
+                    </Text>
+                  )}
                 </Card>
               ))}
             </Col>
             <Col span={12}>
-              <Title level={5}>Right Column</Title>
+              <Title level={5} style={{ fontSize: 13, marginBottom: 8 }}>
+                Right Column
+              </Title>
               {data.rightColumn?.map((item: any) => (
-                <Card key={item.id} size="small" style={{ marginBottom: 8 }}>
-                  {item.image && <Image src={item.image} alt={item.alt} style={{ width: "100%" }} />}
-                  {item.text && <Text>{item.text}</Text>}
+                <Card
+                  key={item.id}
+                  size="small"
+                  style={{ marginBottom: 6 }}
+                  bodyStyle={{ padding: 8 }}
+                >
+                  {item.image && (
+                    <Image
+                      src={item.image}
+                      alt={item.alt}
+                      style={{
+                        width: "100%",
+                        maxHeight: 60,
+                        objectFit: "cover",
+                      }}
+                    />
+                  )}
+                  {item.text && (
+                    <Text style={{ fontSize: 12 }}>{item.text}</Text>
+                  )}
                 </Card>
               ))}
             </Col>
           </Row>
 
-          <div style={{ marginTop: 16 }}>
-            <Text strong>Correct Matches: </Text>
+          <div style={{ marginTop: 12 }}>
+            <Text strong style={{ fontSize: 12 }}>
+              Correct Matches:{" "}
+            </Text>
             {data.correctMatches?.map((match: any, index: number) => (
-              <Tag key={index} color="green">{match.left} ↔ {match.right}</Tag>
+              <Tag key={index} color="green" style={{ fontSize: 11 }}>
+                {match.left} ↔ {match.right}
+              </Tag>
             ))}
           </div>
 
           {data.explanation && (
-            <Paragraph style={{ marginTop: 16, padding: 12, background: "#f0f2f5" }}>
-              <Text strong>Explanation: </Text>
+            <Paragraph
+              style={{
+                marginTop: 12,
+                padding: 8,
+                background: "#f0f2f5",
+                fontSize: 12,
+                marginBottom: 0,
+              }}
+            >
+              <Text strong style={{ fontSize: 12 }}>
+                Explanation:{" "}
+              </Text>
               {data.explanation}
             </Paragraph>
           )}
@@ -459,11 +644,18 @@ export default function LessonItemsPage() {
       return (
         <Card
           hoverable
-          style={{ marginBottom: 16 }}
+          style={cardStyle}
+          size="small"
           extra={
-            <Space>
-              <Tag color="orange">True/False Question</Tag>
-              <Button size="small" icon={<EditOutlined />} onClick={() => handleEditItem(item)} />
+            <Space size="small">
+              <Tag color="orange" style={{ fontSize: 11 }}>
+                True/False Question
+              </Tag>
+              <Button
+                size="small"
+                icon={<EditOutlined />}
+                onClick={() => handleEditItem(item)}
+              />
               <Popconfirm
                 title="Delete this item?"
                 onConfirm={() => handleDeleteItem(item.id)}
@@ -473,32 +665,66 @@ export default function LessonItemsPage() {
             </Space>
           }
         >
-          <Title level={4}>{data.instruction}</Title>
-          
+          <Title level={titleLevel} style={{ marginBottom: 8 }}>
+            {data.instruction}
+          </Title>
+
           {data.audio && (
-            <audio controls src={data.audio} style={{ width: "100%", marginBottom: 16 }} />
+            <audio
+              controls
+              src={data.audio}
+              style={{ width: "100%", marginBottom: 12, height: 32 }}
+            />
           )}
 
-          <div style={{ marginBottom: 16 }}>
-            <Text strong>{data.transcript}</Text>
+          <div style={{ marginBottom: 12 }}>
+            <Text strong style={{ fontSize: 13 }}>
+              {data.transcript}
+            </Text>
             <br />
-            <Text type="secondary">{data.pinyin}</Text>
+            <Text type="secondary" style={{ fontSize: 12 }}>
+              {data.pinyin}
+            </Text>
             <br />
-            <Text>{data.english}</Text>
+            <Text style={{ fontSize: 12 }}>{data.english}</Text>
           </div>
 
           <div>
-            <Text strong>Correct Answer: </Text>
+            <Text strong style={{ fontSize: 12 }}>
+              Correct Answer:{" "}
+            </Text>
             {data.correctAnswer ? (
-              <Tag color="green" icon={<CheckCircleOutlined />}>True</Tag>
+              <Tag
+                color="green"
+                icon={<CheckCircleOutlined />}
+                style={{ fontSize: 11 }}
+              >
+                True
+              </Tag>
             ) : (
-              <Tag color="red" icon={<CloseCircleOutlined />}>False</Tag>
+              <Tag
+                color="red"
+                icon={<CloseCircleOutlined />}
+                style={{ fontSize: 11 }}
+              >
+                False
+              </Tag>
             )}
           </div>
 
           {data.explanation && (
-            <Paragraph style={{ marginTop: 16, padding: 12, background: "#f0f2f5" }}>
-              <Text strong>Explanation: </Text>
+            <Paragraph
+              style={{
+                marginTop: 12,
+                padding: 8,
+                background: "#f0f2f5",
+                fontSize: 12,
+                marginBottom: 0,
+              }}
+            >
+              <Text strong style={{ fontSize: 12 }}>
+                Explanation:{" "}
+              </Text>
               {data.explanation}
             </Paragraph>
           )}
@@ -510,11 +736,18 @@ export default function LessonItemsPage() {
       return (
         <Card
           hoverable
-          style={{ marginBottom: 16 }}
+          style={cardStyle}
+          size="small"
           extra={
-            <Space>
-              <Tag color="magenta">Fill in the Blank</Tag>
-              <Button size="small" icon={<EditOutlined />} onClick={() => handleEditItem(item)} />
+            <Space size="small">
+              <Tag color="magenta" style={{ fontSize: 11 }}>
+                Fill in the Blank
+              </Tag>
+              <Button
+                size="small"
+                icon={<EditOutlined />}
+                onClick={() => handleEditItem(item)}
+              />
               <Popconfirm
                 title="Delete this item?"
                 onConfirm={() => handleDeleteItem(item.id)}
@@ -524,14 +757,18 @@ export default function LessonItemsPage() {
             </Space>
           }
         >
-          <Title level={4}>{data.instruction}</Title>
-          
-          <div style={{ marginBottom: 16 }}>
-            <Text style={{ fontSize: 18 }}>
+          <Title level={titleLevel} style={{ marginBottom: 8 }}>
+            {data.instruction}
+          </Title>
+
+          <div style={{ marginBottom: 12 }}>
+            <Text style={{ fontSize: 14 }}>
               {data.sentence?.map((part: string, index: number) => (
                 <span key={index}>
                   {part.startsWith("[") ? (
-                    <Tag color="blue">{part}</Tag>
+                    <Tag color="blue" style={{ fontSize: 11 }}>
+                      {part}
+                    </Tag>
                   ) : (
                     part
                   )}
@@ -539,34 +776,50 @@ export default function LessonItemsPage() {
               ))}
             </Text>
             <br />
-            <Text type="secondary">
+            <Text type="secondary" style={{ fontSize: 12 }}>
               {data.pinyin?.join(" ")}
             </Text>
             <br />
-            <Text>{data.vietnamese}</Text>
+            <Text style={{ fontSize: 12 }}>{data.vietnamese}</Text>
           </div>
 
           {data.optionBank && (
-            <div style={{ marginBottom: 16 }}>
-              <Text strong>Option Bank: </Text>
+            <div style={{ marginBottom: 12 }}>
+              <Text strong style={{ fontSize: 12 }}>
+                Option Bank:{" "}
+              </Text>
               {data.optionBank.map((option: string, index: number) => (
-                <Tag key={index}>{option}</Tag>
+                <Tag key={index} style={{ fontSize: 11 }}>
+                  {option}
+                </Tag>
               ))}
             </div>
           )}
 
           <div>
-            <Text strong>Correct Answers: </Text>
+            <Text strong style={{ fontSize: 12 }}>
+              Correct Answers:{" "}
+            </Text>
             {data.blanks?.map((blank: any, index: number) => (
-              <Tag key={index} color="green">
+              <Tag key={index} color="green" style={{ fontSize: 11 }}>
                 [{blank.index}] = {blank.correct.join(", ")}
               </Tag>
             ))}
           </div>
 
           {data.explanation && (
-            <Paragraph style={{ marginTop: 16, padding: 12, background: "#f0f2f5" }}>
-              <Text strong>Explanation: </Text>
+            <Paragraph
+              style={{
+                marginTop: 12,
+                padding: 8,
+                background: "#f0f2f5",
+                fontSize: 12,
+                marginBottom: 0,
+              }}
+            >
+              <Text strong style={{ fontSize: 12 }}>
+                Explanation:{" "}
+              </Text>
               {data.explanation}
             </Paragraph>
           )}
@@ -574,16 +827,19 @@ export default function LessonItemsPage() {
       );
     }
 
-    // Default fallback
-    console.log("⚠️ Using fallback render for type:", type);
     return (
       <Card
         hoverable
-        style={{ marginBottom: 16 }}
+        style={cardStyle}
+        size="small"
         extra={
-          <Space>
-            <Tag>{type}</Tag>
-            <Button size="small" icon={<EditOutlined />} onClick={() => handleEditItem(item)} />
+          <Space size="small">
+            <Tag style={{ fontSize: 11 }}>{type}</Tag>
+            <Button
+              size="small"
+              icon={<EditOutlined />}
+              onClick={() => handleEditItem(item)}
+            />
             <Popconfirm
               title="Delete this item?"
               onConfirm={() => handleDeleteItem(item.id)}
@@ -593,10 +849,14 @@ export default function LessonItemsPage() {
           </Space>
         }
       >
-        <pre>{JSON.stringify(data, null, 2)}</pre>
+        <pre style={{ fontSize: 11 }}>{JSON.stringify(data, null, 2)}</pre>
       </Card>
     );
   };
+
+  // ...existing code...
+
+  // ...existing code...
 
   console.log("🎨 Rendering component, activeTab:", activeTab);
 
@@ -608,15 +868,27 @@ export default function LessonItemsPage() {
           onBack: () => router.push(`/courses/${courseId}/lesson/${lessonId}`),
           extra:
             activeTab === "items" ? (
-              <Button type="primary" icon={<PlusOutlined />} onClick={handleCreateItem}>
+              <Button
+                type="primary"
+                icon={<PlusOutlined />}
+                onClick={handleCreateItem}
+              >
                 Add Item
               </Button>
             ) : activeTab === "words" ? (
-              <Button type="primary" icon={<PlusOutlined />} onClick={() => setAddWordsModalVisible(true)}>
+              <Button
+                type="primary"
+                icon={<PlusOutlined />}
+                onClick={() => setAddWordsModalVisible(true)}
+              >
                 Add Words
               </Button>
             ) : (
-              <Button type="primary" icon={<PlusOutlined />} onClick={() => setAddGrammarModalVisible(true)}>
+              <Button
+                type="primary"
+                icon={<PlusOutlined />}
+                onClick={() => setAddGrammarModalVisible(true)}
+              >
                 Add Grammar Patterns
               </Button>
             ),
@@ -678,37 +950,72 @@ export default function LessonItemsPage() {
           </TabPane>
 
           <TabPane tab={`Words (${lessonWords.length})`} key="words">
-            <Row gutter={[16, 16]}>
+            <Row gutter={[12, 12]}>
               {lessonWords.map((word) => (
                 <Col span={8} key={word.id}>
                   <Card
                     hoverable
+                    size="small"
                     cover={
                       word.wordSense?.imageUrl ? (
-                        <Image src={word.wordSense.imageUrl} alt="word" style={{ height: 200, objectFit: "cover" }} />
+                        <Image
+                          src={word.wordSense.imageUrl}
+                          alt="word"
+                          style={{ height: 120, objectFit: "cover" }}
+                        />
                       ) : null
                     }
                     actions={[
                       <Popconfirm
                         key="delete"
                         title="Remove this word?"
-                        onConfirm={() => handleDeleteWord(word.id, word.wordSenseId)}
+                        onConfirm={() =>
+                          handleDeleteWord(word.id, word.wordSenseId)
+                        }
                       >
-                        <DeleteOutlined style={{ color: "red" }} />
+                        <DeleteOutlined
+                          style={{ color: "red", fontSize: 14 }}
+                        />
                       </Popconfirm>,
                     ]}
+                    bodyStyle={{ padding: 12 }}
                   >
-                    <Title level={3}>{word.wordSense?.word.simplified}</Title>
-                    <Text type="secondary">{word.wordSense?.pinyin}</Text>
+                    <Title level={4} style={{ marginBottom: 4 }}>
+                      {word.wordSense?.word.simplified}
+                    </Title>
+                    <Text type="secondary" style={{ fontSize: 12 }}>
+                      {word.wordSense?.pinyin}
+                    </Text>
                     <br />
-                    {word.wordSense?.partOfSpeech && <Tag color="blue">{word.wordSense.partOfSpeech}</Tag>}
-                    {word.wordSense?.hskLevel && <Tag color="green">HSK {word.wordSense.hskLevel}</Tag>}
-                    {word.wordSense?.isPrimary && <Tag color="gold">Primary</Tag>}
+                    {word.wordSense?.partOfSpeech && (
+                      <Tag color="blue" style={{ fontSize: 10 }}>
+                        {word.wordSense.partOfSpeech}
+                      </Tag>
+                    )}
+                    {word.wordSense?.hskLevel && (
+                      <Tag color="green" style={{ fontSize: 10 }}>
+                        HSK {word.wordSense.hskLevel}
+                      </Tag>
+                    )}
+                    {word.wordSense?.isPrimary && (
+                      <Tag color="gold" style={{ fontSize: 10 }}>
+                        Primary
+                      </Tag>
+                    )}
                     {word.wordSense?.translations?.map((trans, idx) => (
-                      <Paragraph key={idx}>{trans.translation}</Paragraph>
+                      <Paragraph
+                        key={idx}
+                        style={{ fontSize: 12, marginBottom: 4 }}
+                      >
+                        {trans.translation}
+                      </Paragraph>
                     ))}
                     {word.wordSense?.audioUrl && (
-                      <audio controls src={word.wordSense.audioUrl} style={{ width: "100%", marginTop: 8 }} />
+                      <audio
+                        controls
+                        src={word.wordSense.audioUrl}
+                        style={{ width: "100%", marginTop: 6, height: 28 }}
+                      />
                     )}
                   </Card>
                 </Col>
@@ -720,29 +1027,48 @@ export default function LessonItemsPage() {
             {lessonGrammar.map((grammar) => (
               <Card
                 key={grammar.id}
-                style={{ marginBottom: 16 }}
+                size="small"
+                style={{ marginBottom: 12 }}
+                bodyStyle={{ padding: 12 }}
                 extra={
                   <Popconfirm
                     title="Remove this grammar pattern?"
-                    onConfirm={() => handleDeleteGrammarPattern(grammar.id, grammar.grammarPatternId)}
+                    onConfirm={() =>
+                      handleDeleteGrammarPattern(
+                        grammar.id,
+                        grammar.grammarPatternId
+                      )
+                    }
                   >
                     <Button size="small" danger icon={<DeleteOutlined />} />
                   </Popconfirm>
                 }
               >
-                <Title level={4}>{grammar.grammarPattern?.pattern.join(" ")}</Title>
-                <Text type="secondary">{grammar.grammarPattern?.patternPinyin?.join(" ")}</Text>
+                <Title level={5} style={{ marginBottom: 4 }}>
+                  {grammar.grammarPattern?.pattern.join(" ")}
+                </Title>
+                <Text type="secondary" style={{ fontSize: 12 }}>
+                  {grammar.grammarPattern?.patternPinyin?.join(" ")}
+                </Text>
                 <br />
                 {grammar.grammarPattern?.patternFormula && (
-                  <Tag color="blue">{grammar.grammarPattern.patternFormula}</Tag>
+                  <Tag color="blue" style={{ fontSize: 10, marginTop: 4 }}>
+                    {grammar.grammarPattern.patternFormula}
+                  </Tag>
                 )}
                 {grammar.grammarPattern?.hskLevel && (
-                  <Tag color="green">HSK {grammar.grammarPattern.hskLevel}</Tag>
+                  <Tag color="green" style={{ fontSize: 10, marginTop: 4 }}>
+                    HSK {grammar.grammarPattern.hskLevel}
+                  </Tag>
                 )}
                 {grammar.grammarPattern?.translations?.map((trans, idx) => (
-                  <div key={idx} style={{ marginTop: 12 }}>
-                    <Paragraph strong>{trans.grammarPoint}</Paragraph>
-                    <Paragraph>{trans.explanation}</Paragraph>
+                  <div key={idx} style={{ marginTop: 8 }}>
+                    <Paragraph strong style={{ fontSize: 13, marginBottom: 2 }}>
+                      {trans.grammarPoint}
+                    </Paragraph>
+                    <Paragraph style={{ fontSize: 12, marginBottom: 0 }}>
+                      {trans.explanation}
+                    </Paragraph>
                   </div>
                 ))}
               </Card>
