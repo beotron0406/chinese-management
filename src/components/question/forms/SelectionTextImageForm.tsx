@@ -534,7 +534,7 @@ const SelectionTextImageForm = forwardRef<SelectionTextImageFormRef, SelectionTe
 
                 {/* Alt Text */}
                 <div>
-                  <Text strong>Văn Bản Thay Thế (cho khả năng tiếp cận)</Text>
+                  <Text strong>Văn Bản Thay Thế </Text>
                   <Input
                     placeholder="Mô tả nội dung trong hình ảnh"
                     value={option.alt}
@@ -544,7 +544,7 @@ const SelectionTextImageForm = forwardRef<SelectionTextImageFormRef, SelectionTe
                 </div>
 
                 {/* Preview */}
-                {answerUpload?.uploadedUrl && (
+                {/* {answerUpload?.uploadedUrl && (
                   <div style={{ marginTop: '12px', padding: '8px', backgroundColor: '#fafafa', borderRadius: '4px' }}>
                     <Text strong>Xem Trước: </Text>
                     <div style={{ marginTop: '4px' }}>
@@ -560,7 +560,7 @@ const SelectionTextImageForm = forwardRef<SelectionTextImageFormRef, SelectionTe
                       )}
                     </div>
                   </div>
-                )}
+                )} */}
               </Card>
             );
           })}

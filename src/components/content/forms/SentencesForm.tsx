@@ -782,11 +782,9 @@ const SentencesForm = forwardRef<SentencesFormRef, SentencesFormProps>(
                       handleImageFileChange(file);
                       return false;
                     }}
-                    disabled={!!uploadedUrls.imageUrl}
                   >
                     <Button
                       icon={<UploadOutlined />}
-                      disabled={!!uploadedUrls.imageUrl}
                       style={{ marginBottom: 8 }}
                     >
                       {selectedImageFile
@@ -849,12 +847,8 @@ const SentencesForm = forwardRef<SentencesFormRef, SentencesFormProps>(
                         handleAudioFileChange(file);
                         return false;
                       }}
-                      disabled={!!uploadedUrls.audioUrl}
                     >
-                      <Button
-                        icon={<UploadOutlined />}
-                        disabled={!!uploadedUrls.audioUrl}
-                      >
+                      <Button icon={<UploadOutlined />}>
                         {selectedAudioFile
                           ? selectedAudioFile.name
                           : "Chọn Âm Thanh"}
@@ -874,7 +868,6 @@ const SentencesForm = forwardRef<SentencesFormRef, SentencesFormProps>(
                         message.success("Âm thanh đã được tạo thành công!");
                       }}
                       buttonText="Tạo Giọng Nói"
-                      disabled={!chineseText}
                     />
                   </div>
                   {uploadedUrls.audioUrl && (
@@ -926,7 +919,7 @@ const SentencesForm = forwardRef<SentencesFormRef, SentencesFormProps>(
           )}
         </Card>
 
-        {/* Preview */}
+        {/* Preview
         {chineseText && (
           <Card title="Xem Trước" style={{ marginBottom: "24px" }}>
             <div
@@ -962,7 +955,7 @@ const SentencesForm = forwardRef<SentencesFormRef, SentencesFormProps>(
               </Space>
             </div>
           </Card>
-        )}
+        )} */}
 
         <UploadModal
           visible={uploadModalVisible}

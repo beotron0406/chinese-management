@@ -408,7 +408,7 @@ const SelectionImageTextForm = forwardRef<SelectionImageTextFormRef, SelectionIm
 
         {/* Alt Text for main image */}
         <Form.Item
-          label="Văn Bản Thay Thế (cho khả năng tiếp cận)"
+          label="Văn Bản Thay Thế "
           name={['data', 'alt']}
           help="Mô tả nội dung trong hình ảnh"
         >
@@ -479,14 +479,14 @@ const SelectionImageTextForm = forwardRef<SelectionImageTextFormRef, SelectionIm
               </div>
 
               {/* Preview */}
-              {option.text && (
+              {/* {option.text && (
                 <div style={{ marginTop: '12px', padding: '8px', backgroundColor: '#fafafa', borderRadius: '4px' }}>
                   <Text strong>Xem Trước: </Text>
                   <div style={{ marginTop: '4px', fontSize: '14px' }}>
                     {option.text}
                   </div>
                 </div>
-              )}
+              )} */}
             </Card>
           ))}
         </Space>

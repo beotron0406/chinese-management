@@ -437,7 +437,7 @@ const FillTextTextForm: React.FC<FillTextTextFormProps> = ({
         </Form.Item>
       </Card>
 
-      {/* Step 4: Preview */}
+      {/* Step 4: Preview
       <Card title="Xem Trước Câu" style={{ marginBottom: "24px" }}>
         <div
           style={{
@@ -506,7 +506,7 @@ const FillTextTextForm: React.FC<FillTextTextFormProps> = ({
             </span>
           </div>
         </div>
-      </Card>
+      </Card> */}
 
       {/* Step 5: Option Bank */}
       <Card
@@ -530,7 +530,9 @@ const FillTextTextForm: React.FC<FillTextTextFormProps> = ({
                   <Form.Item
                     {...restField}
                     name={name}
-                    rules={[{ required: true, message: "Vui lòng nhập lựa chọn" }]}
+                    rules={[
+                      { required: true, message: "Vui lòng nhập lựa chọn" },
+                    ]}
                   >
                     <Input
                       placeholder="Nhập từ tiếng Trung"
@@ -591,10 +593,7 @@ const FillTextTextForm: React.FC<FillTextTextFormProps> = ({
       </Card>
 
       {/* Step 6: Set Correct Answers */}
-      <Card
-        title="Bước 6: Đặt Đáp Án Đúng"
-        style={{ marginBottom: "24px" }}
-      >
+      <Card title="Bước 6: Đặt Đáp Án Đúng" style={{ marginBottom: "24px" }}>
         <div style={{ marginBottom: "12px" }}>
           <Text type="secondary">
             Xác định đáp án đúng cho mỗi vị trí chỗ trống. Bạn có thể chọn từ
@@ -694,9 +693,7 @@ const FillTextTextForm: React.FC<FillTextTextFormProps> = ({
                                 >
                                   {option}
                                 </span>
-                                <Tag color="green">
-                                  Từ Ngân Hàng
-                                </Tag>
+                                <Tag color="green">Từ Ngân Hàng</Tag>
                               </div>
                             </Option>
                           ))}
@@ -857,33 +854,6 @@ const FillTextTextForm: React.FC<FillTextTextFormProps> = ({
         >
           <Switch />
         </Form.Item>
-      </Card>
-
-      <Card title="Xem Trước JSON" style={{ marginBottom: "24px" }}>
-        <pre
-          style={{
-            backgroundColor: "#f5f5f5",
-            padding: "12px",
-            borderRadius: "4px",
-            fontSize: "12px",
-            overflow: "auto",
-            maxHeight: "300px",
-          }}
-        >
-          {JSON.stringify(
-            {
-              instruction: form.getFieldValue(["data", "instruction"]),
-              sentence: sentenceParts,
-              pinyin: pinyinParts,
-              vietnamese: form.getFieldValue(["data", "vietnamese"]),
-              optionBank: form.getFieldValue(["data", "optionBank"]),
-              blanks: form.getFieldValue(["data", "blanks"]),
-              explanation: form.getFieldValue(["data", "explanation"]),
-            },
-            null,
-            2
-          )}
-        </pre>
       </Card>
     </div>
   );

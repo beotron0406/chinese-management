@@ -185,12 +185,12 @@ const SelectionTextTextForm: React.FC<SelectionTextTextFormProps> = ({ form, ini
               </div>
 
               {/* Preview */}
-              {option.text && (
+              {/* {option.text && (
                 <div style={{ marginTop: '12px', padding: '8px', backgroundColor: '#fafafa', borderRadius: '4px' }}>
                   <Text strong>Xem Trước: </Text>
                   <span style={{ fontSize: '16px', color: '#1890ff' }}>{option.text}</span>
                 </div>
-              )}
+              )} */}
             </Card>
           ))}
         </Space>

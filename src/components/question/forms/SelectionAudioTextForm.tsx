@@ -414,11 +414,9 @@ const SelectionAudioTextForm = forwardRef<SelectionAudioTextFormRef, SelectionAu
                   handleAudioFileChange(file);
                   return false;
                 }}
-                disabled={!!uploadedAudioUrl}
               >
                 <Button
                   icon={<UploadOutlined />}
-                  disabled={!!uploadedAudioUrl}
                 >
                   {selectedAudioFile ? selectedAudioFile.name : 'Chọn Âm Thanh'}
                 </Button>
@@ -426,7 +424,6 @@ const SelectionAudioTextForm = forwardRef<SelectionAudioTextFormRef, SelectionAu
               <TTSButton
                 text={audioTranscriptChinese}
                 onAudioGenerated={handleTTSAudioGenerated}
-                disabled={!!uploadedAudioUrl}
                 buttonText="Tạo giọng nói"
               />
             </Space>
@@ -561,14 +558,14 @@ const SelectionAudioTextForm = forwardRef<SelectionAudioTextFormRef, SelectionAu
               </div>
 
               {/* Preview */}
-              {option.text && (
+              {/* {option.text && (
                 <div style={{ marginTop: '12px', padding: '8px', backgroundColor: '#fafafa', borderRadius: '4px' }}>
                   <Text strong>Xem Trước: </Text>
                   <div style={{ marginTop: '4px', fontSize: '14px' }}>
                     {option.text}
                   </div>
                 </div>
-              )}
+              )} */}
             </Card>
           ))}
         </Space>

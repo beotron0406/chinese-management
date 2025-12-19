@@ -523,7 +523,7 @@ const MatchingTextImageForm = forwardRef<MatchingTextImageFormRef, MatchingTextI
                     />
                   </Form.Item>
 
-                  {/* Preview */}
+                  {/* Preview
                   {form.getFieldValue(['data', 'leftColumn', index, 'text']) && (
                     <div style={{ marginTop: '12px', padding: '8px', backgroundColor: '#fafafa', borderRadius: '4px' }}>
                       <Text strong>Xem Trước: </Text>
@@ -538,7 +538,7 @@ const MatchingTextImageForm = forwardRef<MatchingTextImageFormRef, MatchingTextI
                         )}
                       </div>
                     </div>
-                  )}
+                  )} */}
                 </Card>
               ))}
               <Form.Item>
@@ -655,7 +655,7 @@ const MatchingTextImageForm = forwardRef<MatchingTextImageFormRef, MatchingTextI
                     {/* Alt Text */}
                     <Form.Item
                       {...restField}
-                      label="Văn Bản Thay Thế (cho khả năng tiếp cận)"
+                      label="Văn Bản Thay Thế "
                       name={[name, "alt"]}
                       help="Mô tả nội dung trong hình ảnh"
                     >
