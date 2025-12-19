@@ -9,7 +9,6 @@ export async function GET(
 ) {
   try {
     const lessonId = params.id;
-    console.log(`🔄 Fetching lesson grammar patterns: ${lessonId}`);
 
     const response = await fetch(`${API_BASE_URL}/lessons/${lessonId}/grammar-patterns`, {
       method: 'GET',
@@ -25,7 +24,6 @@ export async function GET(
     }
 
     const responseBody: LessonGrammarPattern[] = await response.json();
-    console.log('✅ Lesson grammar patterns fetched successfully');
     
     return NextResponse.json(responseBody);
   } catch (error) {
@@ -47,8 +45,6 @@ export async function POST(
   try {
     const lessonId = params.id;
     const patterns: AddLessonGrammarPatternDto[] = await request.json();
-    
-    console.log(`🔄 Adding grammar patterns to lesson: ${lessonId}`, patterns);
 
     const response = await fetch(`${API_BASE_URL}/lessons/${lessonId}/grammar-patterns`, {
       method: 'POST',
@@ -65,7 +61,6 @@ export async function POST(
     }
 
     const responseBody = await response.json();
-    console.log('✅ Grammar patterns added to lesson successfully');
     
     return NextResponse.json(responseBody);
   } catch (error) {
@@ -88,8 +83,6 @@ export async function DELETE(
     const lessonId = params.id;
     const { searchParams } = new URL(request.url);
     const grammarPatternIds = searchParams.get('grammarPatternIds');
-    
-    console.log(`🔄 Removing grammar patterns from lesson: ${lessonId}`, grammarPatternIds);
 
     const queryString = grammarPatternIds ? `?grammarPatternIds=${grammarPatternIds}` : '';
     
@@ -107,7 +100,6 @@ export async function DELETE(
     }
 
     const responseBody = await response.json();
-    console.log('✅ Grammar patterns removed from lesson successfully');
     
     return NextResponse.json(responseBody);
   } catch (error) {

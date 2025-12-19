@@ -143,7 +143,7 @@ const CourseList = ({ filterActive }: CourseListProps) => {
       content: (
         <div>
           <p>Bạn có chắc chắn muốn xóa vĩnh viễn khóa học này?</p>
-          <p style={{ color: "red", fontWeight: "bold" }}>
+          <p className="text-red-500 font-bold">
             Hành động này KHÔNG THỂ HOÀN TÁC!
           </p>
         </div>
@@ -219,28 +219,14 @@ const CourseList = ({ filterActive }: CourseListProps) => {
   const CourseCard = ({ course }: { course: Course }) => (
     <Card
       hoverable
-      className="course-card"
-      style={{
-        height: "100%",
-        cursor: "pointer",
-        border: course.isActive ? "1px solid #d9d9d9" : "1px solid #ff7875",
-      }}
+      className={`course-card h-full cursor-pointer ${course.isActive ? 'border border-gray-300' : 'border border-red-400'}`}
       onClick={() => handleCourseClick(course)}
       cover={
         <div
-          style={{
-            background: `linear-gradient(135deg, ${
-              course.isActive ? "#1890ff" : "#ff7875"
-            }15, ${course.isActive ? "#52c41a" : "#ffa39e"}25)`,
-            padding: "20px",
-            textAlign: "center",
-          }}
+          className={`p-5 text-center ${course.isActive ? 'bg-gradient-to-br from-blue-500/10 to-green-500/15' : 'bg-gradient-to-br from-red-400/10 to-red-300/15'}`}
         >
           <BookOutlined
-            style={{
-              fontSize: "32px",
-              color: course.isActive ? "#1890ff" : "#ff7875",
-            }}
+            className={`text-3xl ${course.isActive ? 'text-blue-500' : 'text-red-400'}`}
           />
         </div>
       }
@@ -308,43 +294,41 @@ const CourseList = ({ filterActive }: CourseListProps) => {
       <Card.Meta
         title={
           <div>
-            <Text strong style={{ fontSize: "16px" }}>
+            <Text strong className="text-base">
               {course.title}
             </Text>
-            <div style={{ float: "right" }}>
+            <div className="float-right">
               <Tag color={course.isActive ? "green" : "red"}>
                 {course.isActive ? (
                   <CheckCircleOutlined />
                 ) : (
                   <CloseCircleOutlined />
                 )}
-                {course.isActive ? "Hoạt động" : "Không hoạt động"}
+                {course.isActive ? " Hoạt động" : " Không hoạt động"}
               </Tag>
             </div>
           </div>
         }
         description={
           <div>
-            <div style={{ marginBottom: "8px" }}>
+            <div className="mb-2">
               <Tag color="blue">HSK {course.hskLevel}</Tag>
               <Tag color="purple">Order: {course.orderIndex}</Tag>
             </div>
-            <Text type="secondary" style={{ fontSize: "13px" }}>
+            <Text type="secondary" className="text-sm">
               {course.description && course.description.length > 80
                 ? `${course.description.substring(0, 80)}...`
                 : course.description || "Chưa có mô tả"}
             </Text>
-            <div style={{ marginTop: "8px" }}>
+            <div className="mt-2">
               <Space>
-                <Text type="secondary" style={{ fontSize: "12px" }}>
+                <Text type="secondary" className="text-xs">
                   <CalendarOutlined />{" "}
                   {new Date(course.createdAt).toLocaleDateString()}
                 </Text>
               </Space>
             </div>
-            <div
-              style={{ marginTop: "8px", color: "#1890ff", fontSize: "12px" }}
-            >
+            <div className="mt-2 text-blue-500 text-xs">
               Nhấn vào để quản lý bài học
             </div>
           </div>
@@ -356,36 +340,21 @@ const CourseList = ({ filterActive }: CourseListProps) => {
   return (
     <div>
       {/* Filters Section */}
-      <Card style={{ marginBottom: "20px" }}>
-        <div
-          style={{
-            display: "flex",
-            justifyContent: "space-between",
-            alignItems: "center",
-            flexWrap: "wrap",
-            gap: "16px",
-          }}
-        >
-          <div
-            style={{
-              display: "flex",
-              gap: "16px",
-              alignItems: "center",
-              flexWrap: "wrap",
-            }}
-          >
+      <Card className="mb-5">
+        <div className="flex justify-between items-center flex-wrap gap-4">
+          <div className="flex gap-4 items-center flex-wrap">
             <Input
               placeholder="Tìm kiếm khóa học"
               value={searchText}
               onChange={(e) => handleSearch(e.target.value)}
-              style={{ width: 250 }}
+              className="w-[250px]"
               prefix={<SearchOutlined />}
               allowClear
             />
 
             <Select
               placeholder="Lọc theo cấp độ HSK"
-              style={{ width: 180 }}
+              className="w-[180px]"
               allowClear
               value={filterHskLevel}
               onChange={handleHskFilterChange}
@@ -416,7 +385,7 @@ const CourseList = ({ filterActive }: CourseListProps) => {
       </Card>
 
       {/* Courses Grid */}
-      <div style={{ minHeight: "400px" }}>
+      <div className="min-h-[400px]">
         {loading ? (
           <Row gutter={[16, 16]}>
             {Array.from({ length: 6 }).map((_, index) => (
@@ -440,7 +409,7 @@ const CourseList = ({ filterActive }: CourseListProps) => {
                 ? "No courses match your filters"
                 : "No courses available"
             }
-            style={{ marginTop: "60px" }}
+            className="mt-16"
           >
             {!searchText && !filterHskLevel && (
               <Button type="primary" onClick={() => setIsModalVisible(true)}>
@@ -453,7 +422,7 @@ const CourseList = ({ filterActive }: CourseListProps) => {
 
       {/* Pagination */}
       {paginatedCourses.length > 0 && (
-        <div style={{ marginTop: "32px", textAlign: "center" }}>
+        <div className="mt-8 text-center">
           <Pagination
             current={currentPage}
             pageSize={pageSize}

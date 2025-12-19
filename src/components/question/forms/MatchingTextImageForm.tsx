@@ -336,7 +336,6 @@ const MatchingTextImageForm = forwardRef<MatchingTextImageFormRef, MatchingTextI
       );
 
       if (allRightItemsHaveImages) {
-        console.log('All files already uploaded');
         return true;
       }
 
@@ -441,7 +440,7 @@ const MatchingTextImageForm = forwardRef<MatchingTextImageFormRef, MatchingTextI
   return (
     <div>
       {/* Question Setup */}
-      <Card title="Thiết Lập Câu Hỏi" style={{ marginBottom: '24px' }}>
+      <Card title="Thiết Lập Câu Hỏi" className="mb-6">
         <Form.Item
           label="Hướng Dẫn Câu Hỏi"
           name={["data", "instruction"]}
@@ -457,7 +456,7 @@ const MatchingTextImageForm = forwardRef<MatchingTextImageFormRef, MatchingTextI
       {/* Left Column (Text) */}
       <Card
         title="Cột Trái (Chữ Trung)"
-        style={{ marginBottom: '24px' }}
+        className="mb-6"
       >
         <Form.List
           name={["data", "leftColumn"]}
@@ -469,7 +468,7 @@ const MatchingTextImageForm = forwardRef<MatchingTextImageFormRef, MatchingTextI
                 <Card
                   key={key}
                   size="small"
-                  style={{ marginBottom: '16px' }}
+                  className="mb-4"
                   title={`Mục Văn Bản ${index + 1}`}
                   extra={
                     fields.length > 1 && (
@@ -488,11 +487,11 @@ const MatchingTextImageForm = forwardRef<MatchingTextImageFormRef, MatchingTextI
                     label="ID"
                     name={[name, "id"]}
                     initialValue={`${index + 1}`}
-                    style={{ width: "100px" }}
+                    className="w-[100px]"
                   >
                     <Input
                       disabled
-                      style={{ textAlign: "center", fontWeight: "bold" }}
+                      className="text-center font-bold"
                     />
                   </Form.Item>
 
@@ -506,7 +505,7 @@ const MatchingTextImageForm = forwardRef<MatchingTextImageFormRef, MatchingTextI
                     <Input
                       placeholder="Nhập chữ Trung"
                       onChange={(e) => handleLeftTextChange(index, e.target.value)}
-                      style={{ fontSize: '16px' }}
+                      className="text-base"
                     />
                   </Form.Item>
 
@@ -519,7 +518,7 @@ const MatchingTextImageForm = forwardRef<MatchingTextImageFormRef, MatchingTextI
                     <Input
                       placeholder="Pinyin sẽ được tự động tạo"
                       disabled
-                      style={{ backgroundColor: '#f5f5f5', color: '#666' }}
+                      className="bg-gray-100 text-gray-500"
                     />
                   </Form.Item>
 
@@ -561,7 +560,7 @@ const MatchingTextImageForm = forwardRef<MatchingTextImageFormRef, MatchingTextI
       {/* Right Column (Images) */}
       <Card
         title="Cột Phải (Hình Ảnh)"
-        style={{ marginBottom: '24px' }}
+        className="mb-6"
       >
         <Form.List
           name={["data", "rightColumn"]}
@@ -575,7 +574,7 @@ const MatchingTextImageForm = forwardRef<MatchingTextImageFormRef, MatchingTextI
                   <Card
                     key={key}
                     size="small"
-                    style={{ marginBottom: '16px' }}
+                    className="mb-4"
                     title={`Mục Hình Ảnh ${generateRightId(index)}`}
                     extra={
                       fields.length > 1 && (
@@ -594,11 +593,11 @@ const MatchingTextImageForm = forwardRef<MatchingTextImageFormRef, MatchingTextI
                       label="ID"
                       name={[name, "id"]}
                       initialValue={generateRightId(index)}
-                      style={{ width: "100px" }}
+                      className="w-[100px]"
                     >
                       <Input
                         disabled
-                        style={{ textAlign: "center", fontWeight: "bold" }}
+                        className="text-center font-bold"
                       />
                     </Form.Item>
 
@@ -628,10 +627,10 @@ const MatchingTextImageForm = forwardRef<MatchingTextImageFormRef, MatchingTextI
                           </Button>
                         </Upload>
                         {imageUpload?.uploadedUrl && (
-                          <div style={{ marginTop: 8 }}>
-                            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                              <PictureOutlined style={{ color: '#52c41a' }} />
-                              <span style={{ color: '#52c41a' }}>Hình ảnh đã tải lên</span>
+                          <div className="mt-2">
+                            <div className="flex items-center gap-2">
+                              <PictureOutlined className="text-green-500" />
+                              <span className="text-green-500">Hình ảnh đã tải lên</span>
                               <Button
                                 size="small"
                                 icon={<DeleteOutlined />}
@@ -640,11 +639,11 @@ const MatchingTextImageForm = forwardRef<MatchingTextImageFormRef, MatchingTextI
                                 danger
                               />
                             </div>
-                            <div style={{ marginTop: 4 }}>
+                            <div className="mt-1">
                               <img
                                 src={imageUpload.uploadedUrl}
                                 alt={`Right item ${index + 1}`}
-                                style={{ maxWidth: 200, maxHeight: 200, objectFit: 'cover', borderRadius: '4px' }}
+                                className="max-w-[200px] max-h-[200px] object-cover rounded"
                               />
                             </div>
                           </div>
@@ -696,7 +695,7 @@ const MatchingTextImageForm = forwardRef<MatchingTextImageFormRef, MatchingTextI
             Chọn các cặp ghép từ cột trái và cột phải
           </Text>
         }
-        style={{ marginBottom: '24px' }}
+        className="mb-6"
       >
         <Form.List
           name={["data", "correctMatches"]}
@@ -707,7 +706,7 @@ const MatchingTextImageForm = forwardRef<MatchingTextImageFormRef, MatchingTextI
               {fields.map(({ key, name, ...restField }, index) => (
                 <Space
                   key={key}
-                  style={{ display: "flex", marginBottom: 8 }}
+                  className="flex mb-2"
                   align="baseline"
                 >
                   <Text strong>Cặp {index + 1}:</Text>
@@ -715,7 +714,7 @@ const MatchingTextImageForm = forwardRef<MatchingTextImageFormRef, MatchingTextI
                     {...restField}
                     name={[name, "left"]}
                     rules={[{ required: true, message: "Chọn mục bên trái" }]}
-                    style={{ width: "200px" }}
+                    className="w-[200px]"
                   >
                     <Select placeholder="Chọn mục văn bản">
                       {leftItems.map((item, itemIndex) => (
@@ -730,7 +729,7 @@ const MatchingTextImageForm = forwardRef<MatchingTextImageFormRef, MatchingTextI
                     {...restField}
                     name={[name, "right"]}
                     rules={[{ required: true, message: "Chọn mục bên phải" }]}
-                    style={{ width: "200px" }}
+                    className="w-[200px]"
                   >
                     <Select placeholder="Chọn mục hình ảnh">
                       {rightItems.map((item, itemIndex) => (
@@ -766,16 +765,16 @@ const MatchingTextImageForm = forwardRef<MatchingTextImageFormRef, MatchingTextI
 
         {/* Match Preview */}
         {form.getFieldValue(['data', 'correctMatches'])?.length > 0 && (
-          <div style={{ marginTop: '16px', padding: '12px', backgroundColor: '#e6f7ff', borderRadius: '6px' }}>
+          <div className="mt-4 p-3 bg-blue-50 rounded-md">
             <Text strong>Tóm Tắt Các Cặp:</Text>
-            <div style={{ marginTop: '8px' }}>
+            <div className="mt-2">
               {form.getFieldValue(['data', 'correctMatches'])?.map((match: any, index: number) => {
                 const leftItem = leftItems.find(item => item.id === match.left);
                 const rightItem = rightItems.find(item => item.id === match.right);
                 
                 if (leftItem && rightItem) {
                   return (
-                    <div key={index} style={{ marginBottom: '4px' }}>
+                    <div key={index} className="mb-1">
                       <Text>
                         {leftItem.id}: {leftItem.text} 
                         {' → '}
@@ -792,7 +791,7 @@ const MatchingTextImageForm = forwardRef<MatchingTextImageFormRef, MatchingTextI
       </Card>
 
       {/* Additional Settings */}
-      <Card title="Cài Đặt Thêm" style={{ marginBottom: '24px' }}>
+      <Card title="Cài Đặt Thêm" className="mb-6">
         <Form.Item
           label="Giải Thích (Tùy Chọn)"
           name={['data', 'explanation']}

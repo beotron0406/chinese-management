@@ -82,10 +82,13 @@ export default function CourseAnalyticsCard({}: CourseAnalyticsCardProps) {
       width: "20%",
       render: (score: number) => (
         <span
-          style={{
-            color:
-              score >= 80 ? "#52c41a" : score >= 60 ? "#faad14" : "#ff4d4f",
-          }}
+          className={
+            score >= 80
+              ? "text-green-500"
+              : score >= 60
+                ? "text-yellow-500"
+                : "text-red-500"
+          }
         >
           {score.toFixed(1)}%
         </span>
@@ -102,13 +105,13 @@ export default function CourseAnalyticsCard({}: CourseAnalyticsCardProps) {
             : record.averageScore >= 60
               ? "Trung bình"
               : "Khó";
-        const color =
+        const colorClass =
           record.averageScore >= 80
-            ? "green"
+            ? "text-green-500"
             : record.averageScore >= 60
-              ? "orange"
-              : "red";
-        return <span style={{ color }}>{difficulty}</span>;
+              ? "text-orange-500"
+              : "text-red-500";
+        return <span className={colorClass}>{difficulty}</span>;
       },
     },
   ];
@@ -124,7 +127,7 @@ export default function CourseAnalyticsCard({}: CourseAnalyticsCardProps) {
             value={selectedCourseId}
             onChange={setSelectedCourseId}
             onCoursesLoaded={handleCoursesLoaded}
-            style={{ width: 200 }}
+            className="w-[200px]"
           />
         </div>
       }

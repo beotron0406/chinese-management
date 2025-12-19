@@ -10,7 +10,6 @@ export async function GET(
 ) {
   try {
     const courseId = params.id;
-    console.log(`🔄 Fetching course: ${courseId}`);
 
     const response = await fetch(`${API_BASE_URL}/courses/${courseId}`, {
       method: "GET",
@@ -26,7 +25,6 @@ export async function GET(
     }
 
     const responseBody: Course = await response.json();
-    console.log("✅ Course fetched successfully");
 
     return NextResponse.json(responseBody);
   } catch (error) {
@@ -50,8 +48,6 @@ export async function PUT(
     const courseId = params.id;
     const courseData: Partial<CourseFormValues> = await request.json();
 
-    console.log(`🔄 Updating course: ${courseId}`, courseData);
-
     const response = await fetch(`${API_BASE_URL}/courses/${courseId}`, {
       method: "PUT",
       headers: {
@@ -67,7 +63,6 @@ export async function PUT(
     }
 
     const responseBody: Course = await response.json();
-    console.log("✅ Course updated successfully");
 
     return NextResponse.json(responseBody);
   } catch (error) {
@@ -89,7 +84,6 @@ export async function DELETE(
 ) {
   try {
     const courseId = params.id;
-    console.log(`🔄 Deleting course: ${courseId}`);
 
     const response = await fetch(`${API_BASE_URL}/courses/${courseId}`, {
       method: "DELETE",

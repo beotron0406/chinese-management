@@ -608,7 +608,7 @@ const SentencesForm = forwardRef<SentencesFormRef, SentencesFormProps>(
     return (
       <div>
         {/* Sentence Information */}
-        <Card title="Thông Tin Câu" style={{ marginBottom: "24px" }}>
+        <Card title="Thông Tin Câu" className="mb-6">
           <Form.Item
             label="Câu Tiếng Trung"
             name={["data", "chinese_sentence_input"]}
@@ -619,7 +619,7 @@ const SentencesForm = forwardRef<SentencesFormRef, SentencesFormProps>(
             <TextArea
               rows={2}
               onChange={(e) => handleChineseTextChange(e.target.value)}
-              style={{ fontSize: "18px" }}
+              className="text-lg"
             />
           </Form.Item>
 
@@ -629,7 +629,7 @@ const SentencesForm = forwardRef<SentencesFormRef, SentencesFormProps>(
               <Select
                 value={segmentationMode}
                 onChange={handleSegmentationModeChange}
-                style={{ width: 150 }}
+                className="w-[150px]"
               >
                 <Select.Option value="character">
                   Ký Tự (这 家 饭 店)
@@ -658,23 +658,19 @@ const SentencesForm = forwardRef<SentencesFormRef, SentencesFormProps>(
           {manualMode && (
             <Card
               size="small"
-              style={{
-                marginBottom: "16px",
-                backgroundColor: "#e6f7ff",
-                borderColor: "#91d5ff",
-              }}
+              className="mb-4 bg-blue-50 border-blue-300"
             >
               <Space>
-                <EditOutlined style={{ color: "#1890ff" }} />
+                <EditOutlined className="text-blue-500" />
                 <div>
-                  <Text strong style={{ color: "#1890ff" }}>
+                  <Text strong className="text-blue-500">
                     Chế Độ Thủ Công Đã Kích Hoạt
                   </Text>
-                  <Text type="secondary" style={{ display: "block" }}>
+                  <Text type="secondary" className="block">
                     Sử dụng dấu chấm phẩy (;) trong câu của bạn để xác định thủ
                     công các đoạn.
                   </Text>
-                  <Text type="secondary" style={{ fontSize: "12px" }}>
+                  <Text type="secondary" className="text-xs">
                     Ví dụ: "这家饭店;怎么样;？" → ["这家饭店", "怎么样", "？"]
                   </Text>
                 </div>
@@ -684,22 +680,15 @@ const SentencesForm = forwardRef<SentencesFormRef, SentencesFormProps>(
 
           {/* Segmentation Preview */}
           {segmentedChinese.length > 0 && (
-            <div style={{ marginBottom: "16px" }}>
+            <div className="mb-4">
               <Text strong>Tiếng Trung Tự Động Phân Đoạn:</Text>
-              <div
-                style={{
-                  marginTop: "8px",
-                  padding: "12px",
-                  backgroundColor: "#f5f5f5",
-                  borderRadius: "6px",
-                }}
-              >
+              <div className="mt-2 p-3 bg-gray-100 rounded-md">
                 <Space wrap>
                   {segmentedChinese.map((segment, index) => (
                     <Tag
                       key={index}
                       color="blue"
-                      style={{ fontSize: "16px", padding: "4px 8px" }}
+                      className="text-base py-1 px-2"
                     >
                       {segment}
                     </Tag>
@@ -710,22 +699,15 @@ const SentencesForm = forwardRef<SentencesFormRef, SentencesFormProps>(
           )}
 
           {segmentedPinyin.length > 0 && (
-            <div style={{ marginBottom: "16px" }}>
+            <div className="mb-4">
               <Text strong>Pinyin Tự Động Tạo:</Text>
-              <div
-                style={{
-                  marginTop: "8px",
-                  padding: "12px",
-                  backgroundColor: "#f5f5f5",
-                  borderRadius: "6px",
-                }}
-              >
+              <div className="mt-2 p-3 bg-gray-100 rounded-md">
                 <Space wrap>
                   {segmentedPinyin.map((segment, index) => (
                     <Tag
                       key={index}
                       color="green"
-                      style={{ fontSize: "14px", padding: "4px 8px" }}
+                      className="text-sm py-1 px-2"
                     >
                       {segment}
                     </Tag>
@@ -753,17 +735,17 @@ const SentencesForm = forwardRef<SentencesFormRef, SentencesFormProps>(
           {/* Hidden form fields to store the segmented arrays */}
           <Form.Item
             name={["data", "chinese_text"]}
-            style={{ display: "none" }}
+            className="hidden"
           >
             <Input />
           </Form.Item>
-          <Form.Item name={["data", "pinyin"]} style={{ display: "none" }}>
+          <Form.Item name={["data", "pinyin"]} className="hidden">
             <Input />
           </Form.Item>
         </Card>
 
         {/* Media Files */}
-        <Card title="File Đa Phương Tiện" style={{ marginBottom: "24px" }}>
+        <Card title="File Đa Phương Tiện" className="mb-6">
           <Row gutter={16}>
             <Col span={12}>
               <Form.Item
@@ -785,7 +767,7 @@ const SentencesForm = forwardRef<SentencesFormRef, SentencesFormProps>(
                   >
                     <Button
                       icon={<UploadOutlined />}
-                      style={{ marginBottom: 8 }}
+                      className="mb-2"
                     >
                       {selectedImageFile
                         ? selectedImageFile.name
@@ -793,16 +775,10 @@ const SentencesForm = forwardRef<SentencesFormRef, SentencesFormProps>(
                     </Button>
                   </Upload>
                   {uploadedUrls.imageUrl && (
-                    <div style={{ marginTop: 8 }}>
-                      <div
-                        style={{
-                          display: "flex",
-                          alignItems: "center",
-                          gap: 8,
-                        }}
-                      >
-                        <PictureOutlined style={{ color: "#52c41a" }} />
-                        <span style={{ color: "#52c41a" }}>
+                    <div className="mt-2">
+                      <div className="flex items-center gap-2">
+                        <PictureOutlined className="text-green-500" />
+                        <span className="text-green-500">
                           Hình ảnh đã tải lên
                         </span>
                         <Button
@@ -813,15 +789,11 @@ const SentencesForm = forwardRef<SentencesFormRef, SentencesFormProps>(
                           danger
                         />
                       </div>
-                      <div style={{ marginTop: 4 }}>
+                      <div className="mt-1">
                         <img
                           src={uploadedUrls.imageUrl}
                           alt="Preview"
-                          style={{
-                            maxWidth: 100,
-                            maxHeight: 100,
-                            objectFit: "cover",
-                          }}
+                          className="max-w-[100px] max-h-[100px] object-cover"
                         />
                       </div>
                     </div>
@@ -838,7 +810,7 @@ const SentencesForm = forwardRef<SentencesFormRef, SentencesFormProps>(
                 ]}
               >
                 <div>
-                  <div style={{ marginBottom: 8, display: "flex", gap: 8 }}>
+                  <div className="mb-2 flex gap-2">
                     <Upload
                       accept="audio/*"
                       maxCount={1}
@@ -871,16 +843,10 @@ const SentencesForm = forwardRef<SentencesFormRef, SentencesFormProps>(
                     />
                   </div>
                   {uploadedUrls.audioUrl && (
-                    <div style={{ marginTop: 8 }}>
-                      <div
-                        style={{
-                          display: "flex",
-                          alignItems: "center",
-                          gap: 8,
-                        }}
-                      >
-                        <SoundOutlined style={{ color: "#52c41a" }} />
-                        <span style={{ color: "#52c41a" }}>
+                    <div className="mt-2">
+                      <div className="flex items-center gap-2">
+                        <SoundOutlined className="text-green-500" />
+                        <span className="text-green-500">
                           Âm thanh đã tải lên
                         </span>
                         <Button
@@ -891,8 +857,8 @@ const SentencesForm = forwardRef<SentencesFormRef, SentencesFormProps>(
                           danger
                         />
                       </div>
-                      <div style={{ marginTop: 4 }}>
-                        <audio controls style={{ width: "100%" }}>
+                      <div className="mt-1">
+                        <audio controls className="w-full">
                           <source src={uploadedUrls.audioUrl} />
                           Trình duyệt của bạn không hỗ trợ phần tử âm thanh.
                         </audio>
@@ -905,7 +871,7 @@ const SentencesForm = forwardRef<SentencesFormRef, SentencesFormProps>(
           </Row>
 
           {DEV_MODE && (selectedImageFile || selectedAudioFile) && (
-            <div style={{ textAlign: "center", marginTop: 16 }}>
+            <div className="text-center mt-4">
               <Button
                 type="primary"
                 icon={<UploadOutlined />}

@@ -542,7 +542,6 @@ const MatchingAudioImageForm = forwardRef<
           );
 
         if (allLeftItemsHaveAudios && allRightItemsHaveImages) {
-          console.log("All files already uploaded");
           return true;
         }
 
@@ -718,7 +717,7 @@ const MatchingAudioImageForm = forwardRef<
     return (
       <div>
         {/* Question Setup */}
-        <Card title="Thiết Lập Câu Hỏi" style={{ marginBottom: "24px" }}>
+        <Card title="Thiết Lập Câu Hỏi" className="mb-6">
           <Form.Item
             label="Hướng Dẫn Câu Hỏi"
             name={["data", "instruction"]}
@@ -734,7 +733,7 @@ const MatchingAudioImageForm = forwardRef<
         </Card>
 
         {/* Left Column (Audio) */}
-        <Card title="Cột Trái (Âm Thanh)" style={{ marginBottom: "24px" }}>
+        <Card title="Cột Trái (Âm Thanh)" className="mb-6">
           <Form.List
             name={["data", "leftColumn"]}
             initialValue={[
@@ -749,7 +748,7 @@ const MatchingAudioImageForm = forwardRef<
                     <Card
                       key={key}
                       size="small"
-                      style={{ marginBottom: "16px" }}
+                      className="mb-4"
                       title={`Mục Âm Thanh ${index + 1}`}
                       extra={
                         fields.length > 1 && (
@@ -768,11 +767,11 @@ const MatchingAudioImageForm = forwardRef<
                         label="ID"
                         name={[name, "id"]}
                         initialValue={`${index + 1}`}
-                        style={{ width: "100px" }}
+                        className="w-[100px]"
                       >
                         <Input
                           disabled
-                          style={{ textAlign: "center", fontWeight: "bold" }}
+                          className="text-center font-bold"
                         />
                       </Form.Item>
 
@@ -843,16 +842,10 @@ const MatchingAudioImageForm = forwardRef<
                             />
                           </Space>
                           {audioUpload?.uploadedUrl && (
-                            <div style={{ marginTop: 8 }}>
-                              <div
-                                style={{
-                                  display: "flex",
-                                  alignItems: "center",
-                                  gap: 8,
-                                }}
-                              >
-                                <SoundOutlined style={{ color: "#52c41a" }} />
-                                <span style={{ color: "#52c41a" }}>
+                            <div className="mt-2">
+                              <div className="flex items-center gap-2">
+                                <SoundOutlined className="text-green-500" />
+                                <span className="text-green-500">
                                   Âm thanh đã tải lên
                                 </span>
                                 <Button
@@ -863,8 +856,8 @@ const MatchingAudioImageForm = forwardRef<
                                   danger
                                 />
                               </div>
-                              <div style={{ marginTop: 4 }}>
-                                <audio controls style={{ maxWidth: 300 }}>
+                              <div className="mt-1">
+                                <audio controls className="max-w-[300px]">
                                   <source src={audioUpload.uploadedUrl} />
                                   Your browser does not support the audio
                                   element.
@@ -889,7 +882,7 @@ const MatchingAudioImageForm = forwardRef<
                       <Form.Item
                         {...restField}
                         name={[name, "audio_url"]}
-                        style={{ display: "none" }}
+                        className="hidden"
                       >
                         <Input />
                       </Form.Item>
@@ -919,7 +912,7 @@ const MatchingAudioImageForm = forwardRef<
         </Card>
 
         {/* Right Column (Images) */}
-        <Card title="Cột Phải (Hình Ảnh)" style={{ marginBottom: "24px" }}>
+        <Card title="Cột Phải (Hình Ảnh)" className="mb-6">
           <Form.List
             name={["data", "rightColumn"]}
             initialValue={[{ id: "A", image: "", alt: "" }]}
@@ -932,7 +925,7 @@ const MatchingAudioImageForm = forwardRef<
                     <Card
                       key={key}
                       size="small"
-                      style={{ marginBottom: "16px" }}
+                      className="mb-4"
                       title={`Mục Hình Ảnh ${generateRightId(index)}`}
                       extra={
                         fields.length > 1 && (
@@ -951,11 +944,11 @@ const MatchingAudioImageForm = forwardRef<
                         label="ID"
                         name={[name, "id"]}
                         initialValue={generateRightId(index)}
-                        style={{ width: "100px" }}
+                        className="w-[100px]"
                       >
                         <Input
                           disabled
-                          style={{ textAlign: "center", fontWeight: "bold" }}
+                          className="text-center font-bold"
                         />
                       </Form.Item>
 
@@ -988,16 +981,10 @@ const MatchingAudioImageForm = forwardRef<
                             </Button>
                           </Upload>
                           {imageUpload?.uploadedUrl && (
-                            <div style={{ marginTop: 8 }}>
-                              <div
-                                style={{
-                                  display: "flex",
-                                  alignItems: "center",
-                                  gap: 8,
-                                }}
-                              >
-                                <PictureOutlined style={{ color: "#52c41a" }} />
-                                <span style={{ color: "#52c41a" }}>
+                            <div className="mt-2">
+                              <div className="flex items-center gap-2">
+                                <PictureOutlined className="text-green-500" />
+                                <span className="text-green-500">
                                   Hình ảnh đã tải lên
                                 </span>
                                 <Button
@@ -1008,16 +995,11 @@ const MatchingAudioImageForm = forwardRef<
                                   danger
                                 />
                               </div>
-                              <div style={{ marginTop: 4 }}>
+                              <div className="mt-1">
                                 <img
                                   src={imageUpload.uploadedUrl}
                                   alt={`Right item ${index + 1}`}
-                                  style={{
-                                    maxWidth: 200,
-                                    maxHeight: 200,
-                                    objectFit: "cover",
-                                    borderRadius: "4px",
-                                  }}
+                                  className="max-w-[200px] max-h-[200px] object-cover rounded"
                                 />
                               </div>
                             </div>
@@ -1071,7 +1053,7 @@ const MatchingAudioImageForm = forwardRef<
               Select matching pairs from the left and right columns
             </Text>
           }
-          style={{ marginBottom: "24px" }}
+          className="mb-6"
         >
           <Form.List
             name={["data", "correctMatches"]}
@@ -1082,7 +1064,7 @@ const MatchingAudioImageForm = forwardRef<
                 {fields.map(({ key, name, ...restField }, index) => (
                   <Space
                     key={key}
-                    style={{ display: "flex", marginBottom: 8 }}
+                    className="flex mb-2"
                     align="baseline"
                   >
                     <Text strong>Cặp {index + 1}:</Text>
@@ -1090,7 +1072,7 @@ const MatchingAudioImageForm = forwardRef<
                       {...restField}
                       name={[name, "left"]}
                       rules={[{ required: true, message: "Chọn mục bên trái" }]}
-                      style={{ width: "200px" }}
+                      className="w-[200px]"
                     >
                       <Select placeholder="Chọn mục âm thanh">
                         {leftItems.map((item, itemIndex) => (
@@ -1108,7 +1090,7 @@ const MatchingAudioImageForm = forwardRef<
                       {...restField}
                       name={[name, "right"]}
                       rules={[{ required: true, message: "Chọn mục bên phải" }]}
-                      style={{ width: "200px" }}
+                      className="w-[200px]"
                     >
                       <Select placeholder="Chọn mục hình ảnh">
                         {rightItems.map((item, itemIndex) => (
@@ -1147,16 +1129,9 @@ const MatchingAudioImageForm = forwardRef<
 
           {/* Match Preview */}
           {form.getFieldValue(["data", "correctMatches"])?.length > 0 && (
-            <div
-              style={{
-                marginTop: "16px",
-                padding: "12px",
-                backgroundColor: "#e6f7ff",
-                borderRadius: "6px",
-              }}
-            >
+            <div className="mt-4 p-3 bg-blue-50 rounded-md">
               <Text strong>Tóm Tắt Các Cặp:</Text>
-              <div style={{ marginTop: "8px" }}>
+              <div className="mt-2">
                 {form
                   .getFieldValue(["data", "correctMatches"])
                   ?.map((match: any, index: number) => {
@@ -1169,7 +1144,7 @@ const MatchingAudioImageForm = forwardRef<
 
                     if (leftItem && rightItem) {
                       return (
-                        <div key={index} style={{ marginBottom: "4px" }}>
+                        <div key={index} className="mb-1">
                           <Text>
                             {leftItem.id}:{" "}
                             {leftItem.transcript || "File âm thanh"}
@@ -1187,7 +1162,7 @@ const MatchingAudioImageForm = forwardRef<
         </Card>
 
         {/* Additional Settings */}
-        <Card title="Cài Đặt Thêm" style={{ marginBottom: "24px" }}>
+        <Card title="Cài Đặt Thêm" className="mb-6">
           <Form.Item
             label="Giải Thích (Tùy Chọn)"
             name={["data", "explanation"]}

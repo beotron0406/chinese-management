@@ -9,7 +9,6 @@ export async function GET(
 ) {
   try {
     const courseId = params.courseId;
-    console.log(`🔄 Fetching all lessons by course: ${courseId}`);
 
     const response = await fetch(`${API_BASE_URL}/lessons/course/${courseId}/all`, {
       method: 'GET',
@@ -25,7 +24,6 @@ export async function GET(
     }
 
     const responseBody: Lesson[] = await response.json();
-    console.log('✅ All lessons by course fetched successfully');
     
     return NextResponse.json(responseBody);
   } catch (error) {

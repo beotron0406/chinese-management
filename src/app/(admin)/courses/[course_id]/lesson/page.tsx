@@ -54,7 +54,7 @@ export default function CourseLessonsPage() {
         description="ID khóa học được cung cấp trong URL không hợp lệ."
         type="error"
         showIcon
-        style={{ margin: "20px" }}
+        className="m-5"
         action={
           <Button onClick={() => router.push("/courses")}>
             Quay lại trang khóa học
@@ -197,7 +197,7 @@ export default function CourseLessonsPage() {
       content: (
         <div>
           <p>Bạn có chắc chắn muốn xóa vĩnh viễn bài học "{lesson.name}"?</p>
-          <p style={{ color: "red", fontWeight: "bold" }}>
+          <p className="text-red-500 font-bold">
             Hành động này KHÔNG THỂ HOÀN TÁC!
           </p>
         </div>
@@ -233,15 +233,15 @@ export default function CourseLessonsPage() {
       key: "name",
       render: (text: string, record: Lesson) => (
         <div
-          style={{ cursor: "pointer" }}
+          className="cursor-pointer"
           onClick={() => handleLessonClick(record)}
         >
-          <Text strong style={{ color: "#1890ff" }}>
+          <Text strong className="text-blue-500">
             {text}
           </Text>
           {record.description && (
             <div>
-              <Text type="secondary" style={{ fontSize: "0.9em" }}>
+              <Text type="secondary" className="text-sm">
                 {record.description.length > 80
                   ? `${record.description.substring(0, 80)}...`
                   : record.description}
@@ -327,14 +327,7 @@ export default function CourseLessonsPage() {
 
   if (loading) {
     return (
-      <div
-        style={{
-          display: "flex",
-          justifyContent: "center",
-          alignItems: "center",
-          minHeight: "400px",
-        }}
-      >
+      <div className="flex justify-center items-center min-h-[400px]">
         <Spin size="large" />
       </div>
     );
@@ -347,36 +340,36 @@ export default function CourseLessonsPage() {
         description={error}
         type="error"
         showIcon
-        style={{ margin: "20px" }}
+        className="m-5"
       />
     );
   }
 
   return (
-    <div style={{ padding: "24px", maxWidth: "1200px", margin: "0 auto" }}>
+    <div className="p-6 max-w-[1200px] mx-auto">
       {/* Header */}
-      <div style={{ marginBottom: "24px" }}>
+      <div className="mb-6">
         <Button
           icon={<ArrowLeftOutlined />}
           onClick={handleBackToCourses}
-          style={{ marginBottom: "16px" }}
+          className="mb-4"
         >
           Quay lại khóa học
         </Button>
 
         {course && (
           <>
-            <Title level={2} style={{ margin: 0 }}>
+            <Title level={2} className="!m-0">
               Bài học: {course.title}
             </Title>
-            <div style={{ marginTop: "8px" }}>
+            <div className="mt-2">
               <Tag color="blue">HSK Level {course.hskLevel}</Tag>
               <Tag color={course.isActive ? "green" : "red"}>
                 {course.isActive ? "Hoạt động" : "Không hoạt động"}
               </Tag>
             </div>
             {course.description && (
-              <Paragraph type="secondary" style={{ marginTop: "12px" }}>
+              <Paragraph type="secondary" className="mt-3">
                 {course.description}
               </Paragraph>
             )}
@@ -385,33 +378,26 @@ export default function CourseLessonsPage() {
       </div>
 
       {/* Course Stats */}
-      <div
-        style={{
-          display: "grid",
-          gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))",
-          gap: "16px",
-          marginBottom: "24px",
-        }}
-      >
+      <div className="grid grid-cols-[repeat(auto-fit,minmax(200px,1fr))] gap-4 mb-6">
         <Card size="small">
-          <div style={{ textAlign: "center" }}>
-            <Title level={3} style={{ margin: 0, color: "#1890ff" }}>
+          <div className="text-center">
+            <Title level={3} className="!m-0 !text-blue-500">
               {lessons?.length || 0}
             </Title>
             <Text type="secondary">Tổng số bài học</Text>
           </div>
         </Card>
         <Card size="small">
-          <div style={{ textAlign: "center" }}>
-            <Title level={3} style={{ margin: 0, color: "#52c41a" }}>
+          <div className="text-center">
+            <Title level={3} className="!m-0 !text-green-500">
               {lessons?.filter((l) => l.isActive).length || 0}
             </Title>
             <Text type="secondary">Bài học hoạt động</Text>
           </div>
         </Card>
         <Card size="small">
-          <div style={{ textAlign: "center" }}>
-            <Title level={3} style={{ margin: 0, color: "#fa8c16" }}>
+          <div className="text-center">
+            <Title level={3} className="!m-0 !text-orange-500">
               {lessons?.filter((l) => !l.isActive).length || 0}
             </Title>
             <Text type="secondary">Bài học không hoạt động</Text>
@@ -433,11 +419,11 @@ export default function CourseLessonsPage() {
         }
       >
         {!lessons || lessons.length === 0 ? (
-          <div style={{ textAlign: "center", padding: "40px" }}>
+          <div className="text-center p-10">
             <Text type="secondary">
               Không tìm thấy bài học nào cho khóa học này.
             </Text>
-            <div style={{ marginTop: "16px" }}>
+            <div className="mt-4">
               <Button
                 type="primary"
                 icon={<PlusOutlined />}
@@ -455,7 +441,7 @@ export default function CourseLessonsPage() {
             pagination={false}
             size="middle"
             onRow={(record) => ({
-              style: { cursor: "pointer" },
+              className: "cursor-pointer",
               onClick: () => handleLessonClick(record),
             })}
           />

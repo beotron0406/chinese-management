@@ -366,7 +366,7 @@ const WordDefinitionForm = forwardRef<
 
   return (
     <div>
-      <Card title="Thông Tin Từ Vựng" style={{ marginBottom: "24px" }}>
+      <Card title="Thông Tin Từ Vựng" className="mb-6">
         <Row gutter={16}>
           <Col span={12}>
             <Form.Item
@@ -381,7 +381,7 @@ const WordDefinitionForm = forwardRef<
             >
               <Input
                 onChange={(e) => handleChineseTextChange(e.target.value)}
-                style={{ fontSize: "18px" }}
+                className="text-lg"
               />
             </Form.Item>
           </Col>
@@ -421,7 +421,7 @@ const WordDefinitionForm = forwardRef<
         </Form.Item>
       </Card>
 
-      <Card title="File Đa Phương Tiện" style={{ marginBottom: "24px" }}>
+      <Card title="File Đa Phương Tiện" className="mb-6">
         <Row gutter={16}>
           <Col span={12}>
             <Form.Item
@@ -441,19 +441,17 @@ const WordDefinitionForm = forwardRef<
                     return false;
                   }}
                 >
-                  <Button icon={<UploadOutlined />} style={{ marginBottom: 8 }}>
+                  <Button icon={<UploadOutlined />} className="mb-2">
                     {selectedImageFile
                       ? selectedImageFile.name
                       : "Chọn Hình Ảnh"}
                   </Button>
                 </Upload>
                 {uploadedUrls.imageUrl && (
-                  <div style={{ marginTop: 8 }}>
-                    <div
-                      style={{ display: "flex", alignItems: "center", gap: 8 }}
-                    >
-                      <PictureOutlined style={{ color: "#52c41a" }} />
-                      <span style={{ color: "#52c41a" }}>
+                  <div className="mt-2">
+                    <div className="flex items-center gap-2">
+                      <PictureOutlined className="text-green-500" />
+                      <span className="text-green-500">
                         Hình ảnh đã tải lên
                       </span>
                       <Button
@@ -464,15 +462,11 @@ const WordDefinitionForm = forwardRef<
                         danger
                       />
                     </div>
-                    <div style={{ marginTop: 4 }}>
+                    <div className="mt-1">
                       <img
                         src={uploadedUrls.imageUrl}
                         alt="Preview"
-                        style={{
-                          maxWidth: 100,
-                          maxHeight: 100,
-                          objectFit: "cover",
-                        }}
+                        className="max-w-[100px] max-h-[100px] object-cover"
                       />
                     </div>
                   </div>
@@ -489,7 +483,7 @@ const WordDefinitionForm = forwardRef<
               ]}
             >
               <div>
-                <div style={{ marginBottom: 8, display: "flex", gap: 8 }}>
+                <div className="mb-2 flex gap-2">
                   <Upload
                     accept="audio/*"
                     maxCount={1}
@@ -522,12 +516,10 @@ const WordDefinitionForm = forwardRef<
                   />
                 </div>
                 {uploadedUrls.audioUrl && (
-                  <div style={{ marginTop: 8 }}>
-                    <div
-                      style={{ display: "flex", alignItems: "center", gap: 8 }}
-                    >
-                      <SoundOutlined style={{ color: "#52c41a" }} />
-                      <span style={{ color: "#52c41a" }}>
+                  <div className="mt-2">
+                    <div className="flex items-center gap-2">
+                      <SoundOutlined className="text-green-500" />
+                      <span className="text-green-500">
                         Âm thanh đã tải lên
                       </span>
                       <Button
@@ -538,8 +530,8 @@ const WordDefinitionForm = forwardRef<
                         danger
                       />
                     </div>
-                    <div style={{ marginTop: 4 }}>
-                      <audio controls style={{ width: "100%" }}>
+                    <div className="mt-1">
+                      <audio controls className="w-full">
                         <source src={uploadedUrls.audioUrl} />
                         Trình duyệt của bạn không hỗ trợ phần tử âm thanh.
                       </audio>
@@ -552,7 +544,7 @@ const WordDefinitionForm = forwardRef<
         </Row>
 
         {DEV_MODE && (selectedImageFile || selectedAudioFile) && (
-          <div style={{ textAlign: "center", marginTop: 16 }}>
+          <div className="text-center mt-4">
             <Button
               type="primary"
               icon={<UploadOutlined />}

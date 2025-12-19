@@ -50,15 +50,11 @@ const UploadModal: React.FC<UploadModalProps> = ({
   const getStatusIcon = () => {
     switch (uploadStatus) {
       case "uploading":
-        return <LoadingOutlined style={{ fontSize: 24, color: "#1890ff" }} />;
+        return <LoadingOutlined className="text-2xl text-blue-500" />;
       case "success":
-        return (
-          <CheckCircleOutlined style={{ fontSize: 24, color: "#52c41a" }} />
-        );
+        return <CheckCircleOutlined className="text-2xl text-green-500" />;
       case "error":
-        return (
-          <CloseCircleOutlined style={{ fontSize: 24, color: "#ff4d4f" }} />
-        );
+        return <CloseCircleOutlined className="text-2xl text-red-500" />;
       default:
         return null;
     }
@@ -78,9 +74,9 @@ const UploadModal: React.FC<UploadModalProps> = ({
   const renderUploadContent = () => {
     if (uploadStatus === "uploading") {
       return (
-        <div style={{ textAlign: "center", padding: "24px 0" }}>
-          <div style={{ marginBottom: 16 }}>{getStatusIcon()}</div>
-          <Title level={4} style={{ marginBottom: 24 }}>
+        <div className="text-center py-6">
+          <div className="mb-4">{getStatusIcon()}</div>
+          <Title level={4} className="!mb-6">
             Đang tải tệp của bạn lên...
           </Title>
           <Progress
@@ -89,15 +85,15 @@ const UploadModal: React.FC<UploadModalProps> = ({
             status={getProgressStatus()}
             size={120}
           />
-          <div style={{ marginTop: 16 }}>
+          <div className="mt-4">
             <Text type="secondary">
               Vui lòng không đóng cửa sổ này trong khi đang tải lên
             </Text>
           </div>
           {fileNames && (
-            <div style={{ marginTop: 16, textAlign: "left" }}>
+            <div className="mt-4 text-left">
               {fileNames.imageName && (
-                <div style={{ marginBottom: 8 }}>
+                <div className="mb-2">
                   <Text strong>Hình Ảnh: </Text>
                   <Text>{fileNames.imageName}</Text>
                 </div>
@@ -116,9 +112,9 @@ const UploadModal: React.FC<UploadModalProps> = ({
 
     if (uploadStatus === "success") {
       return (
-        <div style={{ textAlign: "center", padding: "24px 0" }}>
-          <div style={{ marginBottom: 16 }}>{getStatusIcon()}</div>
-          <Title level={4} style={{ marginBottom: 24, color: "#52c41a" }}>
+        <div className="text-center py-6">
+          <div className="mb-4">{getStatusIcon()}</div>
+          <Title level={4} className="!mb-6 !text-green-500">
             Tải tệp lên thành công!
           </Title>
           <Alert
@@ -126,8 +122,7 @@ const UploadModal: React.FC<UploadModalProps> = ({
             description="Các tệp của bạn đã được tải lên S3 và sẵn sàng sử dụng."
             type="success"
             showIcon
-            style={{ marginBottom: 24, textAlign: "left" }}
-          />
+            className="mb-6 text-left"          />
           {/* {uploadedUrls && (
             <div style={{ textAlign: 'left' }}>
               {uploadedUrls.imageUrl && (
@@ -158,9 +153,9 @@ const UploadModal: React.FC<UploadModalProps> = ({
 
     if (uploadStatus === "error") {
       return (
-        <div style={{ textAlign: "center", padding: "24px 0" }}>
-          <div style={{ marginBottom: 16 }}>{getStatusIcon()}</div>
-          <Title level={4} style={{ marginBottom: 24, color: "#ff4d4f" }}>
+        <div className="text-center py-6">
+          <div className="mb-4">{getStatusIcon()}</div>
+          <Title level={4} className="!mb-6 !text-red-500">
             Tải Lên Thất Bại
           </Title>
           <Alert
@@ -171,7 +166,7 @@ const UploadModal: React.FC<UploadModalProps> = ({
             }
             type="error"
             showIcon
-            style={{ marginBottom: 24, textAlign: "left" }}
+            className="mb-6 text-left"
           />
           <Text type="secondary">
             Vui lòng kiểm tra tệp của bạn và thử lại. Đảm bảo tệp đúng định dạng

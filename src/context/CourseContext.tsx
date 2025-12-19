@@ -1,8 +1,14 @@
-'use client';
+"use client";
 
-import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import { courseService } from '@/services/api';
-import { Course } from '@/types';
+import {
+  createContext,
+  useContext,
+  useState,
+  useEffect,
+  ReactNode,
+} from "react";
+import { courseService } from "@/services/api";
+import { Course } from "@/types";
 
 interface CourseContextType {
   allCourses: Course[];
@@ -23,16 +29,16 @@ export const CourseProvider = ({ children }: { children: ReactNode }) => {
       // Fetch all courses - this is a simplified approach
       // In a production app, you might want to implement pagination
       const response = await courseService.getCourses(1, 100);
-      setAllCourses(response.items);
+      setAllCourses(response.courses);
     } catch (error) {
-      console.error('Failed to fetch courses:', error);
+      console.error("Failed to fetch courses:", error);
     } finally {
       setLoadingCourses(false);
     }
   };
 
   const getCourseById = (id: number) => {
-    return allCourses.find(course => course.id === id);
+    return allCourses.find((course) => course.id === id);
   };
 
   useEffect(() => {
@@ -40,12 +46,14 @@ export const CourseProvider = ({ children }: { children: ReactNode }) => {
   }, []);
 
   return (
-    <CourseContext.Provider value={{ 
-      allCourses, 
-      loadingCourses, 
-      refreshCourses,
-      getCourseById
-    }}>
+    <CourseContext.Provider
+      value={{
+        allCourses,
+        loadingCourses,
+        refreshCourses,
+        getCourseById,
+      }}
+    >
       {children}
     </CourseContext.Provider>
   );
@@ -54,7 +62,7 @@ export const CourseProvider = ({ children }: { children: ReactNode }) => {
 export const useCourses = () => {
   const context = useContext(CourseContext);
   if (context === undefined) {
-    throw new Error('useCourses must be used within a CourseProvider');
+    throw new Error("useCourses must be used within a CourseProvider");
   }
   return context;
 };

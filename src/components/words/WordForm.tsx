@@ -526,7 +526,7 @@ const WordForm: React.FC<WordFormProps> = ({ wordData, onSuccess }) => {
 
             {/* Display auto-generated pinyin preview */}
             {generatedPinyin && (
-              <div style={{ marginTop: -16, marginBottom: 16 }}>
+              <div className="-mt-4 mb-4">
                 <Tag color="blue">Tự động tạo: {generatedPinyin}</Tag>
               </div>
             )}
@@ -552,7 +552,7 @@ const WordForm: React.FC<WordFormProps> = ({ wordData, onSuccess }) => {
             <Select
               value={senseEditing?.id}
               onChange={handleSenseChange}
-              style={{ width: 300 }}
+              className="w-[300px]"
             >
               {wordData.senses.map((sense) => {
                 const t = firstTranslation(sense);
@@ -611,7 +611,7 @@ const WordForm: React.FC<WordFormProps> = ({ wordData, onSuccess }) => {
                   size="small"
                   icon={<ReloadOutlined />}
                   onClick={handleRegeneratePinyin}
-                  style={{ padding: 0 }}
+                  className="p-0"
                 >
                   Tạo lại
                 </Button>
@@ -636,7 +636,7 @@ const WordForm: React.FC<WordFormProps> = ({ wordData, onSuccess }) => {
             <InputNumber
               min={1}
               max={9}
-              style={{ width: "100%" }}
+              className="w-full"
               placeholder="1-9"
             />
           </Form.Item>
@@ -670,17 +670,15 @@ const WordForm: React.FC<WordFormProps> = ({ wordData, onSuccess }) => {
                   return false;
                 }}
               >
-                <Button icon={<UploadOutlined />} style={{ marginBottom: 8 }}>
+                <Button icon={<UploadOutlined />} className="mb-2">
                   {selectedImageFile ? selectedImageFile.name : "Chọn Hình Ảnh"}
                 </Button>
               </Upload>
               {uploadedImageUrl && (
-                <div style={{ marginTop: 8 }}>
-                  <div
-                    style={{ display: "flex", alignItems: "center", gap: 8 }}
-                  >
-                    <PictureOutlined style={{ color: "#52c41a" }} />
-                    <span style={{ color: "#52c41a" }}>
+                <div className="mt-2">
+                  <div className="flex items-center gap-2">
+                    <PictureOutlined className="text-green-500" />
+                    <span className="text-green-500">
                       Đã tải lên hình ảnh
                     </span>
                     <Button
@@ -691,21 +689,17 @@ const WordForm: React.FC<WordFormProps> = ({ wordData, onSuccess }) => {
                       danger
                     />
                   </div>
-                  <div style={{ marginTop: 4 }}>
+                  <div className="mt-1">
                     <img
                       src={uploadedImageUrl}
                       alt="Word"
-                      style={{
-                        maxWidth: 200,
-                        maxHeight: 200,
-                        objectFit: "cover",
-                      }}
+                      className="max-w-[200px] max-h-[200px] object-cover"
                     />
                   </div>
                 </div>
               )}
               {DEV_MODE && selectedImageFile && !uploadedImageUrl && (
-                <div style={{ marginTop: 8 }}>
+                <div className="mt-2">
                   <Button
                     type="primary"
                     icon={<UploadOutlined />}
@@ -725,7 +719,7 @@ const WordForm: React.FC<WordFormProps> = ({ wordData, onSuccess }) => {
           </Form.Item>
 
           <Form.Item label="Âm Thanh">
-            <Space direction="vertical" style={{ width: "100%" }}>
+            <Space direction="vertical" className="w-full">
               <Space>
                 <Upload
                   accept="audio/*"
@@ -753,12 +747,10 @@ const WordForm: React.FC<WordFormProps> = ({ wordData, onSuccess }) => {
               </Space>
 
               {uploadedAudioUrl && (
-                <div style={{ marginTop: 8 }}>
-                  <div
-                    style={{ display: "flex", alignItems: "center", gap: 8 }}
-                  >
-                    <SoundOutlined style={{ color: "#52c41a" }} />
-                    <span style={{ color: "#52c41a" }}>
+                <div className="mt-2">
+                  <div className="flex items-center gap-2">
+                    <SoundOutlined className="text-green-500" />
+                    <span className="text-green-500">
                       Đã tải lên âm thanh
                     </span>
                     <Button
@@ -769,8 +761,8 @@ const WordForm: React.FC<WordFormProps> = ({ wordData, onSuccess }) => {
                       danger
                     />
                   </div>
-                  <div style={{ marginTop: 4 }}>
-                    <audio controls style={{ width: "100%" }}>
+                  <div className="mt-1">
+                    <audio controls className="w-full">
                       <source src={uploadedAudioUrl} />
                       Trình duyệt của bạn không hỗ trợ phát âm thanh.
                     </audio>
@@ -778,7 +770,7 @@ const WordForm: React.FC<WordFormProps> = ({ wordData, onSuccess }) => {
                 </div>
               )}
               {DEV_MODE && selectedAudioFile && !uploadedAudioUrl && (
-                <div style={{ marginTop: 8 }}>
+                <div className="mt-2">
                   <Button
                     type="primary"
                     icon={<UploadOutlined />}

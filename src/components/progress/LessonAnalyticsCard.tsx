@@ -71,7 +71,7 @@ export default function LessonAnalyticsCard({}: LessonAnalyticsCardProps) {
       key: 'scorePercentage',
       width: '25%',
       render: (score: number) => (
-        <span style={{ color: score >= 80 ? '#52c41a' : score >= 60 ? '#faad14' : '#ff4d4f' }}>
+        <span className={score >= 80 ? 'text-green-500' : score >= 60 ? 'text-yellow-500' : 'text-red-500'}>
           {score}%
         </span>
       ),
@@ -117,7 +117,7 @@ export default function LessonAnalyticsCard({}: LessonAnalyticsCardProps) {
               value={selectedCourseId}
               onChange={handleCourseChange}
               onCoursesLoaded={handleCoursesLoaded}
-              style={{ width: 180 }}
+              className="w-[180px]"
               placeholder="Chọn khóa học"
             />
             <LessonSelect
@@ -125,7 +125,7 @@ export default function LessonAnalyticsCard({}: LessonAnalyticsCardProps) {
               value={selectedLessonId}
               onChange={setSelectedLessonId}
               onLessonsLoaded={handleLessonsLoaded}
-              style={{ width: 200 }}
+              className="w-[200px]"
               disabled={!selectedCourseId}
               placeholder="Chọn bài học"
             />
@@ -152,10 +152,7 @@ export default function LessonAnalyticsCard({}: LessonAnalyticsCardProps) {
                 precision={1}
                 suffix="%"
                 prefix={<TrophyOutlined />}
-                valueStyle={{ 
-                  color: analytics.averageScore >= 80 ? '#52c41a' : 
-                         analytics.averageScore >= 60 ? '#faad14' : '#ff4d4f' 
-                }}
+                className={`[&_.ant-statistic-content-value]:${analytics.averageScore >= 80 ? '!text-green-500' : analytics.averageScore >= 60 ? '!text-yellow-500' : '!text-red-500'}`}
               />
             </Col>
             <Col xs={24} sm={8}>

@@ -169,7 +169,7 @@ const AddWordsModal: React.FC<AddWordsModalProps> = ({
       key: "chinese",
       render: (_: any, record: WordSenseWithSelection) => (
         <Space direction="vertical" size="small">
-          <Text strong style={{ fontSize: "16px" }}>
+          <Text strong className="text-base">
             {record.word?.simplified}
             {record.word?.traditional && record.word.traditional !== record.word.simplified && (
               <Text type="secondary"> ({record.word.traditional})</Text>
@@ -243,19 +243,19 @@ const AddWordsModal: React.FC<AddWordsModalProps> = ({
         </Button>,
       ]}
     >
-      <Space direction="vertical" style={{ width: "100%" }}>
+      <Space direction="vertical" className="w-full">
         <Search
           placeholder="Tìm kiếm theo ký tự Trung Quốc, pinyin hoặc bản dịch..."
           allowClear
           onSearch={handleSearch}
-          style={{ width: "100%" }}
+          className="w-full"
           prefix={<SearchOutlined />}
         />
 
         {selectedWordSenses.length > 0 && (
           <>
             <Text>Đã chọn {selectedWordSenses.length} nghĩa</Text>
-            <Divider style={{ margin: "12px 0" }} />
+            <Divider className="my-3" />
           </>
         )}
 

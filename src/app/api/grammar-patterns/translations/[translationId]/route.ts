@@ -10,8 +10,6 @@ export async function PATCH(
   try {
     const translationId = params.translationId;
     const formData: Partial<GrammarPatternFormData> = await request.json();
-    
-    console.log(`🔄 Updating grammar pattern via translation: ${translationId}`, formData);
 
     const response = await fetch(`${API_BASE_URL}/grammar-patterns/translations/${translationId}`, {
       method: 'PATCH',
@@ -28,7 +26,6 @@ export async function PATCH(
     }
 
     const responseBody: GrammarPattern = await response.json();
-    console.log('✅ Grammar pattern updated successfully via translation');
     
     return NextResponse.json(responseBody);
   } catch (error) {
