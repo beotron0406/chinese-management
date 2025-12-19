@@ -343,9 +343,6 @@ const ItemModal: React.FC<ItemModalProps> = ({
     try {
       setLoading(true);
 
-      // Validate form
-      const values = await form.validateFields();
-
       // Handle file uploads for forms that need it
       if (
         finalType === QuestionType.SelectionAudioImage &&
@@ -378,9 +375,15 @@ const ItemModal: React.FC<ItemModalProps> = ({
         }
       }
 
+      // Validate form first
+      await form.validateFields();
+      
+      // Get ALL form values including programmatically set ones
+      const allValues = form.getFieldsValue(true);
+
       // Prepare data for submission
       const submitData = {
-        ...values,
+        ...allValues,
         lessonId: parseInt(lessonId),
         itemType: selectedCategory, // Add itemType field based on selected category
         ...(selectedCategory === "content" && {

@@ -1,10 +1,13 @@
 "use client";
 import React, { useState, useEffect } from 'react';
-import { Form, Input, Button, Card, Space, Typography, Switch, Row, Col } from 'antd';
-import { PlusOutlined, DeleteOutlined, SoundOutlined } from '@ant-design/icons';
-import { pinyin } from 'pinyin-pro';
+import { Form, Input, Button, Card, Space, Typography, Switch } from 'antd';
+import { PlusOutlined, DeleteOutlined } from '@ant-design/icons';
 import type { FormInstance } from 'antd/es/form';
-import { SelectionTextTextQuestionData } from '@/types/questionType';
+import { SelectionTextTextQuestionData, TextOption } from '@/types/questionType';
+import { TextContent } from '@/types/textContent';
+import TextContentInput from '@/components/shared/TextContentInput';
+import { TextContentInline } from '@/components/shared/TextContentDisplay';
+import { getDisplayText } from '@/utils/textContentUtils';
 
 const { Text } = Typography;
 const { TextArea } = Input;
@@ -18,54 +21,69 @@ interface SelectionTextTextFormProps {
 }
 
 const SelectionTextTextForm: React.FC<SelectionTextTextFormProps> = ({ form, initialValues }) => {
-  const [options, setOptions] = useState<SelectionTextTextQuestionData['options']>([
-    { id: '1', text: '' },
-    { id: '2', text: '' },
-    { id: '3', text: '' },
-    { id: '4', text: '' }
+  const [options, setOptions] = useState<TextOption[]>([
+    { id: '1' },
+    { id: '2' },
+    { id: '3' },
+    { id: '4' }
   ]);
   const [correctAnswer, setCorrectAnswer] = useState<string>('1');
+  const [questionContent, setQuestionContent] = useState<TextContent>({ text: '' });
 
   // Initialize form with existing data
   useEffect(() => {
     if (initialValues?.data) {
       const { data } = initialValues;
+      
+      // Handle options (support both legacy and new format)
       if (data.options) {
-        setOptions(data.options);
+        const normalizedOptions: TextOption[] = data.options.map(opt => ({
+          id: opt.id,
+          content: opt.content || (opt.text ? { text: opt.text } : undefined),
+          text: opt.text, // Keep legacy field for backward compatibility
+        }));
+        setOptions(normalizedOptions);
       }
+      
+      // Handle question content (support both legacy and new format)
+      if (data.questionContent) {
+        setQuestionContent(data.questionContent);
+      } else if (data.question) {
+        setQuestionContent({ text: data.question });
+      }
+      
       if (data.correctAnswer) {
         setCorrectAnswer(data.correctAnswer);
       }
     }
   }, [initialValues]);
 
-  const generatePinyin = (chinese: string): string => {
-    try {
-      return pinyin(chinese, {
-        toneType: 'symbol',
-        type: 'array'
-      }).join(' ');
-    } catch (error) {
-      console.warn('Failed to generate pinyin:', error);
-      return '';
-    }
-  };
-
-  const updateFormData = (newOptions: SelectionTextTextQuestionData['options'], newCorrectAnswer: string) => {
+  const updateFormData = (
+    newOptions: TextOption[], 
+    newCorrectAnswer: string,
+    newQuestionContent?: TextContent
+  ) => {
+    const qContent = newQuestionContent || questionContent;
     form.setFieldsValue({
       data: {
+        questionContent: qContent,
         options: newOptions,
         correctAnswer: newCorrectAnswer
       }
     });
   };
 
-  const handleTextChange = (optionId: string, value: string) => {
+  const handleQuestionContentChange = (content: TextContent) => {
+    setQuestionContent(content);
+    updateFormData(options, correctAnswer, content);
+  };
+
+  const handleOptionContentChange = (optionId: string, content: TextContent) => {
     const updatedOptions = options.map(option => {
       if (option.id === optionId) {
         return {
           ...option,
-          text: value
+          content: content,
         };
       }
       return option;
@@ -77,7 +95,7 @@ const SelectionTextTextForm: React.FC<SelectionTextTextFormProps> = ({ form, ini
 
   const addOption = () => {
     const newId = (options.length + 1).toString();
-    const newOptions = [...options, { id: newId, text: '' }];
+    const newOptions = [...options, { id: newId }];
     setOptions(newOptions);
     updateFormData(newOptions, correctAnswer);
   };
@@ -103,6 +121,14 @@ const SelectionTextTextForm: React.FC<SelectionTextTextFormProps> = ({ form, ini
     updateFormData(options, optionId);
   };
 
+  // Get display text for an option
+  const getOptionDisplayText = (option: TextOption): string => {
+    if (option.content) {
+      return getDisplayText(option.content);
+    }
+    return option.text || '';
+  };
+
   return (
     <div>
       {/* Question Setup */}
@@ -117,12 +143,14 @@ const SelectionTextTextForm: React.FC<SelectionTextTextFormProps> = ({ form, ini
 
         <Form.Item
           label="Nội Dung Câu Hỏi"
-          name={['data', 'question']}
-          rules={[{ required: true, message: 'Vui lòng nhập nội dung câu hỏi' }]}
+          required
         >
-          <TextArea
-            rows={3}
+          <TextContentInput
+            value={questionContent}
+            onChange={handleQuestionContentChange}
             placeholder="Nhập câu hỏi của bạn tại đây"
+            multiline
+            rows={3}
           />
         </Form.Item>
       </Card>
@@ -173,21 +201,14 @@ const SelectionTextTextForm: React.FC<SelectionTextTextFormProps> = ({ form, ini
             >
               <div>
                 <Text strong>Nội Dung Lựa Chọn</Text>
-                <Input
-                  placeholder="Nhập nội dung lựa chọn"
-                  value={option.text}
-                  onChange={(e) => handleTextChange(option.id, e.target.value)}
-                  className="mt-1"
-                />
-              </div>
-
-              {/* Preview */}
-              {/* {option.text && (
-                <div style={{ marginTop: '12px', padding: '8px', backgroundColor: '#fafafa', borderRadius: '4px' }}>
-                  <Text strong>Xem Trước: </Text>
-                  <span style={{ fontSize: '16px', color: '#1890ff' }}>{option.text}</span>
+                <div className="mt-2">
+                  <TextContentInput
+                    value={option.content}
+                    onChange={(content) => handleOptionContentChange(option.id, content)}
+                    placeholder="Nhập nội dung lựa chọn"
+                  />
                 </div>
-              )} */}
+              </div>
             </Card>
           ))}
         </Space>
@@ -196,8 +217,8 @@ const SelectionTextTextForm: React.FC<SelectionTextTextFormProps> = ({ form, ini
         <div className="mt-4 p-3 bg-blue-50 rounded-md">
           <Text strong>Đáp Án Đúng: </Text>
           <Text>Lựa Chọn {options.findIndex(opt => opt.id === correctAnswer) + 1}</Text>
-          {options.find(opt => opt.id === correctAnswer)?.text && (
-            <Text> - {options.find(opt => opt.id === correctAnswer)?.text}</Text>
+          {getOptionDisplayText(options.find(opt => opt.id === correctAnswer) || {id: ''}) && (
+            <Text> - {getOptionDisplayText(options.find(opt => opt.id === correctAnswer) || {id: ''})}</Text>
           )}
         </div>
       </Card>
@@ -226,6 +247,9 @@ const SelectionTextTextForm: React.FC<SelectionTextTextFormProps> = ({ form, ini
       </Card>
 
       {/* Hidden form fields for proper data structure */}
+      <Form.Item name={['data', 'questionContent']} className="hidden">
+        <Input />
+      </Form.Item>
       <Form.Item name={['data', 'options']} className="hidden">
         <Input />
       </Form.Item>

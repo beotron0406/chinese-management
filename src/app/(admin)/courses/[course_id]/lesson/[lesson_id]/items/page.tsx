@@ -38,6 +38,8 @@ import {
   LessonGrammarPattern,
   LessonWord,
 } from "@/types/itemTypes";
+import TextContentDisplay, { TextContentInline } from "@/components/shared/TextContentDisplay";
+import { getDisplayText } from "@/utils/textContentUtils";
 
 const { Title, Text, Paragraph } = Typography;
 const { TabPane } = Tabs;
@@ -111,9 +113,9 @@ export default function LessonItemsPage() {
     setModalVisible(true);
   };
 
-  const handleDeleteItem = async (itemId: number) => {
+  const handleDeleteItem = async (itemId: number, itemType: string) => {
     try {
-      await lessonApi.deleteLessonContent(itemId);
+      await lessonApi.deleteLessonContent(itemId, itemType);
       message.success("Xóa nội dung thành công");
       fetchData();
     } catch (error) {
@@ -174,7 +176,7 @@ export default function LessonItemsPage() {
               />
               <Popconfirm
                 title="Xóa nội dung này?"
-                onConfirm={() => handleDeleteItem(item.id)}
+                onConfirm={() => handleDeleteItem(item.id, item.itemType)}
               >
                 <Button size="small" danger icon={<DeleteOutlined />} />
               </Popconfirm>
@@ -236,7 +238,7 @@ export default function LessonItemsPage() {
               />
               <Popconfirm
                 title="Xóa nội dung này?"
-                onConfirm={() => handleDeleteItem(item.id)}
+                onConfirm={() => handleDeleteItem(item.id, item.itemType)}
               >
                 <Button size="small" danger icon={<DeleteOutlined />} />
               </Popconfirm>
@@ -295,7 +297,7 @@ export default function LessonItemsPage() {
               />
               <Popconfirm
                 title="Xóa nội dung này?"
-                onConfirm={() => handleDeleteItem(item.id)}
+                onConfirm={() => handleDeleteItem(item.id, item.itemType)}
               >
                 <Button size="small" danger icon={<DeleteOutlined />} />
               </Popconfirm>
@@ -305,9 +307,13 @@ export default function LessonItemsPage() {
           <Title level={titleLevel} className="!mb-2">
             {data.instruction}
           </Title>
-          {data.question && (
+          {(data.question || data.questionContent) && (
             <Paragraph className="text-sm !mb-3">
-              {data.question}
+              {data.questionContent ? (
+                <TextContentDisplay content={data.questionContent} />
+              ) : (
+                data.question
+              )}
             </Paragraph>
           )}
 
@@ -335,6 +341,10 @@ export default function LessonItemsPage() {
           <Row gutter={[12, 12]}>
             {data.options?.map((option: any) => {
               const isCorrect = option.id === data.correctAnswer;
+              // Handle both legacy text and new content format
+              const optionText = option.content 
+                ? getDisplayText(option.content) 
+                : option.text;
               return (
                 <Col span={12} key={option.id}>
                   <Card
@@ -348,6 +358,8 @@ export default function LessonItemsPage() {
                         alt={option.alt}
                         className="w-full max-h-[80px] object-cover"
                       />
+                    ) : option.content ? (
+                      <TextContentDisplay content={option.content} size="small" />
                     ) : (
                       <Text className="text-xs">{option.text}</Text>
                     )}
@@ -390,7 +402,7 @@ export default function LessonItemsPage() {
               />
               <Popconfirm
                 title="Delete this item?"
-                onConfirm={() => handleDeleteItem(item.id)}
+                onConfirm={() => handleDeleteItem(item.id, item.itemType)}
               >
                 <Button size="small" danger icon={<DeleteOutlined />} />
               </Popconfirm>
@@ -498,7 +510,7 @@ export default function LessonItemsPage() {
               />
               <Popconfirm
                 title="Xóa nội dung này?"
-                onConfirm={() => handleDeleteItem(item.id)}
+                onConfirm={() => handleDeleteItem(item.id, item.itemType)}
               >
                 <Button size="small" danger icon={<DeleteOutlined />} />
               </Popconfirm>
@@ -565,35 +577,30 @@ export default function LessonItemsPage() {
     }
 
     if (type === "question_fill_text_text") {
-      return (
-        <Card
-          hoverable
-          className="mb-3 text-sm"
-          size="small"
-          extra={
-            <Space size="small">
-              <Tag color="magenta" className="text-xs">
-                Điền vào chỗ trống
-              </Tag>
-              <Button
-                size="small"
-                icon={<EditOutlined />}
-                onClick={() => handleEditItem(item)}
-              />
-              <Popconfirm
-                title="Xóa nội dung này?"
-                onConfirm={() => handleDeleteItem(item.id)}
-              >
-                <Button size="small" danger icon={<DeleteOutlined />} />
-              </Popconfirm>
-            </Space>
-          }
-        >
-          <Title level={titleLevel} className="!mb-2">
-            {data.instruction}
-          </Title>
-
-          <div className="mb-3">
+      // Helper to render segments (new format) or sentence (legacy)
+      const renderSentence = () => {
+        // New format with segments
+        if (data.segments && data.segments.length > 0) {
+          return (
+            <div className="flex flex-wrap items-end gap-1">
+              {data.segments.map((segment: any, index: number) => (
+                <span key={index}>
+                  {segment.type === 'text' ? (
+                    <TextContentDisplay content={segment.content} size="small" />
+                  ) : (
+                    <Tag color="orange" className="text-xs">
+                      [Chỗ trống #{segment.blankIndex}]
+                    </Tag>
+                  )}
+                </span>
+              ))}
+            </div>
+          );
+        }
+        
+        // Legacy format
+        return (
+          <>
             <Text className="text-sm">
               {data.sentence?.map((part: string, index: number) => (
                 <span key={index}>
@@ -611,20 +618,102 @@ export default function LessonItemsPage() {
             <Text type="secondary" className="text-xs">
               {data.pinyin?.join(" ")}
             </Text>
+          </>
+        );
+      };
+
+      // Helper to render option bank
+      const renderOptionBank = () => {
+        // New format
+        if (data.optionBankItems && data.optionBankItems.length > 0) {
+          return data.optionBankItems.map((item: any, index: number) => (
+            <Tag key={index} className="text-xs">
+              <TextContentDisplay content={item} size="small" />
+            </Tag>
+          ));
+        }
+        
+        // Legacy format
+        if (data.optionBank) {
+          return data.optionBank.map((option: string, index: number) => (
+            <Tag key={index} className="text-xs">
+              {option}
+            </Tag>
+          ));
+        }
+        
+        return null;
+      };
+
+      // Helper to render answers
+      const renderAnswers = () => {
+        // New format
+        if (data.blankAnswers && data.blankAnswers.length > 0) {
+          return data.blankAnswers.map((blank: any, index: number) => (
+            <div key={index} className="mb-1">
+              <Tag color="orange" className="text-xs">#{blank.index}</Tag>
+              <span className="mx-1">→</span>
+              {blank.correctAnswers?.map((answer: any, aIdx: number) => (
+                <Tag key={aIdx} color="green" className="text-xs">
+                  {getDisplayText(answer)}
+                </Tag>
+              ))}
+            </div>
+          ));
+        }
+        
+        // Legacy format
+        if (data.blanks) {
+          return data.blanks.map((blank: any, index: number) => (
+            <Tag key={index} color="green" className="text-xs">
+              [{blank.index}] = {blank.correct.join(", ")}
+            </Tag>
+          ));
+        }
+        
+        return null;
+      };
+
+      return (
+        <Card
+          hoverable
+          className="mb-3 text-sm"
+          size="small"
+          extra={
+            <Space size="small">
+              <Tag color="magenta" className="text-xs">
+                Điền vào chỗ trống
+              </Tag>
+              <Button
+                size="small"
+                icon={<EditOutlined />}
+                onClick={() => handleEditItem(item)}
+              />
+              <Popconfirm
+                title="Xóa nội dung này?"
+                onConfirm={() => handleDeleteItem(item.id, item.itemType)}
+              >
+                <Button size="small" danger icon={<DeleteOutlined />} />
+              </Popconfirm>
+            </Space>
+          }
+        >
+          <Title level={titleLevel} className="!mb-2">
+            {data.instruction}
+          </Title>
+
+          <div className="mb-3">
+            {renderSentence()}
             <br />
             <Text className="text-xs">{data.vietnamese}</Text>
           </div>
 
-          {data.optionBank && (
+          {(data.optionBankItems || data.optionBank) && (
             <div className="mb-3">
               <Text strong className="text-xs">
                 Ngân hàng lựa chọn:{" "}
               </Text>
-              {data.optionBank.map((option: string, index: number) => (
-                <Tag key={index} className="text-xs">
-                  {option}
-                </Tag>
-              ))}
+              {renderOptionBank()}
             </div>
           )}
 
@@ -632,11 +721,7 @@ export default function LessonItemsPage() {
             <Text strong className="text-xs">
               Đáp án đúng:{" "}
             </Text>
-            {data.blanks?.map((blank: any, index: number) => (
-              <Tag key={index} color="green" className="text-xs">
-                [{blank.index}] = {blank.correct.join(", ")}
-              </Tag>
-            ))}
+            {renderAnswers()}
           </div>
 
           {data.explanation && (
@@ -666,7 +751,7 @@ export default function LessonItemsPage() {
             />
             <Popconfirm
               title="Xóa nội dung này?"
-              onConfirm={() => handleDeleteItem(item.id)}
+              onConfirm={() => handleDeleteItem(item.id, item.itemType)}
             >
               <Button size="small" danger icon={<DeleteOutlined />} />
             </Popconfirm>

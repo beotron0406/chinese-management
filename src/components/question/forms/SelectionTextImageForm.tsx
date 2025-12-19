@@ -18,8 +18,10 @@ import {
 } from "@ant-design/icons";
 import type { FormInstance } from "antd/es/form";
 import { SelectionTextImageQuestionData } from '@/types/questionType';
+import { TextContent } from '@/types/textContent';
 import { uploadImageByType, validateFile, UploadProgress } from '@/utils/s3Upload';
 import UploadModal from '@/components/common/UploadModal';
+import TextContentInput from '@/components/shared/TextContentInput';
 
 const { Text } = Typography;
 const { TextArea } = Input;
@@ -67,15 +69,23 @@ const SelectionTextImageForm = forwardRef<SelectionTextImageFormRef, SelectionTe
     { id: '4', image: '', alt: '' }
   ]);
   const [correctAnswer, setCorrectAnswer] = useState<string>('1');
+  const [questionContent, setQuestionContent] = useState<TextContent>({ text: '' });
 
-  const updateFormData = (newOptions: SelectionTextImageQuestionData['options'], newCorrectAnswer: string) => {
+  const updateFormData = (newOptions: SelectionTextImageQuestionData['options'], newCorrectAnswer: string, newQuestionContent?: TextContent) => {
+    const qContent = newQuestionContent || questionContent;
     form.setFieldsValue({
       data: {
         ...form.getFieldValue('data'),
+        questionContent: qContent,
         options: newOptions,
         correctAnswer: newCorrectAnswer
       }
     });
+  };
+
+  const handleQuestionContentChange = (content: TextContent) => {
+    setQuestionContent(content);
+    updateFormData(options, correctAnswer, content);
   };
 
   // Answer image upload handlers
@@ -394,6 +404,13 @@ const SelectionTextImageForm = forwardRef<SelectionTextImageFormRef, SelectionTe
     if (initialValues?.data) {
       const { data } = initialValues;
       
+      // Handle question content (support both legacy and new format)
+      if (data.questionContent) {
+        setQuestionContent(data.questionContent);
+      } else if (data.question) {
+        setQuestionContent({ text: data.question });
+      }
+      
       if (data.options) {
         setOptions(data.options);
         const imageUploads: typeof answerImageUploads = {};
@@ -425,13 +442,14 @@ const SelectionTextImageForm = forwardRef<SelectionTextImageFormRef, SelectionTe
 
         <Form.Item
           label="Văn Bản Câu Hỏi"
-          name={['data', 'question']}
-          rules={[{ required: true, message: 'Vui lòng nhập văn bản câu hỏi' }]}
+          required
         >
-          <TextArea
-            rows={3}
+          <TextContentInput
+            value={questionContent}
+            onChange={handleQuestionContentChange}
             placeholder="Nhập văn bản câu hỏi mà học viên sẽ đọc"
-            className="text-base"
+            multiline
+            rows={3}
           />
         </Form.Item>
       </Card>
@@ -587,6 +605,9 @@ const SelectionTextImageForm = forwardRef<SelectionTextImageFormRef, SelectionTe
       </Card>
 
       {/* Hidden form fields for proper data structure */}
+      <Form.Item name={['data', 'questionContent']} className="hidden">
+        <Input />
+      </Form.Item>
       <Form.Item name={['data', 'options']} className="hidden">
         <Input />
       </Form.Item>

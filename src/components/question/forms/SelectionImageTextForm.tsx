@@ -17,9 +17,12 @@ import {
   PlusOutlined,
 } from "@ant-design/icons";
 import type { FormInstance } from "antd/es/form";
-import { SelectionImageTextQuestionData } from '@/types/questionType';
+import { SelectionImageTextQuestionData, TextOption } from '@/types/questionType';
+import { TextContent } from '@/types/textContent';
 import { uploadImageByType, validateFile, UploadProgress } from '@/utils/s3Upload';
 import UploadModal from '@/components/common/UploadModal';
+import TextContentInput from '@/components/shared/TextContentInput';
+import { getDisplayText } from '@/utils/textContentUtils';
 
 const { Text } = Typography;
 const { TextArea } = Input;
@@ -55,11 +58,11 @@ const SelectionImageTextForm = forwardRef<SelectionImageTextFormRef, SelectionIm
   const [imageAlt, setImageAlt] = useState<string>('');
 
   // Options state
-  const [options, setOptions] = useState<SelectionImageTextQuestionData['options']>([
-    { id: '1', text: '' },
-    { id: '2', text: '' },
-    { id: '3', text: '' },
-    { id: '4', text: '' }
+  const [options, setOptions] = useState<TextOption[]>([
+    { id: '1' },
+    { id: '2' },
+    { id: '3' },
+    { id: '4' }
   ]);
   const [correctAnswer, setCorrectAnswer] = useState<string>('1');
 
@@ -202,12 +205,12 @@ const SelectionImageTextForm = forwardRef<SelectionImageTextFormRef, SelectionIm
   };
 
   // Option management
-  const handleOptionTextChange = (optionId: string, value: string) => {
+  const handleOptionContentChange = (optionId: string, content: TextContent) => {
     const updatedOptions = options.map(option => {
       if (option.id === optionId) {
         return {
           ...option,
-          text: value
+          content: content
         };
       }
       return option;
@@ -219,7 +222,7 @@ const SelectionImageTextForm = forwardRef<SelectionImageTextFormRef, SelectionIm
 
   const addOption = () => {
     const newId = (options.length + 1).toString();
-    const newOptions = [...options, { id: newId, text: '' }];
+    const newOptions: TextOption[] = [...options, { id: newId }];
     setOptions(newOptions);
     updateFormData(newOptions, correctAnswer);
   };
@@ -333,7 +336,13 @@ const SelectionImageTextForm = forwardRef<SelectionImageTextFormRef, SelectionIm
       }
       
       if (data.options) {
-        setOptions(data.options);
+        // Normalize options to support both legacy and new format
+        const normalizedOptions: TextOption[] = data.options.map(opt => ({
+          id: opt.id,
+          content: opt.content || (opt.text ? { text: opt.text } : undefined),
+          text: opt.text, // Keep legacy field
+        }));
+        setOptions(normalizedOptions);
       }
       
       if (data.correctAnswer) {
@@ -466,12 +475,13 @@ const SelectionImageTextForm = forwardRef<SelectionImageTextFormRef, SelectionIm
               {/* Option Text */}
               <div>
                 <Text strong>Văn Bản Tùy Chọn</Text>
-                <Input
-                  placeholder={`Nhập văn bản tùy chọn ${index + 1}`}
-                  value={option.text}
-                  onChange={(e) => handleOptionTextChange(option.id, e.target.value)}
-                  className="mt-1 text-base"
-                />
+                <div className="mt-2">
+                  <TextContentInput
+                    value={option.content}
+                    onChange={(content) => handleOptionContentChange(option.id, content)}
+                    placeholder={`Nhập văn bản tùy chọn ${index + 1}`}
+                  />
+                </div>
               </div>
 
               {/* Preview */}
@@ -491,9 +501,11 @@ const SelectionImageTextForm = forwardRef<SelectionImageTextFormRef, SelectionIm
         <div className="mt-4 p-3 bg-blue-50 rounded-md">
           <Text strong>Đáp Án Đúng: </Text>
           <Text>Tùy Chọn {options.findIndex(opt => opt.id === correctAnswer) + 1}</Text>
-          {options.find(opt => opt.id === correctAnswer)?.text && (
-            <Text> - {options.find(opt => opt.id === correctAnswer)?.text}</Text>
-          )}
+          {(() => {
+            const correctOpt = options.find(opt => opt.id === correctAnswer);
+            const displayText = correctOpt?.content ? getDisplayText(correctOpt.content) : correctOpt?.text;
+            return displayText && <Text> - {displayText}</Text>;
+          })()}
         </div>
       </Card>
 

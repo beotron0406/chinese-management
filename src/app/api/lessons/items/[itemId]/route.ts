@@ -46,8 +46,16 @@ export async function DELETE(
 ) {
   try {
     const itemId = params.itemId;
+    const { searchParams } = new URL(request.url);
+    const type = searchParams.get('type');
+    
+    // Construct URL with query parameters if they exist
+    let url = `${API_BASE_URL}/lessons/items/${itemId}`;
+    if (type) {
+      url += `?type=${type}`;
+    }
 
-    const response = await fetch(`${API_BASE_URL}/lessons/items/${itemId}`, {
+    const response = await fetch(url, {
       method: 'DELETE',
       headers: {
         'Content-Type': 'application/json',
