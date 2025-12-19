@@ -42,22 +42,14 @@ export default function LeaderboardTabs() {
   const getRankIcon = (index: number) => {
     switch (index) {
       case 0:
-        return <span style={{ fontSize: '24px' }}>🥇</span>;
+        return <span className="text-2xl">🥇</span>;
       case 1:
-        return <span style={{ fontSize: '24px' }}>🥈</span>;
+        return <span className="text-2xl">🥈</span>;
       case 2:
-        return <span style={{ fontSize: '24px' }}>🥉</span>;
+        return <span className="text-2xl">🥉</span>;
       default:
         return (
-          <div 
-            style={{ 
-              fontSize: '14px', 
-              fontWeight: 'bold',
-              color: '#666',
-              minWidth: '24px',
-              textAlign: 'center'
-            }}
-          >
+          <div className="text-sm font-bold text-gray-500 min-w-[24px] text-center">
             #{index + 1}
           </div>
         );
@@ -88,20 +80,22 @@ export default function LeaderboardTabs() {
       dataSource={users}
       renderItem={(user, index) => (
         <List.Item
-          style={{
-            padding: '12px 16px',
-            backgroundColor: index < 3 ? getRankColor(index) + '20' : 'transparent',
-            borderRadius: '8px',
-            marginBottom: '8px',
-            border: index < 3 ? `2px solid ${getRankColor(index)}` : '1px solid #f0f0f0'
-          }}
+          className={`p-3 rounded-lg mb-2 ${
+            index < 3 
+              ? `bg-opacity-20 border-2 ${
+                  index === 0 ? 'bg-yellow-100 border-yellow-400' :
+                  index === 1 ? 'bg-gray-100 border-gray-400' :
+                  'bg-orange-100 border-orange-400'
+                }`
+              : 'border border-gray-100'
+          }`}
           actions={[
             <Button 
               key="view"
               type="link" 
               icon={<EyeOutlined />}
               onClick={() => handleViewUser(user.userId, user.displayName)}
-              style={{ color: '#1890ff' }}
+              className="text-blue-500"
             >
               Chi tiết
             </Button>
@@ -109,8 +103,8 @@ export default function LeaderboardTabs() {
         >
           <List.Item.Meta
             avatar={
-              <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                <div style={{ minWidth: '32px', textAlign: 'center' }}>
+              <div className="flex items-center gap-3">
+                <div className="min-w-[32px] text-center">
                   {getRankIcon(index)}
                 </div>
                 <Avatar 
@@ -126,13 +120,10 @@ export default function LeaderboardTabs() {
               </div>
             }
             title={
-              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+              <div className="flex items-center gap-2">
                 <Text 
                   strong 
-                  style={{ 
-                    fontSize: '16px',
-                    color: index < 3 ? '#333' : '#666'
-                  }}
+                  className={`text-base ${index < 3 ? 'text-gray-800' : 'text-gray-500'}`}
                 >
                   {user.displayName || 'Unknown User'}
                 </Text>
@@ -144,13 +135,9 @@ export default function LeaderboardTabs() {
               </div>
             }
             description={
-              <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+              <div className="flex items-center gap-1.5">
                 {metricIcon}
-                <span style={{ 
-                  fontSize: '14px',
-                  fontWeight: 'bold',
-                  color: index < 3 ? '#333' : '#888'
-                }}>
+                <span className={`text-sm font-bold ${index < 3 ? 'text-gray-800' : 'text-gray-400'}`}>
                   {user[metricKey] || 0}{suffix}
                 </span>
               </div>
@@ -164,7 +151,7 @@ export default function LeaderboardTabs() {
   if (loading) {
     return (
       <Card title="🏆 Bảng xếp hạng">
-        <div style={{ textAlign: 'center', padding: '40px' }}>
+        <div className="text-center p-10">
           <Spin size="large" />
         </div>
       </Card>
@@ -174,7 +161,7 @@ export default function LeaderboardTabs() {
   if (!leaderboard) {
     return (
       <Card title="🏆 Bảng xếp hạng">
-        <div style={{ textAlign: 'center', padding: '40px' }}>
+        <div className="text-center p-10">
           <Text type="secondary">Không có dữ liệu</Text>
         </div>
       </Card>
@@ -185,8 +172,8 @@ export default function LeaderboardTabs() {
     {
       key: 'streak',
       label: (
-        <span style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-          <TrophyOutlined style={{ color: '#faad14' }} />
+        <span className="flex items-center gap-1.5">
+          <TrophyOutlined className="text-yellow-500" />
           <span>Streak dài nhất</span>
         </span>
       ),
@@ -194,14 +181,14 @@ export default function LeaderboardTabs() {
         leaderboard.byStreak || [], 
         'longestStreak', 
         ' ngày',
-        <span style={{ color: '#ff4d4f' }}>🔥</span>
+        <span className="text-red-500">🔥</span>
       ),
     },
     {
       key: 'lessons',
       label: (
-        <span style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-          <BookOutlined style={{ color: '#52c41a' }} />
+        <span className="flex items-center gap-1.5">
+          <BookOutlined className="text-green-500" />
           <span>Nhiều bài nhất</span>
         </span>
       ),
@@ -209,14 +196,14 @@ export default function LeaderboardTabs() {
         leaderboard.byLessonsCompleted || [], 
         'lessonsCompleted', 
         ' bài',
-        <span style={{ color: '#1890ff' }}>📚</span>
+        <span className="text-blue-500">📚</span>
       ),
     },
     {
       key: 'score',
       label: (
-        <span style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-          <StarOutlined style={{ color: '#722ed1' }} />
+        <span className="flex items-center gap-1.5">
+          <StarOutlined className="text-purple-600" />
           <span>Điểm cao nhất</span>
         </span>
       ),
@@ -224,7 +211,7 @@ export default function LeaderboardTabs() {
         leaderboard.byAverageScore || [], 
         'averageScore', 
         '%',
-        <span style={{ color: '#faad14' }}>⭐</span>
+        <span className="text-yellow-500">⭐</span>
       ),
     },
   ];
@@ -233,15 +220,12 @@ export default function LeaderboardTabs() {
     <>
       <Card 
         title={
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-            <TrophyOutlined style={{ color: '#faad14', fontSize: '20px' }} />
-            <span style={{ fontSize: '18px', fontWeight: 'bold' }}>Bảng xếp hạng</span>
+          <div className="flex items-center gap-2">
+            <TrophyOutlined className="text-yellow-500 text-xl" />
+            <span className="text-lg font-bold">Bảng xếp hạng</span>
           </div>
         }
-        style={{ 
-          boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
-          borderRadius: '8px'
-        }}
+        className="shadow-md rounded-lg"
       >
         <Tabs 
           items={tabItems} 

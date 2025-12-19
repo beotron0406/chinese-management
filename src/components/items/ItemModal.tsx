@@ -54,62 +54,62 @@ interface ItemModalProps {
 
 // Define item categories
 const ITEM_CATEGORIES = [
-  { value: "content", label: "Content" },
-  { value: "question", label: "Question" },
+  { value: "content", label: "Nội Dung" },
+  { value: "question", label: "Câu Hỏi" },
 ];
 
 // Define content types
 const CONTENT_TYPES = [
   {
     value: ContentType.CONTENT_SENTENCES,
-    label: "Sentences Content",
+    label: "Nội Dung Câu",
   },
   {
     value: ContentType.CONTENT_WORD_DEFINITION,
-    label: "Word Definition Content",
+    label: "Nội Dung Định Nghĩa Từ",
   },
 ];
 
 // Define question categories
 const QUESTION_CATEGORIES = [
-  { value: "selection", label: "Selection Questions" },
-  { value: "matching", label: "Matching Questions" },
-  { value: "fill", label: "Fill in the Blank Questions" },
-  { value: "bool", label: "True/False Questions" },
+  { value: "selection", label: "Câu Hỏi Lựa Chọn" },
+  { value: "matching", label: "Câu Hỏi Ghép Cặp" },
+  { value: "fill", label: "Câu Hỏi Điền Chỗ Trống" },
+  { value: "bool", label: "Câu Hỏi Đúng/Sai" },
 ];
 
 // Define question and answer types for each category
 const QUESTION_ANSWER_TYPES = {
   selection: {
     question: [
-      { value: "text", label: "Text" },
-      { value: "audio", label: "Audio" },
-      { value: "image", label: "Image" },
+      { value: "text", label: "Văn Bản" },
+      { value: "audio", label: "Âm Thanh" },
+      { value: "image", label: "Hình Ảnh" },
     ],
     answer: [
-      { value: "text", label: "Text" },
-      { value: "image", label: "Image" },
+      { value: "text", label: "Văn Bản" },
+      { value: "image", label: "Hình Ảnh" },
     ],
   },
   matching: {
     question: [
-      { value: "text", label: "Text" },
-      { value: "audio", label: "Audio" },
+      { value: "text", label: "Văn Bản" },
+      { value: "audio", label: "Âm Thanh" },
     ],
     answer: [
-      { value: "text", label: "Text" },
-      { value: "image", label: "Image" },
+      { value: "text", label: "Văn Bản" },
+      { value: "image", label: "Hình Ảnh" },
     ],
   },
   fill: {
     // Fill only has text->text format
-    question: [{ value: "text", label: "Text" }],
-    answer: [{ value: "text", label: "Text" }],
+    question: [{ value: "text", label: "Văn Bản" }],
+    answer: [{ value: "text", label: "Văn Bản" }],
   },
   bool: {
     // Bool only has audio->text format
-    question: [{ value: "audio", label: "Audio" }],
-    answer: [{ value: "text", label: "Text" }],
+    question: [{ value: "audio", label: "Âm Thanh" }],
+    answer: [{ value: "text", label: "Văn Bản" }],
   },
 };
 
@@ -394,17 +394,19 @@ const ItemModal: React.FC<ItemModalProps> = ({
       // Use lessonApi service methods instead of direct fetch
       if (mode === "edit") {
         await lessonApi.updateLessonItem(editItem.id, submitData);
-        message.success("Item updated successfully!");
+        message.success("Cập nhật mục thành công!");
       } else {
         await lessonApi.addLessonContent(parseInt(lessonId), submitData);
-        message.success("Item created successfully!");
+        message.success("Tạo mục thành công!");
       }
 
       onSuccess();
       handleCancel();
     } catch (error) {
       console.error(`Error ${mode}ing item:`, error);
-      message.error(`Failed to ${mode} item. Please try again.`);
+      message.error(
+        `Không thể ${mode === "edit" ? "cập nhật" : "tạo"} mục. Vui lòng thử lại.`
+      );
     } finally {
       setLoading(false);
     }
@@ -424,19 +426,12 @@ const ItemModal: React.FC<ItemModalProps> = ({
 
   // Render step 0: Category selection
   const renderCategorySelection = () => (
-    <div style={{ padding: "20px 0", maxHeight: "60vh", overflowY: "auto" }}>
-      <Title level={4} style={{ marginBottom: "20px", textAlign: "center" }}>
-        Select Item Category
+    <div className="py-5 max-h-[60vh] overflow-y-auto">
+      <Title level={4} className="mb-5 text-center">
+        Chọn Loại Danh Mục
       </Title>
 
-      <div
-        style={{
-          display: "grid",
-          gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))",
-          gap: "16px",
-          marginTop: "20px",
-        }}
-      >
+      <div className="grid grid-cols-[repeat(auto-fit,minmax(280px,1fr))] gap-4 mt-5">
         {ITEM_CATEGORIES.map((category) => (
           <Card
             key={category.value}
@@ -444,24 +439,11 @@ const ItemModal: React.FC<ItemModalProps> = ({
             onClick={() =>
               handleCategorySelect(category.value as "content" | "question")
             }
-            style={{
-              cursor: "pointer",
-              textAlign: "center",
-              border:
-                selectedCategory === category.value
-                  ? "2px solid #1890ff"
-                  : "1px solid #d9d9d9",
-            }}
+            className={`cursor-pointer text-center ${selectedCategory === category.value ? 'border-2 border-blue-500' : 'border border-gray-300'}`}
           >
-            <div style={{ padding: "20px" }}>
-              <PlusOutlined
-                style={{
-                  fontSize: "24px",
-                  color: "#1890ff",
-                  marginBottom: "10px",
-                }}
-              />
-              <div style={{ fontWeight: "bold", fontSize: "16px" }}>
+            <div className="p-5">
+              <PlusOutlined className="text-2xl text-blue-500 mb-2.5" />
+              <div className="font-bold text-base">
                 {category.label}
               </div>
             </div>
@@ -475,44 +457,22 @@ const ItemModal: React.FC<ItemModalProps> = ({
   const renderTypeSelection = () => {
     if (selectedCategory === "content") {
       return (
-        <div style={{ padding: "20px 0" }}>
-          <Title
-            level={4}
-            style={{ marginBottom: "20px", textAlign: "center" }}
-          >
-            Select Content Type
+        <div className="py-5">
+          <Title level={4} className="mb-5 text-center">
+            Chọn Loại Nội Dung
           </Title>
 
-          <div
-            style={{
-              display: "grid",
-              gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))",
-              gap: "16px",
-            }}
-          >
+          <div className="grid grid-cols-[repeat(auto-fit,minmax(280px,1fr))] gap-4">
             {CONTENT_TYPES.map((type) => (
               <Card
                 key={type.value}
                 hoverable
                 onClick={() => handleContentTypeSelect(type.value)}
-                style={{
-                  cursor: "pointer",
-                  textAlign: "center",
-                  border:
-                    selectedContentType === type.value
-                      ? "2px solid #52c41a"
-                      : "1px solid #d9d9d9",
-                }}
+                className={`cursor-pointer text-center ${selectedContentType === type.value ? 'border-2 border-green-500' : 'border border-gray-300'}`}
               >
-                <div style={{ padding: "20px" }}>
-                  <PlusOutlined
-                    style={{
-                      fontSize: "20px",
-                      color: "#52c41a",
-                      marginBottom: "8px",
-                    }}
-                  />
-                  <div style={{ fontWeight: "bold", fontSize: "14px" }}>
+                <div className="p-5">
+                  <PlusOutlined className="text-xl text-green-500 mb-2" />
+                  <div className="font-bold text-sm">
                     {type.label}
                   </div>
                 </div>
@@ -523,44 +483,22 @@ const ItemModal: React.FC<ItemModalProps> = ({
       );
     } else if (selectedCategory === "question") {
       return (
-        <div style={{ padding: "20px 0" }}>
-          <Title
-            level={4}
-            style={{ marginBottom: "20px", textAlign: "center" }}
-          >
-            Select Question Category
+        <div className="py-5">
+          <Title level={4} className="mb-5 text-center">
+            Chọn Danh Mục Câu Hỏi
           </Title>
 
-          <div
-            style={{
-              display: "grid",
-              gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))",
-              gap: "16px",
-            }}
-          >
+          <div className="grid grid-cols-[repeat(auto-fit,minmax(280px,1fr))] gap-4">
             {QUESTION_CATEGORIES.map((category) => (
               <Card
                 key={category.value}
                 hoverable
                 onClick={() => handleQuestionCategorySelect(category.value)}
-                style={{
-                  cursor: "pointer",
-                  textAlign: "center",
-                  border:
-                    selectedQuestionCategory === category.value
-                      ? "2px solid #1890ff"
-                      : "1px solid #d9d9d9",
-                }}
+                className={`cursor-pointer text-center ${selectedQuestionCategory === category.value ? 'border-2 border-blue-500' : 'border border-gray-300'}`}
               >
-                <div style={{ padding: "20px" }}>
-                  <PlusOutlined
-                    style={{
-                      fontSize: "20px",
-                      color: "#1890ff",
-                      marginBottom: "8px",
-                    }}
-                  />
-                  <div style={{ fontWeight: "bold", fontSize: "14px" }}>
+                <div className="p-5">
+                  <PlusOutlined className="text-xl text-blue-500 mb-2" />
+                  <div className="font-bold text-sm">
                     {category.label}
                   </div>
                 </div>
@@ -596,56 +534,28 @@ const ItemModal: React.FC<ItemModalProps> = ({
     // REMOVED THE useEffect FROM HERE - IT'S NOW AT TOP LEVEL
 
     return (
-      <div style={{ padding: "20px 0" }}>
-        <Title level={4} style={{ marginBottom: "20px", textAlign: "center" }}>
-          Select Question and Answer Types
+      <div className="py-5">
+        <Title level={4} className="mb-5 text-center">
+          Chọn Loại Câu Hỏi Và Câu Trả Lời
         </Title>
 
         {/* Question Type Selection */}
-        <div style={{ marginBottom: "40px" }}>
-          <Text
-            strong
-            style={{
-              fontSize: "16px",
-              display: "block",
-              marginBottom: "15px",
-              textAlign: "center",
-            }}
-          >
-            Question Type:
+        <div className="mb-10">
+          <Text strong className="text-base block mb-4 text-center">
+            Loại Câu Hỏi:
           </Text>
 
-          <div
-            style={{
-              display: "grid",
-              gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))",
-              gap: "16px",
-              marginBottom: "10px",
-            }}
-          >
+          <div className="grid grid-cols-[repeat(auto-fit,minmax(200px,1fr))] gap-4 mb-2.5">
             {categoryConfig.question.map((type) => (
               <Card
                 key={type.value}
                 hoverable
                 onClick={() => setSelectedQuestionType(type.value)}
-                style={{
-                  cursor: "pointer",
-                  textAlign: "center",
-                  border:
-                    selectedQuestionType === type.value
-                      ? "2px solid #1890ff"
-                      : "1px solid #d9d9d9",
-                }}
+                className={`cursor-pointer text-center ${selectedQuestionType === type.value ? 'border-2 border-blue-500' : 'border border-gray-300'}`}
               >
-                <div style={{ padding: "15px" }}>
-                  <PlusOutlined
-                    style={{
-                      fontSize: "18px",
-                      color: "#1890ff",
-                      marginBottom: "8px",
-                    }}
-                  />
-                  <div style={{ fontWeight: "bold", fontSize: "14px" }}>
+                <div className="p-4">
+                  <PlusOutlined className="text-lg text-blue-500 mb-2" />
+                  <div className="font-bold text-sm">
                     {type.label}
                   </div>
                 </div>
@@ -655,45 +565,21 @@ const ItemModal: React.FC<ItemModalProps> = ({
         </div>
 
         {/* Answer Type Selection */}
-        <div style={{ marginBottom: "40px" }}>
-          <Text
-            strong
-            style={{
-              fontSize: "16px",
-              display: "block",
-              marginBottom: "15px",
-              textAlign: "center",
-            }}
-          >
-            Answer Type:
+        <div className="mb-10">
+          <Text strong className="text-base block mb-4 text-center">
+            Loại câu trả lời:
           </Text>
 
           {selectedQuestionType === "image" && (
-            <div
-              style={{
-                marginBottom: "15px",
-                padding: "10px",
-                backgroundColor: "#fff7e6",
-                border: "1px solid #ffd591",
-                borderRadius: "6px",
-                textAlign: "center",
-              }}
-            >
-              <Text style={{ fontSize: "13px", color: "#d46b08" }}>
-                ⚠️ Image answers are not available when question type is also
-                Image
+            <div className="mb-4 p-2.5 bg-orange-50 border border-orange-300 rounded-md text-center">
+              <Text className="text-[13px] text-orange-600">
+                ⚠️ Trả lời bằng hình ảnh không khả dụng khi loại câu hỏi cũng là
+                Hình Ảnh
               </Text>
             </div>
           )}
 
-          <div
-            style={{
-              display: "grid",
-              gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))",
-              gap: "16px",
-              marginBottom: "10px",
-            }}
-          >
+          <div className="grid grid-cols-[repeat(auto-fit,minmax(200px,1fr))] gap-4 mb-2.5">
             {categoryConfig.answer.map((type) => {
               const isDisabled =
                 selectedQuestionType === "image" && type.value === "image";
@@ -710,32 +596,11 @@ const ItemModal: React.FC<ItemModalProps> = ({
                   onClick={() =>
                     !isDisabled && setSelectedAnswerType(type.value)
                   }
-                  style={{
-                    cursor: isDisabled ? "not-allowed" : "pointer",
-                    textAlign: "center",
-                    border:
-                      selectedAnswerType === type.value
-                        ? "2px solid #52c41a"
-                        : "1px solid #d9d9d9",
-                    opacity: isDisabled ? 0.5 : 1,
-                    backgroundColor: isDisabled ? "#f5f5f5" : "white",
-                  }}
+                  className={`text-center ${isDisabled ? 'cursor-not-allowed opacity-50 bg-gray-100' : 'cursor-pointer bg-white'} ${selectedAnswerType === type.value ? 'border-2 border-green-500' : 'border border-gray-300'}`}
                 >
-                  <div style={{ padding: "15px" }}>
-                    <PlusOutlined
-                      style={{
-                        fontSize: "18px",
-                        color: isDisabled ? "#bfbfbf" : "#52c41a",
-                        marginBottom: "8px",
-                      }}
-                    />
-                    <div
-                      style={{
-                        fontWeight: "bold",
-                        fontSize: "14px",
-                        color: isDisabled ? "#bfbfbf" : "inherit",
-                      }}
-                    >
+                  <div className="p-4">
+                    <PlusOutlined className={`text-lg mb-2 ${isDisabled ? 'text-gray-400' : 'text-green-500'}`} />
+                    <div className={`font-bold text-sm ${isDisabled ? 'text-gray-400' : ''}`}>
                       {type.label}
                       {isDisabled && " (Unavailable)"}
                     </div>
@@ -747,17 +612,9 @@ const ItemModal: React.FC<ItemModalProps> = ({
 
           {/* Show message if no answer types available */}
           {availableAnswerTypes.length === 0 && (
-            <div
-              style={{
-                padding: "20px",
-                textAlign: "center",
-                backgroundColor: "#fff2f0",
-                border: "1px solid #ffccc7",
-                borderRadius: "6px",
-              }}
-            >
-              <Text style={{ color: "#cf1322" }}>
-                No answer types available for the selected question type.
+            <div className="p-5 text-center bg-red-50 border border-red-200 rounded-md">
+              <Text className="text-red-600">
+                Không có loại trả lời khả dụng cho loại câu hỏi đã chọn.
               </Text>
             </div>
           )}
@@ -765,7 +622,7 @@ const ItemModal: React.FC<ItemModalProps> = ({
 
         {/* Continue Button */}
         {selectedQuestionType && selectedAnswerType && (
-          <div style={{ textAlign: "center", marginTop: "30px" }}>
+          <div className="text-center mt-8">
             <Button
               type="primary"
               size="large"
@@ -775,35 +632,21 @@ const ItemModal: React.FC<ItemModalProps> = ({
                   selectedAnswerType
                 )
               }
-              style={{
-                height: "45px",
-                fontSize: "16px",
-                paddingLeft: "30px",
-                paddingRight: "30px",
-              }}
+              className="h-[45px] text-base px-8"
             >
-              Continue with {selectedQuestionType} → {selectedAnswerType}
+              Tiếp Tục với{" "}
+              {
+                categoryConfig.question.find(
+                  (q) => q.value === selectedQuestionType
+                )?.label
+              }{" "}
+              →{" "}
+              {
+                categoryConfig.answer.find(
+                  (a) => a.value === selectedAnswerType
+                )?.label
+              }
             </Button>
-          </div>
-        )}
-
-        {/* Selected Combination Preview */}
-        {selectedQuestionType && selectedAnswerType && (
-          <div
-            style={{
-              marginTop: "20px",
-              textAlign: "center",
-              padding: "15px",
-              backgroundColor: "#f6f8fa",
-              borderRadius: "8px",
-              border: "1px solid #e1e4e8",
-            }}
-          >
-            <Text style={{ fontSize: "14px", color: "#586069" }}>
-              Selected: <strong>{selectedQuestionCategory}</strong> question
-              with <strong>{selectedQuestionType}</strong> question type and{" "}
-              <strong>{selectedAnswerType}</strong> answer type
-            </Text>
           </div>
         )}
 
@@ -811,18 +654,9 @@ const ItemModal: React.FC<ItemModalProps> = ({
         {selectedQuestionType &&
           !selectedAnswerType &&
           availableAnswerTypes.length > 0 && (
-            <div
-              style={{
-                marginTop: "20px",
-                textAlign: "center",
-                padding: "15px",
-                backgroundColor: "#f0f9ff",
-                borderRadius: "8px",
-                border: "1px solid #bae7ff",
-              }}
-            >
-              <Text style={{ fontSize: "14px", color: "#0958d9" }}>
-                Available answer types for{" "}
+            <div className="mt-5 text-center p-4 bg-blue-50 rounded-lg border border-blue-200">
+              <Text className="text-sm text-blue-600">
+                Loại trả lời khả dụng cho{" "}
                 <strong>{selectedQuestionType}</strong>:{" "}
                 {availableAnswerTypes.map((type) => type.label).join(", ")}
               </Text>
@@ -838,10 +672,10 @@ const ItemModal: React.FC<ItemModalProps> = ({
 
     return (
       <div>
-        <div style={{ marginBottom: "20px", textAlign: "center" }}>
-          <Title level={4}>Configure Item</Title>
+        <div className="mb-5 text-center">
+          <Title level={4}>Cấu Hình Mục</Title>
           <Button type="link" onClick={handleBack}>
-            ← Change Selection
+            ← Thay Đổi Lựa Chọn
           </Button>
         </div>
 
@@ -984,18 +818,18 @@ const ItemModal: React.FC<ItemModalProps> = ({
 
   // Determine steps for the stepper
   const getSteps = () => {
-    const steps = [{ title: "Category", description: "Select item category" }];
+    const steps = [{ title: "Danh Mục", description: "Chọn danh mục " }];
 
     if (selectedCategory === "content") {
-      steps.push({ title: "Type", description: "Select content type" });
+      steps.push({ title: "Loại", description: "Chọn loại nội dung" });
       steps.push({
-        title: "Configure",
-        description: "Fill in the item details",
+        title: "Cấu Hình",
+        description: "Điền thông tin chi tiết",
       });
     } else if (selectedCategory === "question") {
       steps.push({
-        title: "Question Category",
-        description: "Select question category",
+        title: "Danh Mục Câu Hỏi",
+        description: "Chọn danh mục câu hỏi",
       });
 
       const categoryConfig = selectedQuestionCategory
@@ -1009,21 +843,21 @@ const ItemModal: React.FC<ItemModalProps> = ({
         (categoryConfig.question.length > 1 || categoryConfig.answer.length > 1)
       ) {
         steps.push({
-          title: "Question & Answer Types",
-          description: "Select question & answer types",
+          title: "Loại Câu Hỏi & Trả Lời",
+          description: "Chọn loại câu hỏi & trả lời",
         });
       }
 
       steps.push({
-        title: "Configure",
-        description: "Fill in the item details",
+        title: "Cấu Hình",
+        description: "Điền thông tin chi tiết",
       });
     } else {
       // When no category is selected, show minimal steps
-      steps.push({ title: "Type", description: "Select item type" });
+      steps.push({ title: "Loại", description: "Chọn loại mục" });
       steps.push({
-        title: "Configure",
-        description: "Fill in the item details",
+        title: "Cấu Hình",
+        description: "Điền thông tin chi tiết",
       });
     }
 
@@ -1036,10 +870,10 @@ const ItemModal: React.FC<ItemModalProps> = ({
     <Modal
       title={
         <div>
-          {mode === "edit" ? "Edit Item" : "Create New Item"}
+          {mode === "edit" ? "Chỉnh Sửa Mục" : "Tạo Mục Mới"}
           {finalType && (
-            <div style={{ fontSize: "14px", color: "#666", marginTop: "4px" }}>
-              Type: {finalType}
+            <div className="text-sm text-gray-500 mt-1">
+              Loại: {finalType}
             </div>
           )}
         </div>
@@ -1047,14 +881,14 @@ const ItemModal: React.FC<ItemModalProps> = ({
       open={visible}
       onCancel={handleCancel}
       width={900}
-      style={{ top: 20 }}
+      className="top-5"
       footer={[
         <Button key="cancel" onClick={handleCancel}>
-          Cancel
+          Hủy
         </Button>,
         currentStep > 0 && (
           <Button key="back" onClick={handleBack}>
-            Back
+            Quay Lại
           </Button>
         ),
         currentStep === steps.length - 1 && (
@@ -1064,13 +898,13 @@ const ItemModal: React.FC<ItemModalProps> = ({
             loading={loading}
             onClick={handleSubmit}
           >
-            {mode === "edit" ? "Update" : "Create"} Item
+            {mode === "edit" ? "Cập Nhật" : "Tạo"} Mục
           </Button>
         ),
       ].filter(Boolean)}
     >
       {mode === "create" && (
-        <Steps current={currentStep} style={{ marginBottom: "24px" }}>
+        <Steps current={currentStep} className="mb-6">
           {steps.map((item) => (
             <Steps.Step
               key={item.title}

@@ -1,17 +1,18 @@
-'use client';
+"use client";
 
-import { useEffect } from 'react';
-import { 
-  Form, 
-  Input, 
-  Modal, 
-  InputNumber, 
-  Switch, 
-  Select, 
+import { useEffect } from "react";
+import {
+  Form,
+  Input,
+  Modal,
+  InputNumber,
+  Switch,
+  Select,
   Divider,
-  Typography
-} from 'antd';
-import { Course, CourseCreateInput, CourseUpdateInput } from '@/types';
+  Typography,
+} from "antd";
+import { Course, CourseCreateInput, CourseUpdateInput } from "@/types";
+import CourseSelect from "../shared/button/CourseSelect";
 
 const { TextArea } = Input;
 const { Option } = Select;
@@ -24,11 +25,11 @@ interface CourseFormModalProps {
   initialValues: Course | null;
 }
 
-const CourseFormModal: React.FC<CourseFormModalProps> = ({ 
-  visible, 
-  onCancel, 
-  onSave, 
-  initialValues 
+const CourseFormModal: React.FC<CourseFormModalProps> = ({
+  visible,
+  onCancel,
+  onSave,
+  initialValues,
 }) => {
   const [form] = Form.useForm();
 
@@ -38,34 +39,34 @@ const CourseFormModal: React.FC<CourseFormModalProps> = ({
         form.setFieldsValue(initialValues);
       } else {
         form.resetFields();
-        // Set default values for new courses
-        form.setFieldsValue({ 
+        form.setFieldsValue({
           isActive: true,
           hskLevel: 1,
-          orderIndex: 1
+          orderIndex: 1,
         });
       }
     }
   }, [visible, initialValues, form]);
 
   const handleOk = () => {
-    form.validateFields()
-      .then(values => {
+    form
+      .validateFields()
+      .then((values) => {
         onSave(values);
         form.resetFields();
       })
-      .catch(info => {
-        console.error('Validate Failed:', info);
+      .catch((info) => {
+        console.error("Validate Failed:", info);
       });
   };
 
   return (
     <Modal
-      title={initialValues ? "Edit Course" : "Add New Course"}
+      title={initialValues ? "Sửa khóa học" : "Thêm khóa học mới"}
       open={visible}
       onOk={handleOk}
       onCancel={onCancel}
-      okText={initialValues ? "Update" : "Create"}
+      okText={initialValues ? "Cập nhật" : "Tạo"}
       width={600}
       maskClosable={false}
     >
@@ -74,84 +75,68 @@ const CourseFormModal: React.FC<CourseFormModalProps> = ({
         layout="vertical"
         initialValues={{ isActive: true, hskLevel: 1, orderIndex: 1 }}
       >
-        <Divider orientation="left">Basic Information</Divider>
-        
-        <Form.Item
-          name="title"
-          label="Course Title"
-          rules={[{ required: true, message: 'Please enter the course title' }]}
-        >
-          <Input placeholder="Enter course title" />
-        </Form.Item>
+        <Divider orientation="left">Thông tin cơ bản</Divider>
 
         <Form.Item
-          name="description"
-          label="Description"
+          name="title"
+          label="Tiêu đề khóa học"
+          rules={[
+            { required: true, message: "Vui lòng nhập tiêu đề khóa học" },
+          ]}
         >
-          <TextArea 
-            rows={4} 
-            placeholder="Enter course description" 
-            showCount 
-            maxLength={500} 
+          <Input placeholder="Nhập tiêu đề khóa học" />
+        </Form.Item>
+
+        <Form.Item name="description" label="Mô tả khóa học">
+          <TextArea
+            rows={4}
+            placeholder="Nhập mô tả khóa học"
+            showCount
+            maxLength={500}
           />
         </Form.Item>
 
-        <Divider orientation="left">Course Settings</Divider>
+        <Divider orientation="left">Cài đặt khóa học</Divider>
 
-        <div style={{ display: 'flex', gap: '16px' }}>
+        <div style={{ display: "flex", gap: "16px" }}>
           <Form.Item
             name="hskLevel"
-            label="HSK Level"
-            rules={[{ required: true, message: 'Please select HSK level' }]}
+            label="Cấp độ HSK"
+            rules={[{ required: true, message: "Vui lòng chọn cấp độ HSK" }]}
             style={{ flex: 1 }}
           >
-            <Select placeholder="Select HSK level">
-              {[1, 2, 3, 4, 5, 6, 7, 8, 9].map(level => (
-                <Option key={level} value={level}>HSK {level}</Option>
+            <Select placeholder="Chọn cấp độ HSK">
+              {[1, 2, 3, 4, 5, 6, 7, 8, 9].map((level) => (
+                <Option key={level} value={level}>
+                  HSK {level}
+                </Option>
               ))}
             </Select>
-          </Form.Item>
-
-          <Form.Item
-            name="orderIndex"
-            label="Order Index"
-            rules={[{ required: true, message: 'Please enter the order index' }]}
-            style={{ flex: 1 }}
-            tooltip="Determines the order in which courses are displayed. Lower numbers appear first."
-          >
-            <InputNumber 
-              min={1} 
-              placeholder="Enter order index" 
-              style={{ width: '100%' }} 
-            />
           </Form.Item>
         </div>
 
         <Form.Item
           name="prerequisiteCourseId"
-          label="Prerequisite Course"
-          tooltip="Course that must be completed before this one becomes available"
+          label="Khóa học tiên quyết"
+          tooltip="Khóa học phải hoàn thành trước khi có thể truy cập khóa học này"
         >
-          <Select 
-            placeholder="Select prerequisite course (optional)" 
+          <CourseSelect
+            placeholder="Chọn khóa học tiên quyết (tùy chọn)"
             allowClear
-          >
-            {/* This would ideally be populated with courses from your API */}
-            <Option value={1}>HSK 1 - Basic Chinese Characters</Option>
-            <Option value={2}>HSK 1 - Greetings and Introductions</Option>
-            {/* Add more options as needed */}
-          </Select>
+            excludeCourseId={initialValues?.id}
+          />
         </Form.Item>
 
-        <Form.Item 
-          name="isActive" 
-          label="Active Status" 
+        <Form.Item
+          name="isActive"
+          label="Active Status"
           valuePropName="checked"
         >
           <Switch />
         </Form.Item>
         <Text type="secondary">
-          Only active courses are visible to students. Inactive courses are hidden.
+          Only active courses are visible to students. Inactive courses are
+          hidden.
         </Text>
       </Form>
     </Modal>

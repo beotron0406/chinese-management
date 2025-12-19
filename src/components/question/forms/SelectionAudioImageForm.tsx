@@ -22,12 +22,13 @@ import type { FormInstance } from "antd/es/form";
 import { SelectionAudioImageQuestionData } from '@/types/questionType';
 import { uploadImageByType, uploadAudioByType, validateFile, UploadProgress } from '@/utils/s3Upload';
 import UploadModal from '@/components/common/UploadModal';
+import TTSButton from '@/components/shared/TTSButton';
 
 const { Text } = Typography;
 const { TextArea } = Input;
 
 // Dev mode flag - set to false to hide individual upload buttons
-const DEV_MODE = true;
+const DEV_MODE = false;
 
 interface SelectionAudioImageFormProps {
   form: FormInstance;
@@ -116,15 +117,65 @@ const SelectionAudioImageForm = forwardRef<SelectionAudioImageFormRef, Selection
     });
   };
 
-  // Audio upload handlers
-  const handleAudioFileChange = (file: File | null) => {
+  // Audio upload handlers - auto upload
+  const handleAudioFileChange = async (file: File | null) => {
+    if (!file) {
+      setSelectedAudioFile(null);
+      return false;
+    }
+
+    const audioValidation = validateFile(file, 'audio', 10);
+    if (!audioValidation.isValid) {
+      message.error(audioValidation.error);
+      return false;
+    }
+
     setSelectedAudioFile(file);
+    
+    // Auto upload
+    setUploadModalVisible(true);
+    setUploadStatus('uploading');
+    setUploadProgress(0);
+    setUploadError('');
+
+    try {
+      const result = await uploadAudioByType(
+        file,
+        questionType,
+        (progress: UploadProgress) => {
+          setUploadProgress(Math.round(progress.percentage));
+        }
+      );
+
+      if (result.success && result.url) {
+        setUploadedAudioUrl(result.url);
+        form.setFieldsValue({
+          data: {
+            ...form.getFieldValue('data'),
+            audio: result.url,
+            audio_url: result.url,
+          }
+        });
+        setUploadStatus('success');
+        setUploadProgress(100);
+        setSelectedAudioFile(null);
+        message.success('Tải âm thanh lên thành công!');
+      } else {
+        throw new Error(result.error || 'Tải lên thất bại - không có URL trả về');
+      }
+    } catch (error) {
+      console.error('Upload error:', error);
+      setUploadStatus('error');
+      setUploadError(error instanceof Error ? error.message : 'Tải lên thất bại');
+      message.error('Tải lên thất bại. Vui lòng thử lại.');
+    }
+
     return false;
   };
 
   const handleUploadAudio = async () => {
     if (!selectedAudioFile) {
-      message.warning('Please select an audio file to upload');
+      message.warning('Vui lòng chọn file âm thanh để tải lên');
       return;
     }
 
@@ -160,7 +211,7 @@ const SelectionAudioImageForm = forwardRef<SelectionAudioImageFormRef, Selection
         setUploadStatus('success');
         setUploadProgress(100);
         setSelectedAudioFile(null);
-        message.success('Audio uploaded successfully!');
+        message.success('Tải âm thanh lên thành công!');
       } else {
         throw new Error(result.error);
       }
@@ -168,7 +219,7 @@ const SelectionAudioImageForm = forwardRef<SelectionAudioImageFormRef, Selection
       console.error('Upload error:', error);
       setUploadStatus('error');
       setUploadError(error instanceof Error ? error.message : 'Upload failed');
-      message.error('Upload failed. Please try again.');
+      message.error('Tải lên thất bại. Vui lòng thử lại.');
     }
   };
 
@@ -184,15 +235,77 @@ const SelectionAudioImageForm = forwardRef<SelectionAudioImageFormRef, Selection
     });
   };
 
-  // Answer image upload handlers
-  const handleAnswerImageChange = (optionId: string, file: File | null) => {
+  // Answer image upload handlers - auto upload
+  const handleAnswerImageChange = async (optionId: string, file: File | null) => {
     const optionIndex = options.findIndex(opt => opt.id === optionId);
-    if (optionIndex >= 0) {
+    if (optionIndex < 0) return false;
+
+    if (!file) {
       setAnswerImageUploads(prev => ({
         ...prev,
-        [optionIndex]: { file, uploadedUrl: prev[optionIndex]?.uploadedUrl }
+        [optionIndex]: { file: null, uploadedUrl: prev[optionIndex]?.uploadedUrl }
       }));
+      return false;
     }
+
+    const imageValidation = validateFile(file, 'image', 10);
+    if (!imageValidation.isValid) {
+      message.error(imageValidation.error);
+      return false;
+    }
+
+    setAnswerImageUploads(prev => ({
+      ...prev,
+      [optionIndex]: { file, uploadedUrl: prev[optionIndex]?.uploadedUrl }
+    }));
+
+    // Auto upload
+    setUploadModalVisible(true);
+    setUploadStatus('uploading');
+    setUploadProgress(0);
+    setUploadError('');
+
+    try {
+      const result = await uploadImageByType(
+        file,
+        questionType,
+        (progress: UploadProgress) => {
+          setUploadProgress(Math.round(progress.percentage));
+        }
+      );
+
+      if (result.success && result.url) {
+        setAnswerImageUploads(prev => ({
+          ...prev,
+          [optionIndex]: { file: null, uploadedUrl: result.url }
+        }));
+
+        const updatedOptions = options.map(option => {
+          if (option.id === optionId) {
+            return {
+              ...option,
+              image: result.url || '',
+            };
+          }
+          return option;
+        });
+
+        setOptions(updatedOptions);
+        updateFormData(updatedOptions, correctAnswer);
+
+        setUploadStatus('success');
+        setUploadProgress(100);
+        message.success('Tải hình ảnh lên thành công!');
+      } else {
+        throw new Error(result.error || 'Tải lên thất bại - không có URL trả về');
+      }
+    } catch (error) {
+      console.error('Upload error:', error);
+      setUploadStatus('error');
+      setUploadError(error instanceof Error ? error.message : 'Tải lên thất bại');
+      message.error('Tải lên thất bại. Vui lòng thử lại.');
+    }
+
     return false;
   };
 
@@ -201,7 +314,7 @@ const SelectionAudioImageForm = forwardRef<SelectionAudioImageFormRef, Selection
   const answerUpload = answerImageUploads[optionIndex];
   
   if (!answerUpload?.file) {
-    message.warning('Please select an image file to upload');
+    message.warning('Vui lòng chọn file hình ảnh để tải lên');
     return;
   }
 
@@ -248,7 +361,7 @@ const SelectionAudioImageForm = forwardRef<SelectionAudioImageFormRef, Selection
 
       setUploadStatus('success');
       setUploadProgress(100);
-      message.success('Image uploaded successfully!');
+      message.success('Tải hình ảnh lên thành công!');
     } else {
       throw new Error(result.error || 'Upload failed - no URL returned');
     }
@@ -256,7 +369,7 @@ const SelectionAudioImageForm = forwardRef<SelectionAudioImageFormRef, Selection
     console.error('Upload error:', error);
     setUploadStatus('error');
     setUploadError(error instanceof Error ? error.message : 'Upload failed');
-    message.error('Upload failed. Please try again.');
+    message.error('Tải lên thất bại. Vui lòng thử lại.');
   }
 };
 
@@ -342,7 +455,7 @@ const SelectionAudioImageForm = forwardRef<SelectionAudioImageFormRef, Selection
         return true;
       }
 
-      message.warning('Please select and upload all required files (audio + all option images)');
+      message.warning('Vui lòng chọn và tải lên tất cả file yêu cầu (âm thanh + tất cả hình ảnh tùy chọn)');
       return false;
     }
 
@@ -452,14 +565,14 @@ const SelectionAudioImageForm = forwardRef<SelectionAudioImageFormRef, Selection
       setSelectedAudioFile(null);
 
       if (showModal) {
-        message.success('All files uploaded successfully!');
+        message.success('Tất cả file đã tải lên thành công!');
       }
       return true;
     } catch (error) {
       console.error('Upload error:', error);
       setUploadStatus('error');
       setUploadError(error instanceof Error ? error.message : 'Upload failed');
-      message.error('Upload failed. Please try again.');
+      message.error('Tải lên thất bại. Vui lòng thử lại.');
       return false;
     }
   };
@@ -507,47 +620,64 @@ const SelectionAudioImageForm = forwardRef<SelectionAudioImageFormRef, Selection
   return (
     <div>
       {/* Question Setup */}
-      <Card title="Question Setup" style={{ marginBottom: '24px' }}>
+      <Card title="Thiết Lập Câu Hỏi" style={{ marginBottom: '24px' }}>
         <Form.Item
-          label="Question Instruction"
+          label="Hướng Dẫn Câu Hỏi"
           name={['data', 'instruction']}
-          rules={[{ required: true, message: 'Please enter the question instruction' }]}
+          rules={[{ required: true, message: 'Vui lòng nhập hướng dẫn câu hỏi' }]}
         >
-          <Input placeholder="e.g., Listen to the audio and choose the correct image" />
+          <Input placeholder="ví dụ: Nghe audio và chọn hình ảnh đúng" />
         </Form.Item>
       </Card>
 
       {/* Audio Section */}
-      <Card title="Audio File" style={{ marginBottom: "24px" }}>
+      <Card title="File Âm Thanh" style={{ marginBottom: "24px" }}>
         <Form.Item
-          label="Audio File"
+          label="File Âm Thanh"
           name={['data', 'audio']}
-          rules={[{ required: true, message: "Please upload an audio file" }]}
+          rules={[{ required: true, message: "Vui lòng tải lên file âm thanh" }]}
         >
           <div>
-            <Upload
-              accept="audio/*"
-              maxCount={1}
-              showUploadList={false}
-              beforeUpload={(file) => {
-                handleAudioFileChange(file);
-                return false;
-              }}
-              disabled={!!uploadedAudioUrl}
-            >
-              <Button
-                icon={<UploadOutlined />}
+            <Space>
+              <Upload
+                accept="audio/*"
+                maxCount={1}
+                showUploadList={false}
+                beforeUpload={(file) => {
+                  handleAudioFileChange(file);
+                  return false;
+                }}
                 disabled={!!uploadedAudioUrl}
-                style={{ marginBottom: 8 }}
               >
-                {selectedAudioFile ? selectedAudioFile.name : 'Select Audio'}
-              </Button>
-            </Upload>
+                <Button
+                  icon={<UploadOutlined />}
+                  disabled={!!uploadedAudioUrl}
+                >
+                  {selectedAudioFile ? selectedAudioFile.name : 'Chọn Âm Thanh'}
+                </Button>
+              </Upload>
+              <TTSButton
+                text={transcriptText}
+                buttonText="Tạo Giọng Nói"
+                disabled={!!uploadedAudioUrl || !transcriptText}
+                onAudioGenerated={(audioUrl) => {
+                  setUploadedAudioUrl(audioUrl);
+                  form.setFieldsValue({
+                    data: {
+                      ...form.getFieldValue('data'),
+                      audio: audioUrl,
+                      audio_url: audioUrl,
+                    }
+                  });
+                  message.success('Tạo giọng nói thành công!');
+                }}
+              />
+            </Space>
             {uploadedAudioUrl && (
               <div style={{ marginTop: 8 }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                   <SoundOutlined style={{ color: '#52c41a' }} />
-                  <span style={{ color: '#52c41a' }}>Audio uploaded</span>
+                  <span style={{ color: '#52c41a' }}>Âm thanh đã tải lên</span>
                   <Button
                     size="small"
                     icon={<DeleteOutlined />}
@@ -559,21 +689,9 @@ const SelectionAudioImageForm = forwardRef<SelectionAudioImageFormRef, Selection
                 <div style={{ marginTop: 4 }}>
                   <audio controls style={{ width: '100%' }}>
                     <source src={uploadedAudioUrl} />
-                    Your browser does not support the audio element.
+                    Trình duyệt của bạn không hỗ trợ phần tử âm thanh.
                   </audio>
                 </div>
-              </div>
-            )}
-            {DEV_MODE && selectedAudioFile && !uploadedAudioUrl && (
-              <div style={{ marginTop: 8 }}>
-                <Button
-                  type="primary"
-                  icon={<UploadOutlined />}
-                  onClick={handleUploadAudio}
-                  loading={uploadStatus === 'uploading'}
-                >
-                  Upload Audio to S3 (Dev Mode)
-                </Button>
               </div>
             )}
           </div>
@@ -581,20 +699,20 @@ const SelectionAudioImageForm = forwardRef<SelectionAudioImageFormRef, Selection
 
         {/* Audio Transcript */}
         <Form.Item
-          label="Audio Transcript (Chinese)"
+          label="Bản Ghi Âm Thanh (Tiếng Trung)"
           name={['data', 'audio_transcript_chinese']}
-          help="Optional transcript of the audio content"
+          help="Bản ghi tùy chọn của nội dung âm thanh"
         >
           <TextArea
             rows={2}
-            placeholder="Enter Chinese transcript of the audio"
+            placeholder="Nhập bản ghi tiếng Trung của âm thanh"
             onChange={(e) => handleTranscriptChange(e.target.value)}
             style={{ fontSize: "16px" }}
           />
         </Form.Item>
 
         {audioTranscriptPinyin && (
-          <Form.Item label="Auto-generated Pinyin">
+          <Form.Item label="Pinyin Tự Động Tạo">
             <div style={{ 
               padding: '8px 12px', 
               backgroundColor: '#f5f5f5', 
@@ -608,13 +726,13 @@ const SelectionAudioImageForm = forwardRef<SelectionAudioImageFormRef, Selection
         )}
 
         <Form.Item
-          label="Audio Translation (Vietnamese)"
+          label="Bản Dịch Âm Thanh (Tiếng Việt)"
           name={['data', 'audio_transcript_translation']}
-          help="Optional Vietnamese translation of the audio"
+          help="Bản dịch tiếng Việt tùy chọn của âm thanh"
         >
           <TextArea
             rows={2}
-            placeholder="Enter Vietnamese translation"
+            placeholder="Nhập bản dịch tiếng Việt"
           />
         </Form.Item>
 
@@ -629,7 +747,7 @@ const SelectionAudioImageForm = forwardRef<SelectionAudioImageFormRef, Selection
 
       {/* Answer Options */}
       <Card
-        title="Answer Options"
+        title="Các Lựa Chọn Trả Lời"
         extra={
           <Button
             type="dashed"
@@ -637,7 +755,7 @@ const SelectionAudioImageForm = forwardRef<SelectionAudioImageFormRef, Selection
             onClick={addOption}
             disabled={options.length >= 6}
           >
-            Add Option
+            Thêm Tùy Chọn
           </Button>
         }
         style={{ marginBottom: '24px' }}
@@ -655,14 +773,14 @@ const SelectionAudioImageForm = forwardRef<SelectionAudioImageFormRef, Selection
                 }}
                 title={
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <span>Option {index + 1}</span>
+                    <span>Tùy Chọn {index + 1}</span>
                     <Space>
                       <Button
                         type={correctAnswer === option.id ? 'primary' : 'default'}
                         size="small"
                         onClick={() => handleCorrectAnswerChange(option.id)}
                       >
-                        {correctAnswer === option.id ? 'Correct Answer' : 'Mark as Correct'}
+                        {correctAnswer === option.id ? 'Đáp Án Đúng' : 'Đánh Dấu Là Đúng'}
                       </Button>
                       {options.length > 2 && (
                         <Button
@@ -678,7 +796,7 @@ const SelectionAudioImageForm = forwardRef<SelectionAudioImageFormRef, Selection
               >
                 {/* Image Upload */}
                 <div style={{ marginBottom: '16px' }}>
-                  <Text strong>Option Image</Text>
+                  <Text strong>Hình Ảnh Tùy Chọn</Text>
                   <div style={{ marginTop: '4px' }}>
                     <Upload
                       accept="image/*"
@@ -693,16 +811,15 @@ const SelectionAudioImageForm = forwardRef<SelectionAudioImageFormRef, Selection
                       <Button
                         icon={<UploadOutlined />}
                         disabled={!!answerUpload?.uploadedUrl}
-                        style={{ marginBottom: 8 }}
                       >
-                        {answerUpload?.file ? answerUpload.file.name : 'Select Image'}
+                        {answerUpload?.file ? answerUpload.file.name : 'Chọn Hình Ảnh'}
                       </Button>
                     </Upload>
                     {answerUpload?.uploadedUrl && (
                       <div style={{ marginTop: 8 }}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                           <PictureOutlined style={{ color: '#52c41a' }} />
-                          <span style={{ color: '#52c41a' }}>Image uploaded</span>
+                          <span style={{ color: '#52c41a' }}>Hình ảnh đã tải lên</span>
                           <Button
                             size="small"
                             icon={<DeleteOutlined />}
@@ -720,27 +837,14 @@ const SelectionAudioImageForm = forwardRef<SelectionAudioImageFormRef, Selection
                         </div>
                       </div>
                     )}
-                    {DEV_MODE && answerUpload?.file && !answerUpload?.uploadedUrl && (
-                      <div style={{ marginTop: 8 }}>
-                        <Button
-                          type="primary"
-                          icon={<UploadOutlined />}
-                          onClick={() => handleUploadAnswerImage(option.id)}
-                          loading={uploadStatus === 'uploading'}
-                          size="small"
-                        >
-                          Upload Image to S3 (Dev Mode)
-                        </Button>
-                      </div>
-                    )}
                   </div>
                 </div>
 
                 {/* Alt Text */}
                 <div>
-                  <Text strong>Alt Text (for accessibility)</Text>
+                  <Text strong>Văn Bản Thay Thế (cho khả năng tiếp cận)</Text>
                   <Input
-                    placeholder="Describe what's in the image"
+                    placeholder="Mô tả nội dung trong hình ảnh"
                     value={option.alt}
                     onChange={(e) => handleAltTextChange(option.id, e.target.value)}
                     style={{ marginTop: '4px' }}
@@ -750,7 +854,7 @@ const SelectionAudioImageForm = forwardRef<SelectionAudioImageFormRef, Selection
                 {/* Preview */}
                 {answerUpload?.uploadedUrl && (
                   <div style={{ marginTop: '12px', padding: '8px', backgroundColor: '#fafafa', borderRadius: '4px' }}>
-                    <Text strong>Preview: </Text>
+                    <Text strong>Xem Trước: </Text>
                     <div style={{ marginTop: '4px' }}>
                       <img
                         src={answerUpload.uploadedUrl}
@@ -759,7 +863,7 @@ const SelectionAudioImageForm = forwardRef<SelectionAudioImageFormRef, Selection
                       />
                       {option.alt && (
                         <div style={{ fontSize: '12px', color: '#666', marginTop: '4px' }}>
-                          Alt: {option.alt}
+                          Mô tả: {option.alt}
                         </div>
                       )}
                     </div>
@@ -772,8 +876,8 @@ const SelectionAudioImageForm = forwardRef<SelectionAudioImageFormRef, Selection
 
         {/* Correct Answer Summary */}
         <div style={{ marginTop: '16px', padding: '12px', backgroundColor: '#e6f7ff', borderRadius: '6px' }}>
-          <Text strong>Correct Answer: </Text>
-          <Text>Option {options.findIndex(opt => opt.id === correctAnswer) + 1}</Text>
+          <Text strong>Đáp Án Đúng: </Text>
+          <Text>Tùy Chọn {options.findIndex(opt => opt.id === correctAnswer) + 1}</Text>
           {options.find(opt => opt.id === correctAnswer)?.alt && (
             <Text> - {options.find(opt => opt.id === correctAnswer)?.alt}</Text>
           )}
@@ -781,15 +885,15 @@ const SelectionAudioImageForm = forwardRef<SelectionAudioImageFormRef, Selection
       </Card>
 
       {/* Additional Settings */}
-      <Card title="Additional Settings" style={{ marginBottom: '24px' }}>
+      <Card title="Cài Đặt Thêm" style={{ marginBottom: '24px' }}>
         <Form.Item
-          label="Explanation (Optional)"
+          label="Giải Thích (Tùy Chọn)"
           name={['data', 'explanation']}
-          help="Provide an explanation that will be shown after the student answers"
+          help="Cung cấp giải thích sẽ được hiển thị sau khi học viên trả lời"
         >
           <TextArea
             rows={3}
-            placeholder="Explain why this is the correct answer..."
+            placeholder="Giải thích tại sao đây là đáp án đúng..."
           />
         </Form.Item>
       </Card>

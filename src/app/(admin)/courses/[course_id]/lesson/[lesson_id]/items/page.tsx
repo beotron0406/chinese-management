@@ -24,9 +24,6 @@ import {
   BookOutlined,
   FileTextOutlined,
   TranslationOutlined,
-  QuestionCircleOutlined,
-  SoundOutlined,
-  FileImageOutlined,
   CheckCircleOutlined,
   CloseCircleOutlined,
 } from "@ant-design/icons";
@@ -36,72 +33,14 @@ import ItemModal from "@/components/items/ItemModal";
 import PageHeader from "@/components/common/PageHeader";
 import AddWordsModal from "@/components/question/AddWordsModal";
 import AddGrammarModal from "@/components/question/AddGrammarModal";
+import {
+  ContentItem,
+  LessonGrammarPattern,
+  LessonWord,
+} from "@/types/itemTypes";
 
 const { Title, Text, Paragraph } = Typography;
 const { TabPane } = Tabs;
-
-interface ContentItem {
-  id: number;
-  itemType: "content" | "question";
-  orderIndex: number;
-  type: string;
-  isActive: boolean;
-  data: any;
-}
-
-interface LessonWord {
-  id: number;
-  lessonId: number;
-  wordSenseId: number;
-  orderIndex: number;
-  wordSense: {
-    id: number;
-    wordId: number;
-    senseNumber: number;
-    pinyin?: string;
-    partOfSpeech?: string;
-    hskLevel?: number;
-    isPrimary?: boolean;
-    imageUrl?: string | null;
-    audioUrl?: string | null;
-    word: {
-      id: number;
-      simplified: string;
-      traditional?: string;
-      createdAt: string;
-    };
-    translations?: Array<{
-      language: string;
-      translation: string;
-      additionalDetail?: string;
-    }>;
-  };
-}
-
-interface LessonGrammarPattern {
-  id: number;
-  lessonId: number;
-  grammarPatternId: number;
-  orderIndex: number;
-  grammarPattern: {
-    id: number;
-    pattern: string[];
-    patternPinyin?: string[];
-    patternFormula?: string;
-    hskLevel?: number;
-    createdAt: string;
-    translations?: Array<{
-      language: string;
-      grammarPoint: string;
-      explanation: string;
-      example?: Array<{
-        chinese: string[];
-        pinyin?: string[];
-        translation: string;
-      }>;
-    }>;
-  };
-}
 
 export default function LessonItemsPage() {
   const params = useParams();
@@ -123,79 +62,44 @@ export default function LessonItemsPage() {
   const [activeTab, setActiveTab] = useState("items");
 
   const fetchData = useCallback(async () => {
-    console.log("=== fetchData START ===");
-    console.log("lessonId:", lessonId);
-
     if (!lessonId) {
-      console.log("❌ No lessonId, returning");
       return;
     }
 
     setLoading(true);
     try {
-      console.log("📡 Calling API: lessonApi.getLessonWithContent");
       const response = await lessonApi.getLessonWithContent(parseInt(lessonId));
 
-      console.log("✅ API Response:", response);
-      console.log("Response type:", typeof response);
-      console.log("Response keys:", Object.keys(response || {}));
-
       if (response) {
-        console.log("📦 Setting lesson info...");
         const lessonInfoData = {
           id: parseInt(lessonId),
           name: response.name || `Lesson ${lessonId}`,
           description: response.description || "",
         };
-        console.log("Lesson info data:", lessonInfoData);
         setLessonInfo(lessonInfoData);
 
-        console.log("📋 Content array:", response.content);
-        console.log("Content length:", response.content?.length || 0);
-        console.log("Content sample:", response.content?.[0]);
         setItems(response.content || []);
 
-        console.log("📚 Words array:", response.words);
-        console.log("Words length:", response.words?.length || 0);
-        console.log("Words sample:", response.words?.[0]);
         setLessonWords(response.words || []);
 
-        console.log("📖 Grammar patterns array:", response.grammarPatterns);
-        console.log("Grammar length:", response.grammarPatterns?.length || 0);
-        console.log("Grammar sample:", response.grammarPatterns?.[0]);
         setLessonGrammar(response.grammarPatterns || []);
       } else {
-        console.log("⚠️ Response is null/undefined");
       }
     } catch (error) {
-      console.error("❌ Error fetching lesson data:", error);
-      console.error("Error details:", JSON.stringify(error, null, 2));
-      message.error("Failed to fetch lesson data");
+      message.error("Có lỗi khi tải dữ liệu bài học");
       setItems([]);
       setLessonWords([]);
       setLessonGrammar([]);
     } finally {
       setLoading(false);
-      console.log("=== fetchData END ===");
-      console.log("Final state - items:", items.length);
-      console.log("Final state - words:", lessonWords.length);
-      console.log("Final state - grammar:", lessonGrammar.length);
     }
   }, [lessonId]);
 
   useEffect(() => {
-    console.log("🔄 useEffect triggered");
     fetchData();
   }, [fetchData]);
 
-  useEffect(() => {
-    console.log("📊 State updated:");
-    console.log("- items:", items.length, items);
-    console.log("- lessonWords:", lessonWords.length, lessonWords);
-    console.log("- lessonGrammar:", lessonGrammar.length, lessonGrammar);
-    console.log("- lessonInfo:", lessonInfo);
-    console.log("- loading:", loading);
-  }, [items, lessonWords, lessonGrammar, lessonInfo, loading]);
+  useEffect(() => {}, [items, lessonWords, lessonGrammar, lessonInfo, loading]);
 
   const handleCreateItem = () => {
     setEditItem(null);
@@ -203,38 +107,32 @@ export default function LessonItemsPage() {
   };
 
   const handleEditItem = (item: ContentItem) => {
-    console.log("✏️ Editing item:", item);
     setEditItem(item);
     setModalVisible(true);
   };
 
   const handleDeleteItem = async (itemId: number) => {
-    console.log("🗑️ Deleting item:", itemId);
     try {
       await lessonApi.deleteLessonContent(itemId);
-      message.success("Item deleted successfully");
+      message.success("Xóa nội dung thành công");
       fetchData();
     } catch (error) {
-      console.error("❌ Delete error:", error);
-      message.error("Failed to delete item");
+      message.error("Không thể xóa nội dung");
     }
   };
 
   const handleModalSuccess = () => {
-    console.log("✅ Modal success, refreshing data");
     fetchData();
     setModalVisible(false);
   };
 
   const handleDeleteWord = async (wordId: number, wordSenseId: number) => {
-    console.log("🗑️ Deleting word:", wordId, wordSenseId);
     try {
       await lessonApi.removeWordsFromLesson(parseInt(lessonId), [wordSenseId]);
-      message.success("Word removed successfully");
+      message.success("Xóa từ thành công");
       fetchData();
     } catch (error) {
-      console.error("❌ Delete word error:", error);
-      message.error("Failed to remove word");
+      message.error("Không thể xóa từ");
     }
   };
 
@@ -242,25 +140,18 @@ export default function LessonItemsPage() {
     patternId: number,
     grammarPatternId: number
   ) => {
-    console.log("🗑️ Deleting grammar pattern:", patternId, grammarPatternId);
     try {
       await lessonApi.removeGrammarPatternsFromLesson(parseInt(lessonId), [
         grammarPatternId,
       ]);
-      message.success("Grammar pattern removed successfully");
+      message.success("Xóa mẫu ngữ pháp thành công");
       fetchData();
     } catch (error) {
-      console.error("❌ Delete grammar error:", error);
-      message.error("Failed to remove grammar pattern");
+      message.error("Không thể xóa mẫu ngữ pháp");
     }
   };
 
-  // Render content cards based on type
-  // ...existing code...
-
-  // Render content cards based on type
   const renderContentCard = (item: ContentItem) => {
-    console.log("🎨 Rendering card for type:", item.type, "item:", item);
     const { type, data } = item;
 
     const cardStyle = { marginBottom: 12, fontSize: "0.85em" };
@@ -276,7 +167,7 @@ export default function LessonItemsPage() {
           extra={
             <Space size="small">
               <Tag color="green" style={{ fontSize: 11 }}>
-                Word Definition
+                Định nghĩa từ
               </Tag>
               <Button
                 size="small"
@@ -284,7 +175,7 @@ export default function LessonItemsPage() {
                 onClick={() => handleEditItem(item)}
               />
               <Popconfirm
-                title="Delete this item?"
+                title="Xóa nội dung này?"
                 onConfirm={() => handleDeleteItem(item.id)}
               >
                 <Button size="small" danger icon={<DeleteOutlined />} />
@@ -340,7 +231,7 @@ export default function LessonItemsPage() {
           extra={
             <Space size="small">
               <Tag color="cyan" style={{ fontSize: 11 }}>
-                Sentences
+                Câu
               </Tag>
               <Button
                 size="small"
@@ -348,7 +239,7 @@ export default function LessonItemsPage() {
                 onClick={() => handleEditItem(item)}
               />
               <Popconfirm
-                title="Delete this item?"
+                title="Xóa nội dung này?"
                 onConfirm={() => handleDeleteItem(item.id)}
               >
                 <Button size="small" danger icon={<DeleteOutlined />} />
@@ -411,7 +302,7 @@ export default function LessonItemsPage() {
           extra={
             <Space size="small">
               <Tag color="blue" style={{ fontSize: 11 }}>
-                Selection Question
+                Câu hỏi lựa chọn
               </Tag>
               <Button
                 size="small"
@@ -419,7 +310,7 @@ export default function LessonItemsPage() {
                 onClick={() => handleEditItem(item)}
               />
               <Popconfirm
-                title="Delete this item?"
+                title="Xóa nội dung này?"
                 onConfirm={() => handleDeleteItem(item.id)}
               >
                 <Button size="small" danger icon={<DeleteOutlined />} />
@@ -510,7 +401,7 @@ export default function LessonItemsPage() {
               }}
             >
               <Text strong style={{ fontSize: 12 }}>
-                Explanation:{" "}
+                Giải thích:{" "}
               </Text>
               {data.explanation}
             </Paragraph>
@@ -528,7 +419,7 @@ export default function LessonItemsPage() {
           extra={
             <Space size="small">
               <Tag color="purple" style={{ fontSize: 11 }}>
-                Matching Question
+                Câu hỏi ghép nối
               </Tag>
               <Button
                 size="small"
@@ -551,7 +442,7 @@ export default function LessonItemsPage() {
           <Row gutter={12}>
             <Col span={12}>
               <Title level={5} style={{ fontSize: 13, marginBottom: 8 }}>
-                Left Column
+                Cột bên trái
               </Title>
               {data.leftColumn?.map((item: any) => (
                 <Card
@@ -581,7 +472,7 @@ export default function LessonItemsPage() {
             </Col>
             <Col span={12}>
               <Title level={5} style={{ fontSize: 13, marginBottom: 8 }}>
-                Right Column
+                Cột bên phải
               </Title>
               {data.rightColumn?.map((item: any) => (
                 <Card
@@ -611,7 +502,7 @@ export default function LessonItemsPage() {
 
           <div style={{ marginTop: 12 }}>
             <Text strong style={{ fontSize: 12 }}>
-              Correct Matches:{" "}
+              Ghép nối đúng:{" "}
             </Text>
             {data.correctMatches?.map((match: any, index: number) => (
               <Tag key={index} color="green" style={{ fontSize: 11 }}>
@@ -631,7 +522,7 @@ export default function LessonItemsPage() {
               }}
             >
               <Text strong style={{ fontSize: 12 }}>
-                Explanation:{" "}
+                Giải thích:{" "}
               </Text>
               {data.explanation}
             </Paragraph>
@@ -649,7 +540,7 @@ export default function LessonItemsPage() {
           extra={
             <Space size="small">
               <Tag color="orange" style={{ fontSize: 11 }}>
-                True/False Question
+                Câu hỏi đúng/sai
               </Tag>
               <Button
                 size="small"
@@ -657,7 +548,7 @@ export default function LessonItemsPage() {
                 onClick={() => handleEditItem(item)}
               />
               <Popconfirm
-                title="Delete this item?"
+                title="Xóa nội dung này?"
                 onConfirm={() => handleDeleteItem(item.id)}
               >
                 <Button size="small" danger icon={<DeleteOutlined />} />
@@ -691,7 +582,7 @@ export default function LessonItemsPage() {
 
           <div>
             <Text strong style={{ fontSize: 12 }}>
-              Correct Answer:{" "}
+              Đáp án đúng:{" "}
             </Text>
             {data.correctAnswer ? (
               <Tag
@@ -699,7 +590,7 @@ export default function LessonItemsPage() {
                 icon={<CheckCircleOutlined />}
                 style={{ fontSize: 11 }}
               >
-                True
+                Đúng
               </Tag>
             ) : (
               <Tag
@@ -707,7 +598,7 @@ export default function LessonItemsPage() {
                 icon={<CloseCircleOutlined />}
                 style={{ fontSize: 11 }}
               >
-                False
+                Sai
               </Tag>
             )}
           </div>
@@ -723,7 +614,7 @@ export default function LessonItemsPage() {
               }}
             >
               <Text strong style={{ fontSize: 12 }}>
-                Explanation:{" "}
+                Giải thích:{" "}
               </Text>
               {data.explanation}
             </Paragraph>
@@ -741,7 +632,7 @@ export default function LessonItemsPage() {
           extra={
             <Space size="small">
               <Tag color="magenta" style={{ fontSize: 11 }}>
-                Fill in the Blank
+                Điền vào chỗ trống
               </Tag>
               <Button
                 size="small"
@@ -749,7 +640,7 @@ export default function LessonItemsPage() {
                 onClick={() => handleEditItem(item)}
               />
               <Popconfirm
-                title="Delete this item?"
+                title="Xóa nội dung này?"
                 onConfirm={() => handleDeleteItem(item.id)}
               >
                 <Button size="small" danger icon={<DeleteOutlined />} />
@@ -786,7 +677,7 @@ export default function LessonItemsPage() {
           {data.optionBank && (
             <div style={{ marginBottom: 12 }}>
               <Text strong style={{ fontSize: 12 }}>
-                Option Bank:{" "}
+                Ngân hàng lựa chọn:{" "}
               </Text>
               {data.optionBank.map((option: string, index: number) => (
                 <Tag key={index} style={{ fontSize: 11 }}>
@@ -798,7 +689,7 @@ export default function LessonItemsPage() {
 
           <div>
             <Text strong style={{ fontSize: 12 }}>
-              Correct Answers:{" "}
+              Đáp án đúng:{" "}
             </Text>
             {data.blanks?.map((blank: any, index: number) => (
               <Tag key={index} color="green" style={{ fontSize: 11 }}>
@@ -818,7 +709,7 @@ export default function LessonItemsPage() {
               }}
             >
               <Text strong style={{ fontSize: 12 }}>
-                Explanation:{" "}
+                Giải thích:{" "}
               </Text>
               {data.explanation}
             </Paragraph>
@@ -841,7 +732,7 @@ export default function LessonItemsPage() {
               onClick={() => handleEditItem(item)}
             />
             <Popconfirm
-              title="Delete this item?"
+              title="Xóa nội dung này?"
               onConfirm={() => handleDeleteItem(item.id)}
             >
               <Button size="small" danger icon={<DeleteOutlined />} />
@@ -854,17 +745,11 @@ export default function LessonItemsPage() {
     );
   };
 
-  // ...existing code...
-
-  // ...existing code...
-
-  console.log("🎨 Rendering component, activeTab:", activeTab);
-
   return (
     <div className="page-container">
       <PageHeader
         {...({
-          title: `Lesson Items: ${lessonInfo?.name || "Loading..."}`,
+          title: `Danh sách câu hỏi: ${lessonInfo?.name || "Đang tải..."}`,
           onBack: () => router.push(`/courses/${courseId}/lesson/${lessonId}`),
           extra:
             activeTab === "items" ? (
@@ -873,7 +758,7 @@ export default function LessonItemsPage() {
                 icon={<PlusOutlined />}
                 onClick={handleCreateItem}
               >
-                Add Item
+                Thêm nội dung
               </Button>
             ) : activeTab === "words" ? (
               <Button
@@ -881,7 +766,7 @@ export default function LessonItemsPage() {
                 icon={<PlusOutlined />}
                 onClick={() => setAddWordsModalVisible(true)}
               >
-                Add Words
+                Thêm từ
               </Button>
             ) : (
               <Button
@@ -889,7 +774,7 @@ export default function LessonItemsPage() {
                 icon={<PlusOutlined />}
                 onClick={() => setAddGrammarModalVisible(true)}
               >
-                Add Grammar Patterns
+                Thêm mẫu ngữ pháp
               </Button>
             ),
         } as any)}
@@ -899,7 +784,7 @@ export default function LessonItemsPage() {
         <Col span={8}>
           <Card>
             <Statistic
-              title="Total Items"
+              title="Tổng số nội dung"
               value={items.length}
               prefix={<FileTextOutlined />}
               valueStyle={{ color: "#1890ff" }}
@@ -909,7 +794,7 @@ export default function LessonItemsPage() {
         <Col span={8}>
           <Card>
             <Statistic
-              title="Lesson Words"
+              title="Từ vựng bài học"
               value={lessonWords.length}
               prefix={<BookOutlined />}
               valueStyle={{ color: "#52c41a" }}
@@ -919,7 +804,7 @@ export default function LessonItemsPage() {
         <Col span={8}>
           <Card>
             <Statistic
-              title="Grammar Patterns"
+              title="Mẫu ngữ pháp"
               value={lessonGrammar.length}
               prefix={<TranslationOutlined />}
               valueStyle={{ color: "#fa8c16" }}
@@ -930,7 +815,7 @@ export default function LessonItemsPage() {
 
       <Card>
         <Tabs activeKey={activeTab} onChange={setActiveTab}>
-          <TabPane tab={`Items (${items.length})`} key="items">
+          <TabPane tab={`Nội dung (${items.length})`} key="items">
             {loading ? (
               <div style={{ textAlign: "center", padding: 50 }}>
                 <Spin size="large" />
@@ -938,18 +823,17 @@ export default function LessonItemsPage() {
             ) : items.length === 0 ? (
               <Empty description="No items found">
                 <Button type="primary" onClick={handleCreateItem}>
-                  Create First Item
+                  Tạo nội dung đầu tiên
                 </Button>
               </Empty>
             ) : (
               items.map((item) => {
-                console.log("📋 Mapping item:", item.id, item.type);
                 return <div key={item.id}>{renderContentCard(item)}</div>;
               })
             )}
           </TabPane>
 
-          <TabPane tab={`Words (${lessonWords.length})`} key="words">
+          <TabPane tab={`Từ (${lessonWords.length})`} key="words">
             <Row gutter={[12, 12]}>
               {lessonWords.map((word) => (
                 <Col span={8} key={word.id}>
@@ -968,7 +852,7 @@ export default function LessonItemsPage() {
                     actions={[
                       <Popconfirm
                         key="delete"
-                        title="Remove this word?"
+                        title="Xóa từ này?"
                         onConfirm={() =>
                           handleDeleteWord(word.id, word.wordSenseId)
                         }
@@ -999,7 +883,7 @@ export default function LessonItemsPage() {
                     )}
                     {word.wordSense?.isPrimary && (
                       <Tag color="gold" style={{ fontSize: 10 }}>
-                        Primary
+                        Chính
                       </Tag>
                     )}
                     {word.wordSense?.translations?.map((trans, idx) => (
@@ -1023,7 +907,7 @@ export default function LessonItemsPage() {
             </Row>
           </TabPane>
 
-          <TabPane tab={`Grammar (${lessonGrammar.length})`} key="grammar">
+          <TabPane tab={`Ngữ pháp (${lessonGrammar.length})`} key="grammar">
             {lessonGrammar.map((grammar) => (
               <Card
                 key={grammar.id}
@@ -1032,7 +916,7 @@ export default function LessonItemsPage() {
                 bodyStyle={{ padding: 12 }}
                 extra={
                   <Popconfirm
-                    title="Remove this grammar pattern?"
+                    title="Xóa mẫu ngữ pháp này?"
                     onConfirm={() =>
                       handleDeleteGrammarPattern(
                         grammar.id,
@@ -1085,7 +969,7 @@ export default function LessonItemsPage() {
         lessonId={lessonId}
         editItem={editItem}
         mode={editItem ? "edit" : "create"}
-      />
+      />  
 
       <AddWordsModal
         visible={addWordsModalVisible}

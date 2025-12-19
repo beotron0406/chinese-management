@@ -9,7 +9,6 @@ export async function PUT(
 ) {
   try {
     const courseId = params.id;
-    console.log(`🔄 Restoring course: ${courseId}`);
 
     const response = await fetch(`${API_BASE_URL}/courses/${courseId}/restore`, {
       method: 'PUT',

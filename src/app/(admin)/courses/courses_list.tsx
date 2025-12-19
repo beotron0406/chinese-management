@@ -17,6 +17,7 @@ import {
   Row,
   Col,
   Empty,
+  Modal,
 } from "antd";
 import {
   EditOutlined,
@@ -28,6 +29,7 @@ import {
   CalendarOutlined,
   CheckCircleOutlined,
   CloseCircleOutlined,
+  ExclamationCircleOutlined,
 } from "@ant-design/icons";
 import { courseService } from "@/services/api";
 import { Course } from "@/types";
@@ -47,7 +49,7 @@ const CourseList = ({ filterActive }: CourseListProps) => {
   const [loading, setLoading] = useState(false);
   const [totalItems, setTotalItems] = useState(0);
   const [currentPage, setCurrentPage] = useState(1);
-  const [pageSize, setPageSize] = useState(12); // 12 cards per page
+  const [pageSize, setPageSize] = useState(12);
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [editingCourse, setEditingCourse] = useState<Course | null>(null);
   const [filterHskLevel, setFilterHskLevel] = useState<number | null>(null);
@@ -56,25 +58,16 @@ const CourseList = ({ filterActive }: CourseListProps) => {
   const fetchCourses = async () => {
     setLoading(true);
     try {
-      console.log("📡 Fetching courses with getCourses API...");
-      const data = await courseService.getCourses(1, 100); // Load all courses
-
-      console.log("📦 Received data:", data);
-
-      // 🔧 FIX: Handle correct response structure
+      const data = await courseService.getCourses(1, 100);
       if (data && data.courses) {
-        // Đổi từ data.items thành data.courses
-        setAllCourses(data.courses); // Đổi từ data.items thành data.courses
-        setTotalItems(data.pagination?.total || 0); // Đổi từ data.total thành data.pagination.total
-        console.log("✅ Courses loaded successfully:", data.courses.length);
+        setAllCourses(data.courses);
+        setTotalItems(data.pagination?.total || 0);
       } else {
-        console.error("❌ Invalid data format received:", data);
         setAllCourses([]);
         setTotalItems(0);
       }
     } catch (error) {
-      message.error("Failed to fetch courses");
-      console.error("❌ Error fetching courses:", error);
+      message.error("Có lỗi khi tải danh sách khóa học");
       setAllCourses([]);
       setTotalItems(0);
     } finally {
@@ -85,14 +78,12 @@ const CourseList = ({ filterActive }: CourseListProps) => {
   const applyFilters = (courses: Course[]) => {
     let filtered = [...courses];
 
-    // Apply HSK level filter
     if (filterHskLevel !== null) {
       filtered = filtered.filter(
         (course) => course.hskLevel === filterHskLevel
       );
     }
 
-    // Apply search filter
     if (searchText.trim()) {
       const searchLower = searchText.toLowerCase();
       filtered = filtered.filter(
@@ -103,7 +94,6 @@ const CourseList = ({ filterActive }: CourseListProps) => {
       );
     }
 
-    // Apply active filter if specified
     if (filterActive !== undefined) {
       filtered = filtered.filter((course) => course.isActive === filterActive);
     }
@@ -127,10 +117,10 @@ const CourseList = ({ filterActive }: CourseListProps) => {
   const handleDelete = async (id: number) => {
     try {
       await courseService.deleteCourse(id);
-      message.success("Course deleted successfully");
+      message.success("Xóa khóa học thành công");
       fetchCourses();
     } catch (error) {
-      message.error("Failed to delete course");
+      message.error("Có lỗi khi xóa khóa học");
       console.error(error);
     }
   };
@@ -138,12 +128,40 @@ const CourseList = ({ filterActive }: CourseListProps) => {
   const handleRestore = async (id: number) => {
     try {
       await courseService.restoreCourse(id);
-      message.success("Course restored successfully");
+      message.success("Khôi phục khóa học thành công");
       fetchCourses();
     } catch (error) {
-      message.error("Failed to restore course");
+      message.error("Có lỗi khi khôi phục khóa học");
       console.error(error);
     }
+  };
+
+  const handleHardDelete = async (id: number) => {
+    Modal.confirm({
+      title: "Xóa vĩnh viễn khóa học",
+      icon: <ExclamationCircleOutlined />,
+      content: (
+        <div>
+          <p>Bạn có chắc chắn muốn xóa vĩnh viễn khóa học này?</p>
+          <p style={{ color: "red", fontWeight: "bold" }}>
+            Hành động này KHÔNG THỂ HOÀN TÁC!
+          </p>
+        </div>
+      ),
+      okText: "Xóa vĩnh viễn",
+      cancelText: "Hủy",
+      okType: "danger",
+      onOk: async () => {
+        try {
+          await courseService.hardDeleteCourse(id);
+          message.success("Xóa vĩnh viễn khóa học thành công");
+          fetchCourses();
+        } catch (error) {
+          message.error("Có lỗi khi xóa vĩnh viễn khóa học");
+          console.error(error);
+        }
+      },
+    });
   };
 
   const handleCloseModal = () => {
@@ -155,16 +173,16 @@ const CourseList = ({ filterActive }: CourseListProps) => {
     try {
       if (editingCourse) {
         await courseService.updateCourse(editingCourse.id, values);
-        message.success("Course updated successfully");
+        message.success("Cập nhật khóa học thành công");
       } else {
         await courseService.createCourse(values);
-        message.success("Course created successfully");
+        message.success("Tạo khóa học thành công");
       }
       setIsModalVisible(false);
       setEditingCourse(null);
       fetchCourses();
     } catch (error) {
-      message.error("Failed to save course");
+      message.error("Có lỗi khi lưu khóa học");
       console.error(error);
     }
   };
@@ -194,7 +212,6 @@ const CourseList = ({ filterActive }: CourseListProps) => {
     router.push(`/courses/${course.id}/lesson`);
   };
 
-  // Calculate pagination for filtered results
   const startIndex = (currentPage - 1) * pageSize;
   const endIndex = startIndex + pageSize;
   const paginatedCourses = filteredCourses.slice(startIndex, endIndex);
@@ -237,7 +254,7 @@ const CourseList = ({ filterActive }: CourseListProps) => {
             handleEdit(course);
           }}
         >
-          Edit
+          Sửa
         </Button>,
         course.isActive ? (
           <Popconfirm
@@ -256,7 +273,7 @@ const CourseList = ({ filterActive }: CourseListProps) => {
               icon={<DeleteOutlined />}
               onClick={(e) => e.stopPropagation()}
             >
-              Deactivate
+              Xóa tạm thời
             </Button>
           </Popconfirm>
         ) : (
@@ -269,10 +286,24 @@ const CourseList = ({ filterActive }: CourseListProps) => {
               handleRestore(course.id);
             }}
           >
-            Restore
+            Khôi phục
           </Button>
         ),
-      ]}
+        !course.isActive && (
+          <Button
+            key="hardDelete"
+            type="link"
+            danger
+            icon={<DeleteOutlined />}
+            onClick={(e) => {
+              e.stopPropagation();
+              handleHardDelete(course.id);
+            }}
+          >
+            Xóa vĩnh viễn
+          </Button>
+        ),
+      ].filter(Boolean)}
     >
       <Card.Meta
         title={
@@ -287,7 +318,7 @@ const CourseList = ({ filterActive }: CourseListProps) => {
                 ) : (
                   <CloseCircleOutlined />
                 )}
-                {course.isActive ? "Active" : "Inactive"}
+                {course.isActive ? "Hoạt động" : "Không hoạt động"}
               </Tag>
             </div>
           </div>
@@ -301,13 +332,10 @@ const CourseList = ({ filterActive }: CourseListProps) => {
             <Text type="secondary" style={{ fontSize: "13px" }}>
               {course.description && course.description.length > 80
                 ? `${course.description.substring(0, 80)}...`
-                : course.description || "No description"}
+                : course.description || "Chưa có mô tả"}
             </Text>
             <div style={{ marginTop: "8px" }}>
               <Space>
-                <Text type="secondary" style={{ fontSize: "12px" }}>
-                  <BookOutlined /> {course.totalLessons || 0} lessons
-                </Text>
                 <Text type="secondary" style={{ fontSize: "12px" }}>
                   <CalendarOutlined />{" "}
                   {new Date(course.createdAt).toLocaleDateString()}
@@ -317,7 +345,7 @@ const CourseList = ({ filterActive }: CourseListProps) => {
             <div
               style={{ marginTop: "8px", color: "#1890ff", fontSize: "12px" }}
             >
-              Click to view lessons →
+              Nhấn vào để quản lý bài học
             </div>
           </div>
         }
@@ -327,7 +355,7 @@ const CourseList = ({ filterActive }: CourseListProps) => {
 
   return (
     <div>
-      {/* Header Section */}
+      {/* Filters Section */}
       <Card style={{ marginBottom: "20px" }}>
         <div
           style={{
@@ -338,21 +366,42 @@ const CourseList = ({ filterActive }: CourseListProps) => {
             gap: "16px",
           }}
         >
-          <div>
-            <Title level={3} style={{ margin: 0 }}>
-              Course Management
-            </Title>
-            <Text type="secondary">
-              {filteredCourses.length !== allCourses.length && (
-                <>
-                  Showing {filteredCourses.length} of {allCourses.length}{" "}
-                  courses
-                </>
-              )}
-              {filteredCourses.length === allCourses.length && (
-                <>Total {allCourses.length} courses</>
-              )}
-            </Text>
+          <div
+            style={{
+              display: "flex",
+              gap: "16px",
+              alignItems: "center",
+              flexWrap: "wrap",
+            }}
+          >
+            <Input
+              placeholder="Tìm kiếm khóa học"
+              value={searchText}
+              onChange={(e) => handleSearch(e.target.value)}
+              style={{ width: 250 }}
+              prefix={<SearchOutlined />}
+              allowClear
+            />
+
+            <Select
+              placeholder="Lọc theo cấp độ HSK"
+              style={{ width: 180 }}
+              allowClear
+              value={filterHskLevel}
+              onChange={handleHskFilterChange}
+            >
+              {[1, 2, 3, 4, 5, 6, 7, 8, 9].map((level) => (
+                <Option key={level} value={level}>
+                  HSK {level}
+                </Option>
+              ))}
+            </Select>
+
+            {(filterHskLevel !== null || searchText) && (
+              <Button onClick={clearFilters} size="middle">
+                Xóa bộ lọc
+              </Button>
+            )}
           </div>
 
           <Button
@@ -361,49 +410,8 @@ const CourseList = ({ filterActive }: CourseListProps) => {
             size="large"
             onClick={() => setIsModalVisible(true)}
           >
-            Add New Course
+            Tạo khóa học mới
           </Button>
-        </div>
-      </Card>
-
-      {/* Filters Section */}
-      <Card style={{ marginBottom: "20px" }}>
-        <div
-          style={{
-            display: "flex",
-            gap: "16px",
-            alignItems: "center",
-            flexWrap: "wrap",
-          }}
-        >
-          <Input
-            placeholder="Search courses..."
-            value={searchText}
-            onChange={(e) => handleSearch(e.target.value)}
-            style={{ width: 250 }}
-            prefix={<SearchOutlined />}
-            allowClear
-          />
-
-          <Select
-            placeholder="Filter by HSK Level"
-            style={{ width: 180 }}
-            allowClear
-            value={filterHskLevel}
-            onChange={handleHskFilterChange}
-          >
-            {[1, 2, 3, 4, 5, 6, 7, 8, 9].map((level) => (
-              <Option key={level} value={level}>
-                HSK {level}
-              </Option>
-            ))}
-          </Select>
-
-          {(filterHskLevel !== null || searchText) && (
-            <Button onClick={clearFilters} size="middle">
-              Clear Filters
-            </Button>
-          )}
         </div>
       </Card>
 
@@ -436,7 +444,7 @@ const CourseList = ({ filterActive }: CourseListProps) => {
           >
             {!searchText && !filterHskLevel && (
               <Button type="primary" onClick={() => setIsModalVisible(true)}>
-                Create First Course
+                Tạo khóa học đầu tiên
               </Button>
             )}
           </Empty>
@@ -468,32 +476,6 @@ const CourseList = ({ filterActive }: CourseListProps) => {
         onSave={handleSave}
         initialValues={editingCourse}
       />
-
-      <style jsx global>{`
-        .course-card .ant-card-cover {
-          border-bottom: 1px solid #f0f0f0;
-        }
-
-        .course-card .ant-card-actions {
-          background: #fafafa;
-        }
-
-        .course-card:hover {
-          transform: translateY(-4px);
-          box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
-          transition: all 0.3s ease;
-        }
-
-        .course-card .ant-card-actions > li {
-          margin: 4px 0;
-        }
-
-        .course-card .ant-card-actions > li > span {
-          display: flex;
-          align-items: center;
-          justify-content: center;
-        }
-      `}</style>
     </div>
   );
 };

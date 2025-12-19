@@ -15,6 +15,7 @@ import {
   Avatar,
   Divider,
   Empty,
+  Spin,
 } from "antd";
 import {
   SearchOutlined,
@@ -56,29 +57,29 @@ const WordPage = () => {
         sortOrder: "DESC",
       });
 
-      console.log("🔍 API Response received:", response);
+      console.log("🔍 Nhận phản hồi từ API:", response);
 
       // Since we fixed the API, response should now be the correct format
       if (response && response.words && Array.isArray(response.words)) {
         setWords(response.words);
         setTotal(response.total || 0);
-        console.log("✅ Successfully loaded", response.words.length, "words");
+        console.log("✅ Tải thành công", response.words.length, "từ vựng");
       } else {
-        console.error("❌ Unexpected response format:", response);
+        console.error("❌ Định dạng phản hồi không mong đợi:", response);
         setWords([]);
         setTotal(0);
-        message.error("Unexpected data format from server");
+        message.error("Định dạng dữ liệu không hợp lệ từ máy chủ");
       }
     } catch (error: any) {
-      console.error("❌ Fetch error:", error);
+      console.error("❌ Lỗi tải dữ liệu:", error);
 
-      let errorMessage = "Failed to load words";
+      let errorMessage = "Không thể tải từ vựng";
       if (error.response?.status === 401) {
-        errorMessage = "Unauthorized. Please login again.";
+        errorMessage = "Chưa được xác thực. Vui lòng đăng nhập lại.";
       } else if (error.response?.status === 403) {
-        errorMessage = "Access forbidden. Check your permissions.";
+        errorMessage = "Không có quyền truy cập. Kiểm tra quyền của bạn.";
       } else if (error.response?.status >= 500) {
-        errorMessage = "Server error. Please try again later.";
+        errorMessage = "Lỗi máy chủ. Vui lòng thử lại sau.";
       } else if (error.message) {
         errorMessage = error.message;
       }
@@ -97,21 +98,21 @@ const WordPage = () => {
 
   const handleDelete = async (id: number) => {
     Modal.confirm({
-      title: "Delete Word",
+      title: "Xóa Từ Vựng",
       content:
-        "Are you sure you want to delete this word? This action cannot be undone and will delete all senses and translations.",
-      okText: "Yes, Delete",
+        "Bạn có chắc chắn muốn xóa từ này? Hành động này không thể hoàn tác và sẽ xóa tất cả các nghĩa và bản dịch.",
+      okText: "Có, Xóa",
       okType: "danger",
-      cancelText: "Cancel",
+      cancelText: "Hủy",
       onOk: async () => {
         try {
           await deleteWord(id);
-          message.success("Word deleted successfully");
+          message.success("Xóa từ vựng thành công");
           fetchWordData();
         } catch (error: any) {
-          console.error("Failed to delete word:", error);
+          console.error("Không thể xóa từ vựng:", error);
           message.error(
-            error?.response?.data?.message || "Failed to delete word"
+            error?.response?.data?.message || "Không thể xóa từ vựng"
           );
         }
       },
@@ -154,8 +155,14 @@ const WordPage = () => {
     const primarySense =
       word.senses?.find((sense) => sense.isPrimary) || word.senses?.[0];
     const translation = primarySense?.translations?.[0];
-    const hasImage = !!primarySense?.imageUrl;
-    const hasAudio = !!primarySense?.audioUrl;
+    
+    // Validate media URLs - exclude blob URLs and empty strings
+    const hasImage = !!primarySense?.imageUrl && 
+      primarySense.imageUrl.trim() !== '' &&
+      !primarySense.imageUrl.startsWith('blob:');
+    const hasAudio = !!primarySense?.audioUrl && 
+      primarySense.audioUrl.trim() !== '' &&
+      !primarySense.audioUrl.startsWith('blob:');
     const sensesCount = word.senses?.length || 0;
 
     return (
@@ -164,7 +171,7 @@ const WordPage = () => {
           className="h-full shadow-sm hover:shadow-lg transition-all duration-300 border-l-4 border-l-blue-500"
           bodyStyle={{ padding: "16px" }}
           actions={[
-            <Tooltip title="Edit Word" key="edit">
+            <Tooltip title="Chỉnh sửa từ vựng" key="edit">
               <Button
                 type="text"
                 icon={<EditOutlined />}
@@ -175,7 +182,7 @@ const WordPage = () => {
                 className="hover:text-blue-600"
               />
             </Tooltip>,
-            <Tooltip title="Delete Word" key="delete">
+            <Tooltip title="Xóa từ vựng" key="delete">
               <Button
                 type="text"
                 danger
@@ -209,7 +216,7 @@ const WordPage = () => {
                       primarySense.isPrimary ? <StarFilled /> : <StarOutlined />
                     }
                   >
-                    Primary
+                    Chính
                   </Tag>
                 )}
               </div>
@@ -217,7 +224,7 @@ const WordPage = () => {
 
             {/* Pinyin */}
             <div className="text-red-500 font-medium text-lg italic mb-2">
-              {primarySense?.pinyin || "No pinyin"}
+              {primarySense?.pinyin || "Không có phiên âm"}
             </div>
 
             {/* Part of Speech and HSK Level */}
@@ -240,12 +247,12 @@ const WordPage = () => {
             <div className="flex items-center gap-2 mb-2">
               <GlobalOutlined className="text-green-600" />
               <span className="text-sm font-medium text-green-800">
-                Vietnamese Translation
+                Bản dịch Tiếng Việt
               </span>
             </div>
 
             <div className="text-green-700 font-medium mb-1">
-              {translation?.translation || "No translation available"}
+              {translation?.translation || "Không có bản dịch"}
             </div>
 
             {translation?.additionalDetail && (
@@ -255,28 +262,67 @@ const WordPage = () => {
             )}
           </div>
 
-          {/* Media Icons */}
+          {/* Image Display */}
+          {hasImage && (
+            <div className="mb-4">
+              <div className="flex items-center gap-2 mb-2">
+                <PictureOutlined className="text-blue-600" />
+                <span className="text-sm font-medium text-gray-700">Hình ảnh</span>
+              </div>
+              <div className="relative w-full h-40 bg-gray-100 rounded-lg overflow-hidden">
+                <img
+                  src={primarySense.imageUrl!}
+                  alt={word.simplified}
+                  className="w-full h-full object-cover"
+                  onError={(e) => {
+                    (e.target as HTMLImageElement).style.display = 'none';
+                    (e.target as HTMLImageElement).parentElement!.innerHTML = 
+                      '<div class="flex items-center justify-center h-full text-gray-400"><PictureOutlined /> Không thể tải hình ảnh</div>';
+                  }}
+                />
+              </div>
+            </div>
+          )}
+
+          {/* Audio Player */}
+          {hasAudio && (
+            <div className="mb-4">
+              <div className="flex items-center gap-2 mb-2">
+                <SoundOutlined className="text-orange-600" />
+                <span className="text-sm font-medium text-gray-700">Âm thanh</span>
+              </div>
+              <audio
+                controls
+                className="w-full h-10"
+                style={{ maxHeight: '40px' }}
+              >
+                <source src={primarySense.audioUrl!} type="audio/mpeg" />
+                <source src={primarySense.audioUrl!} type="audio/wav" />
+                Trình duyệt không hỗ trợ phát âm thanh.
+              </audio>
+            </div>
+          )}
+
+          {/* Media Summary */}
           <div className="flex items-center justify-between mb-4">
-            <div className="flex gap-2">
+            <div className="flex gap-2 flex-wrap">
               {hasAudio && (
-                <Tooltip title="Audio available">
-                  <Tag color="orange" icon={<SoundOutlined />}>
-                    Audio
-                  </Tag>
-                </Tooltip>
+                <Tag color="orange" icon={<SoundOutlined />}>
+                  Có âm thanh
+                </Tag>
               )}
               {hasImage && (
-                <Tooltip title="Image available">
-                  <Tag color="green" icon={<PictureOutlined />}>
-                    Image
-                  </Tag>
-                </Tooltip>
+                <Tag color="green" icon={<PictureOutlined />}>
+                  Có hình ảnh
+                </Tag>
               )}
-              {!hasAudio && !hasImage && <Tag color="default">No Media</Tag>}
+              {!hasAudio && !hasImage && (
+                <Tag color="default">Không có phương tiện</Tag>
+              )}
             </div>
 
             <Tag color="purple">
-              {sensesCount} sense{sensesCount !== 1 ? "s" : ""}
+              {sensesCount} nghĩa{sensesCount !== 1 ? "" : ""}
             </Tag>
           </div>
 
@@ -288,7 +334,7 @@ const WordPage = () => {
               <span>
                 {word.createdAt
                   ? new Date(word.createdAt).toLocaleDateString("vi-VN")
-                  : "Unknown"}
+                  : "Không xác định"}
               </span>
             </div>
 
@@ -304,8 +350,8 @@ const WordPage = () => {
   return (
     <div className="p-6 bg-gray-50 min-h-screen">
       <PageHeader
-        title="Word Management"
-        subtitle={`Manage your Chinese vocabulary database (${total} words)`}
+        title="Quản lý Từ Vựng"
+        subtitle={`Quản lý cơ sở dữ liệu từ vựng Tiếng Trung của bạn (${total} từ)`}
         extra={[
           <Button
             key="create"
@@ -314,7 +360,7 @@ const WordPage = () => {
             onClick={() => setCreateModalVisible(true)}
             size="large"
           >
-            Add New Word
+            Thêm Từ Mới
           </Button>,
         ]}
       />
@@ -323,7 +369,7 @@ const WordPage = () => {
       <div className="bg-white p-6 rounded-lg shadow-sm mb-6">
         <div className="flex flex-col sm:flex-row gap-4 justify-between items-center">
           <Input
-            placeholder="Search by Chinese characters, pinyin, or Vietnamese translation..."
+            placeholder="Tìm kiếm theo ký tự Trung Quốc, phiên âm hoặc bản dịch Tiếng Việt..."
             prefix={<SearchOutlined />}
             value={searchText}
             onChange={(e) => setSearchText(e.target.value)}
@@ -333,10 +379,10 @@ const WordPage = () => {
           />
           <div className="flex items-center gap-4 text-sm text-gray-600">
             <span>
-              Total: <strong>{total}</strong> words
+              Tổng: <strong>{total}</strong> từ
             </span>
             <span>
-              Page: <strong>{page}</strong> of{" "}
+              Trang: <strong>{page}</strong> của{" "}
               <strong>{Math.ceil(total / pageSize) || 1}</strong>
             </span>
           </div>
@@ -346,21 +392,17 @@ const WordPage = () => {
       {/* Words Grid */}
       <div className="bg-white rounded-lg shadow-sm p-6 mb-6">
         {loading ? (
-          <div className="flex flex-col justify-center items-center py-20">
-            <div className="text-4xl mb-4">🔄</div>
-            <div className="text-lg text-gray-600 mb-2">Loading words...</div>
-            <div className="text-sm text-gray-400">
-              Please wait while we fetch your vocabulary
-            </div>
+          <div className="flex justify-center items-center min-h-[400px]">
+            <Spin size="large" tip="Đang tải từ vựng..." />
           </div>
         ) : words.length > 0 ? (
           <>
             <div className="mb-4 flex items-center justify-between">
               <h2 className="text-lg font-semibold text-gray-800">
-                Vocabulary Cards ({words.length} of {total})
+                Thẻ Từ Vựng ({words.length} của {total})
               </h2>
               {searchText && (
-                <Tag color="blue">Filtered by: "{searchText}"</Tag>
+                <Tag color="blue">Lọc theo: "{searchText}"</Tag>
               )}
             </div>
             <Row gutter={[16, 16]}>{words.map(renderWordCard)}</Row>
@@ -371,12 +413,12 @@ const WordPage = () => {
             description={
               <div className="text-center">
                 <div className="text-lg text-gray-600 mb-2">
-                  {searchText ? "No words found" : "No words available"}
+                  {searchText ? "Không tìm thấy từ nào" : "Chưa có từ vựng nào"}
                 </div>
                 <div className="text-sm text-gray-400">
                   {searchText
-                    ? "Try adjusting your search terms or clear the filter"
-                    : "Start building your vocabulary by adding your first word"}
+                    ? "Hãy thử điều chỉnh điều kiện tìm kiếm hoặc xóa bộ lọc"
+                    : "Bắt đầu xây dựng từ vựng của bạn bằng cách thêm từ đầu tiên"}
                 </div>
               </div>
             }
@@ -388,7 +430,7 @@ const WordPage = () => {
                 onClick={() => setCreateModalVisible(true)}
                 size="large"
               >
-                Add First Word
+                Thêm Từ Đầu Tiên
               </Button>
             )}
           </Empty>
@@ -406,7 +448,7 @@ const WordPage = () => {
             showSizeChanger
             showQuickJumper
             showTotal={(total, range) =>
-              `Showing ${range[0]}-${range[1]} of ${total} words`
+              `Hiển thị ${range[0]}-${range[1]} trong ${total} từ`
             }
             pageSizeOptions={["12", "24", "48", "96"]}
             className="text-center"
@@ -416,7 +458,7 @@ const WordPage = () => {
 
       {/* Modals */}
       <Modal
-        title="Add New Word"
+        title="Thêm Từ Vựng Mới"
         open={createModalVisible}
         onCancel={() => setCreateModalVisible(false)}
         footer={null}
@@ -427,7 +469,7 @@ const WordPage = () => {
       </Modal>
 
       <Modal
-        title="Edit Word"
+        title="Chỉnh Sửa Từ Vựng"
         open={editModalVisible && !!selectedWord}
         onCancel={() => {
           setEditModalVisible(false);

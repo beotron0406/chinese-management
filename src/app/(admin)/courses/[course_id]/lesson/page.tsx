@@ -11,6 +11,8 @@ import {
   Table,
   Tag,
   Badge,
+  Modal,
+  message,
 } from "antd";
 import {
   ArrowLeftOutlined,
@@ -18,6 +20,8 @@ import {
   EditOutlined,
   DeleteOutlined,
   BookOutlined,
+  UndoOutlined,
+  ExclamationCircleOutlined,
 } from "@ant-design/icons";
 import { courseService } from "@/services/api";
 import { lessonApi } from "@/services/lessonApi";
@@ -41,18 +45,19 @@ export default function CourseLessonsPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [lessonModalVisible, setLessonModalVisible] = useState(false);
+  const [selectedLesson, setSelectedLesson] = useState<Lesson | null>(null);
 
   if (!courseIdParam || isNaN(courseId)) {
     return (
       <Alert
-        message="Invalid Course ID"
-        description="The course ID provided in the URL is not valid."
+        message="ID khóa học không hợp lệ"
+        description="ID khóa học được cung cấp trong URL không hợp lệ."
         type="error"
         showIcon
         style={{ margin: "20px" }}
         action={
           <Button onClick={() => router.push("/courses")}>
-            Back to Courses
+            Quay lại trang khóa học
           </Button>
         }
       />
@@ -66,7 +71,7 @@ export default function CourseLessonsPage() {
         setError(null);
 
         if (!courseId || isNaN(courseId)) {
-          throw new Error("Invalid course ID");
+          throw new Error("ID khóa học không hợp lệ");
         }
 
         let courseData: Course | null = null;
@@ -75,11 +80,11 @@ export default function CourseLessonsPage() {
         try {
           courseData = await courseService.getCourseById(courseId);
         } catch (courseErr) {
-          throw new Error("Failed to load course information");
+          throw new Error("Không thể tải thông tin khóa học");
         }
 
         try {
-          lessonsData = await lessonApi.getLessonsByCourse(courseId);
+          lessonsData = await lessonApi.getAllLessonsByCourse(courseId);
         } catch (lessonsErr) {
           lessonsData = [];
         }
@@ -90,7 +95,7 @@ export default function CourseLessonsPage() {
         setError(
           err instanceof Error
             ? err.message
-            : "Failed to load course and lessons data"
+            : "Không thể tải dữ liệu khóa học và bài học"
         );
       } finally {
         setLoading(false);
@@ -100,7 +105,7 @@ export default function CourseLessonsPage() {
     if (courseId && !isNaN(courseId)) {
       fetchData();
     } else {
-      setError("Invalid course ID provided");
+      setError("ID khóa học không hợp lệ");
       setLoading(false);
     }
   }, [courseId]);
@@ -115,16 +120,23 @@ export default function CourseLessonsPage() {
   };
 
   const handleAddNewLesson = () => {
+    setSelectedLesson(null);
+    setLessonModalVisible(true);
+  };
+
+  const handleEditLesson = (lesson: Lesson) => {
+    setSelectedLesson(lesson);
     setLessonModalVisible(true);
   };
 
   const handleLessonModalClose = (refreshData: boolean) => {
     setLessonModalVisible(false);
+    setSelectedLesson(null);
     if (refreshData) {
       const fetchLessons = async () => {
         try {
           setLoading(true);
-          const lessonsData = await lessonApi.getLessonsByCourse(courseId);
+          const lessonsData = await lessonApi.getAllLessonsByCourse(courseId);
           setLessons(lessonsData);
         } catch (error) {
         } finally {
@@ -133,6 +145,78 @@ export default function CourseLessonsPage() {
       };
       fetchLessons();
     }
+  };
+
+  const handleDeleteLesson = (lesson: Lesson) => {
+    Modal.confirm({
+      title: "Xóa bài học",
+      icon: <ExclamationCircleOutlined />,
+      content: `Bạn có chắc chắn muốn xóa bài học "${lesson.name}"? Bài học sẽ được đánh dấu là không hoạt động.`,
+      okText: "Xóa",
+      cancelText: "Hủy",
+      okType: "danger",
+      onOk: async () => {
+        try {
+          await lessonApi.deleteLesson(lesson.id);
+          message.success("Xóa bài học thành công");
+          // Refresh lessons list
+          const lessonsData = await lessonApi.getAllLessonsByCourse(courseId);
+          setLessons(lessonsData);
+        } catch (error) {
+          message.error("Có lỗi khi xóa bài học");
+        }
+      },
+    });
+  };
+
+  const handleRestoreLesson = (lesson: Lesson) => {
+    Modal.confirm({
+      title: "Khôi phục bài học",
+      icon: <ExclamationCircleOutlined />,
+      content: `Bạn có chắc chắn muốn khôi phục bài học "${lesson.name}"?`,
+      okText: "Khôi phục",
+      cancelText: "Hủy",
+      onOk: async () => {
+        try {
+          await lessonApi.restoreLesson(lesson.id);
+          message.success("Khôi phục bài học thành công");
+          // Refresh lessons list
+          const lessonsData = await lessonApi.getAllLessonsByCourse(courseId);
+          setLessons(lessonsData);
+        } catch (error) {
+          message.error("Có lỗi khi khôi phục bài học");
+        }
+      },
+    });
+  };
+
+  const handleHardDeleteLesson = (lesson: Lesson) => {
+    Modal.confirm({
+      title: "Xóa vĩnh viễn bài học",
+      icon: <ExclamationCircleOutlined />,
+      content: (
+        <div>
+          <p>Bạn có chắc chắn muốn xóa vĩnh viễn bài học "{lesson.name}"?</p>
+          <p style={{ color: "red", fontWeight: "bold" }}>
+            Hành động này KHÔNG THỂ HOÀN TÁC!
+          </p>
+        </div>
+      ),
+      okText: "Xóa vĩnh viễn",
+      cancelText: "Hủy",
+      okType: "danger",
+      onOk: async () => {
+        try {
+          await lessonApi.hardDeleteLesson(lesson.id);
+          message.success("Xóa vĩnh viễn bài học thành công");
+          // Refresh lessons list
+          const lessonsData = await lessonApi.getAllLessonsByCourse(courseId);
+          setLessons(lessonsData);
+        } catch (error) {
+          message.error("Có lỗi khi xóa vĩnh viễn bài học");
+        }
+      },
+    });
   };
 
   const columns = [
@@ -144,7 +228,7 @@ export default function CourseLessonsPage() {
       render: (order: number) => <Tag color="blue">#{order}</Tag>,
     },
     {
-      title: "Lesson Name",
+      title: "Tên bài học",
       dataIndex: "name",
       key: "name",
       render: (text: string, record: Lesson) => (
@@ -168,42 +252,74 @@ export default function CourseLessonsPage() {
       ),
     },
     {
-      title: "Status",
+      title: "Trạng thái",
       dataIndex: "isActive",
       key: "isActive",
       width: 120,
       render: (isActive: boolean) =>
         isActive ? (
-          <Badge status="success" text="Active" />
+          <Badge status="success" text="Hoạt động" />
         ) : (
-          <Badge status="error" text="Inactive" />
+          <Badge status="error" text="Không hoạt động" />
         ),
     },
     {
-      title: "Actions",
+      title: "Hành động",
       key: "actions",
-      width: 200,
+      width: 300,
       render: (_: any, record: Lesson) => (
         <Space>
           <Button
             type="link"
             icon={<BookOutlined />}
             size="small"
-            onClick={() => handleLessonClick(record)}
-          >
-            View Items
-          </Button>
+            onClick={(e) => {
+              e.stopPropagation();
+              handleLessonClick(record);
+            }}
+          ></Button>
           <Button
             type="default"
             icon={<EditOutlined />}
             size="small"
             onClick={(e) => {
               e.stopPropagation();
-              // Handle edit lesson
+              handleEditLesson(record);
             }}
-          >
-            Edit
-          </Button>
+          ></Button>
+          {record.isActive ? (
+            <Button
+              danger
+              icon={<DeleteOutlined />}
+              size="small"
+              onClick={(e) => {
+                e.stopPropagation();
+                handleDeleteLesson(record);
+              }}
+            ></Button>
+          ) : (
+            <>
+              <Button
+                type="primary"
+                icon={<UndoOutlined />}
+                size="small"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleRestoreLesson(record);
+                }}
+              ></Button>
+              <Button
+                danger
+                icon={<DeleteOutlined />}
+                size="small"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleHardDeleteLesson(record);
+                }}
+              >
+              </Button>
+            </>
+          )}
         </Space>
       ),
     },
@@ -227,7 +343,7 @@ export default function CourseLessonsPage() {
   if (error) {
     return (
       <Alert
-        message="Error Loading Data"
+        message="Lỗi tải dữ liệu"
         description={error}
         type="error"
         showIcon
@@ -245,18 +361,18 @@ export default function CourseLessonsPage() {
           onClick={handleBackToCourses}
           style={{ marginBottom: "16px" }}
         >
-          Back to Courses
+          Quay lại khóa học
         </Button>
 
         {course && (
           <>
             <Title level={2} style={{ margin: 0 }}>
-              {course.title} - Lessons
+              Bài học: {course.title}
             </Title>
             <div style={{ marginTop: "8px" }}>
               <Tag color="blue">HSK Level {course.hskLevel}</Tag>
               <Tag color={course.isActive ? "green" : "red"}>
-                {course.isActive ? "Active" : "Inactive"}
+                {course.isActive ? "Hoạt động" : "Không hoạt động"}
               </Tag>
             </div>
             {course.description && (
@@ -280,25 +396,25 @@ export default function CourseLessonsPage() {
         <Card size="small">
           <div style={{ textAlign: "center" }}>
             <Title level={3} style={{ margin: 0, color: "#1890ff" }}>
-              {lessons.length}
+              {lessons?.length || 0}
             </Title>
-            <Text type="secondary">Total Lessons</Text>
+            <Text type="secondary">Tổng số bài học</Text>
           </div>
         </Card>
         <Card size="small">
           <div style={{ textAlign: "center" }}>
             <Title level={3} style={{ margin: 0, color: "#52c41a" }}>
-              {lessons.filter((l) => l.isActive).length}
+              {lessons?.filter((l) => l.isActive).length || 0}
             </Title>
-            <Text type="secondary">Active Lessons</Text>
+            <Text type="secondary">Bài học hoạt động</Text>
           </div>
         </Card>
         <Card size="small">
           <div style={{ textAlign: "center" }}>
             <Title level={3} style={{ margin: 0, color: "#fa8c16" }}>
-              {lessons.filter((l) => !l.isActive).length}
+              {lessons?.filter((l) => !l.isActive).length || 0}
             </Title>
-            <Text type="secondary">Inactive Lessons</Text>
+            <Text type="secondary">Bài học không hoạt động</Text>
           </div>
         </Card>
       </div>
@@ -312,20 +428,22 @@ export default function CourseLessonsPage() {
             icon={<PlusOutlined />}
             onClick={handleAddNewLesson}
           >
-            Add New Lesson
+            Thêm bài học mới
           </Button>
         }
       >
-        {lessons.length === 0 ? (
+        {!lessons || lessons.length === 0 ? (
           <div style={{ textAlign: "center", padding: "40px" }}>
-            <Text type="secondary">No lessons found for this course.</Text>
+            <Text type="secondary">
+              Không tìm thấy bài học nào cho khóa học này.
+            </Text>
             <div style={{ marginTop: "16px" }}>
               <Button
                 type="primary"
                 icon={<PlusOutlined />}
                 onClick={handleAddNewLesson}
               >
-                Create First Lesson
+                Tạo bài học đầu tiên
               </Button>
             </div>
           </div>
@@ -344,11 +462,11 @@ export default function CourseLessonsPage() {
         )}
       </Card>
 
-      {/* Add Lesson Modal */}
+      {/* Add/Edit Lesson Modal */}
       <LessonFormModal
         visible={lessonModalVisible}
         onClose={handleLessonModalClose}
-        lesson={null}
+        lesson={selectedLesson}
         courseId={courseId}
       />
     </div>

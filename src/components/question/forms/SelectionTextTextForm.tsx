@@ -106,30 +106,30 @@ const SelectionTextTextForm: React.FC<SelectionTextTextFormProps> = ({ form, ini
   return (
     <div>
       {/* Question Setup */}
-      <Card title="Question Setup" style={{ marginBottom: '24px' }}>
+      <Card title="Thiết Lập Câu Hỏi" style={{ marginBottom: '24px' }}>
         <Form.Item
-          label="Question Instruction"
+          label="Hướng Dẫn Câu Hỏi"
           name={['data', 'instruction']}
-          rules={[{ required: true, message: 'Please enter the question instruction' }]}
+          rules={[{ required: true, message: 'Vui lòng nhập hướng dẫn câu hỏi' }]}
         >
-          <Input placeholder="e.g., Choose the correct translation for the Chinese word" />
+          <Input placeholder="VD: Chọn bản dịch đúng cho từ tiếng Trung" />
         </Form.Item>
 
         <Form.Item
-          label="Question Text"
+          label="Nội Dung Câu Hỏi"
           name={['data', 'question']}
-          rules={[{ required: true, message: 'Please enter the question text' }]}
+          rules={[{ required: true, message: 'Vui lòng nhập nội dung câu hỏi' }]}
         >
           <TextArea
             rows={3}
-            placeholder="Enter your question here"
+            placeholder="Nhập câu hỏi của bạn tại đây"
           />
         </Form.Item>
       </Card>
 
       {/* Answer Options */}
       <Card
-        title="Answer Options"
+        title="Các Lựa Chọn Trả Lời"
         extra={
           <Button
             type="dashed"
@@ -137,7 +137,7 @@ const SelectionTextTextForm: React.FC<SelectionTextTextFormProps> = ({ form, ini
             onClick={addOption}
             disabled={options.length >= 6}
           >
-            Add Option
+            Thêm Lựa Chọn
           </Button>
         }
         style={{ marginBottom: '24px' }}
@@ -153,14 +153,14 @@ const SelectionTextTextForm: React.FC<SelectionTextTextFormProps> = ({ form, ini
               }}
               title={
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <span>Option {index + 1}</span>
+                  <span>Lựa Chọn {index + 1}</span>
                   <Space>
                     <Button
                       type={correctAnswer === option.id ? 'primary' : 'default'}
                       size="small"
                       onClick={() => handleCorrectAnswerChange(option.id)}
                     >
-                      {correctAnswer === option.id ? 'Correct Answer' : 'Mark as Correct'}
+                      {correctAnswer === option.id ? 'Đáp Án Đúng' : 'Đánh Dấu Đúng'}
                     </Button>
                     {options.length > 2 && (
                       <Button
@@ -175,9 +175,9 @@ const SelectionTextTextForm: React.FC<SelectionTextTextFormProps> = ({ form, ini
               }
             >
               <div>
-                <Text strong>Option Text</Text>
+                <Text strong>Nội Dung Lựa Chọn</Text>
                 <Input
-                  placeholder="Enter option text"
+                  placeholder="Nhập nội dung lựa chọn"
                   value={option.text}
                   onChange={(e) => handleTextChange(option.id, e.target.value)}
                   style={{ marginTop: '4px' }}
@@ -187,7 +187,7 @@ const SelectionTextTextForm: React.FC<SelectionTextTextFormProps> = ({ form, ini
               {/* Preview */}
               {option.text && (
                 <div style={{ marginTop: '12px', padding: '8px', backgroundColor: '#fafafa', borderRadius: '4px' }}>
-                  <Text strong>Preview: </Text>
+                  <Text strong>Xem Trước: </Text>
                   <span style={{ fontSize: '16px', color: '#1890ff' }}>{option.text}</span>
                 </div>
               )}
@@ -197,8 +197,8 @@ const SelectionTextTextForm: React.FC<SelectionTextTextFormProps> = ({ form, ini
 
         {/* Correct Answer Summary */}
         <div style={{ marginTop: '16px', padding: '12px', backgroundColor: '#e6f7ff', borderRadius: '6px' }}>
-          <Text strong>Correct Answer: </Text>
-          <Text>Option {options.findIndex(opt => opt.id === correctAnswer) + 1}</Text>
+          <Text strong>Đáp Án Đúng: </Text>
+          <Text>Lựa Chọn {options.findIndex(opt => opt.id === correctAnswer) + 1}</Text>
           {options.find(opt => opt.id === correctAnswer)?.text && (
             <Text> - {options.find(opt => opt.id === correctAnswer)?.text}</Text>
           )}
@@ -206,20 +206,20 @@ const SelectionTextTextForm: React.FC<SelectionTextTextFormProps> = ({ form, ini
       </Card>
 
       {/* Additional Settings */}
-      <Card title="Additional Settings" style={{ marginBottom: '24px' }}>
+      <Card title="Cài Đặt Bổ Sung" style={{ marginBottom: '24px' }}>
         <Form.Item
-          label="Explanation (Optional)"
+          label="Giải Thích (Tùy Chọn)"
           name={['data', 'explanation']}
-          help="Provide an explanation that will be shown after the student answers"
+          help="Cung cấp giải thích sẽ được hiển thị sau khi học viên trả lời"
         >
           <TextArea
             rows={3}
-            placeholder="Explain why this is the correct answer..."
+            placeholder="Giải thích tại sao đây là đáp án đúng..."
           />
         </Form.Item>
 
         <Form.Item
-          label="Active"
+          label="Kích Hoạt"
           name="isActive"
           valuePropName="checked"
           initialValue={true}

@@ -25,8 +25,8 @@ import {
 } from "@/types/grammarTypes";
 import { HSK_LEVEL_OPTIONS, HSKLevel } from "@/enums/hsk-level.enum";
 import { grammarApi } from "@/services/grammarApi";
-import GrammarFormModal from "../../../components/grammar/GrammarFormModal";
 import PageHeader from "@/components/common/PageHeader";
+import GrammarFormModal from "@/components/grammar/GrammarFormModal";
 
 const { Option } = Select;
 
@@ -59,7 +59,7 @@ const GrammarList: React.FC = () => {
         total: response.total,
       });
     } catch (error) {
-      message.error("Không thể tải danh sách grammar patterns");
+      message.error("Không thể tải danh sách mẫu ngữ pháp");
     } finally {
       setLoading(false);
     }
@@ -104,14 +104,14 @@ const GrammarList: React.FC = () => {
         };
 
         await grammarApi.updateGrammarPattern(values.translationId!, formData);
-        message.success("Cập nhật grammar pattern thành công!");
+        message.success("Cập nhật mẫu ngữ pháp thành công!");
       } else {
         if (!values.pattern || values.pattern.length === 0) {
-          message.error("Vui lòng nhập pattern!");
+          message.error("Vui lòng nhập mẫu câu!");
           return;
         }
         if (!values.grammarPoint) {
-          message.error("Vui lòng nhập grammar point!");
+          message.error("Vui lòng nhập điểm ngữ pháp!");
           return;
         }
         if (!values.explanation) {
@@ -140,7 +140,7 @@ const GrammarList: React.FC = () => {
         };
 
         const result = await grammarApi.createCompleteGrammarPattern(formData);
-        message.success("Tạo grammar pattern thành công!");
+        message.success("Tạo mẫu ngữ pháp thành công!");
       }
 
       setModalVisible(false);
@@ -155,18 +155,38 @@ const GrammarList: React.FC = () => {
   const handleDelete = async (id: number) => {
     try {
       await grammarApi.deleteGrammarPattern(id);
-      message.success("Xóa grammar pattern thành công!");
+      message.success("Xóa mẫu ngữ pháp thành công!");
       fetchData();
     } catch (error) {
-      message.error("Không thể xóa grammar pattern");
+      message.error("Không thể xóa mẫu ngữ pháp");
       console.error("Error deleting grammar pattern:", error);
     }
   };
 
   // Handle edit
-  const handleEdit = (record: GrammarPattern) => {
-    setEditingPattern(record);
-    setModalVisible(true);
+  const handleEdit = async (record: GrammarPattern) => {
+    try {
+      setLoading(true);
+      console.log('🔧 handleEdit called with record:', record);
+      
+      // Fetch full data from API to ensure we have all information
+      const fullData = await grammarApi.getGrammarPatternById(record.id);
+      console.log('✅ Full data fetched:', fullData);
+      
+      // Set editing pattern first
+      setEditingPattern(fullData);
+      console.log('📦 editingPattern set, opening modal...');
+      
+      // Use setTimeout to ensure state is updated before opening modal
+      setTimeout(() => {
+        setModalVisible(true);
+      }, 0);
+    } catch (error) {
+      message.error("Không thể tải thông tin mẫu ngữ pháp");
+      console.error("Error fetching grammar pattern:", error);
+    } finally {
+      setLoading(false);
+    }
   };
 
   // Handle create new
@@ -184,7 +204,7 @@ const GrammarList: React.FC = () => {
       width: 60,
     },
     {
-      title: "Pattern",
+      title: "Mẫu Câu",
       dataIndex: "pattern",
       key: "pattern",
       render: (pattern: string[]) => (
@@ -192,7 +212,7 @@ const GrammarList: React.FC = () => {
       ),
     },
     {
-      title: "Pinyin",
+      title: "Phiên Âm",
       dataIndex: "patternPinyin",
       key: "patternPinyin",
       render: (pinyin: string[]) => (
@@ -200,12 +220,12 @@ const GrammarList: React.FC = () => {
       ),
     },
     {
-      title: "Formula",
+      title: "Công Thức",
       dataIndex: "patternFormula",
       key: "patternFormula",
     },
     {
-      title: "HSK Level",
+      title: "Cấp HSK",
       dataIndex: "hskLevel",
       key: "hskLevel",
       width: 100,
@@ -213,7 +233,7 @@ const GrammarList: React.FC = () => {
         level ? <Tag color="blue">HSK {level}</Tag> : "-",
     },
     {
-      title: "Grammar Point",
+      title: "Điểm Ngữ Pháp",
       key: "grammarPoint",
       render: (record: GrammarPattern) => (
         <div>
@@ -253,7 +273,7 @@ const GrammarList: React.FC = () => {
             Sửa
           </Button>
           <Popconfirm
-            title="Bạn có chắc chắn muốn xóa grammar pattern này?"
+            title="Bạn có chắc chắn muốn xóa mẫu ngữ pháp này?"
             onConfirm={() => handleDelete(record.id)}
             okText="Có"
             cancelText="Không"
@@ -275,11 +295,11 @@ const GrammarList: React.FC = () => {
   return (
     <div>
       <PageHeader
-        title="Grammar Patterns Management"
-        subtitle="Create and manage grammar patterns"
+        title="Quản Lý Mẫu Ngữ Pháp"
+        subtitle="Tạo và quản lý các mẫu ngữ pháp"
         extra={
           <Button type="primary" icon={<PlusOutlined />} onClick={handleCreate}>
-            Tạo Grammar Pattern mới
+            Tạo Mẫu Ngữ Pháp Mới
           </Button>
         }
       />
@@ -287,13 +307,13 @@ const GrammarList: React.FC = () => {
       <Card>
         <Space style={{ marginBottom: 16 }}>
           <Input.Search
-            placeholder="Tìm kiếm pattern..."
+            placeholder="Tìm kiếm mẫu ngữ pháp..."
             allowClear
             onSearch={handleSearch}
             style={{ width: 300 }}
           />
           <Select
-            placeholder="Lọc theo HSK Level"
+            placeholder="Lọc theo Cấp HSK"
             allowClear
             style={{ width: 150 }}
             onChange={handleHSKFilter}

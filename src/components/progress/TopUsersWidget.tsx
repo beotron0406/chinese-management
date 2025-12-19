@@ -83,13 +83,13 @@ export default function TopUsersWidget({ topUsers, loading }: TopUsersWidgetProp
     return (
       <Card
         title={
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-            <TrophyOutlined style={{ color: '#faad14', fontSize: '18px' }} />
-            <span style={{ fontWeight: 'bold' }}>Top người dùng theo streak</span>
+          <div className="flex items-center gap-2">
+            <TrophyOutlined className="text-yellow-500 text-lg" />
+            <span className="font-bold">Top người dùng theo streak</span>
           </div>
         }
         loading={true}
-        style={{ borderRadius: '8px' }}
+        className="rounded-lg"
       />
     );
   }
@@ -98,14 +98,14 @@ export default function TopUsersWidget({ topUsers, loading }: TopUsersWidgetProp
     return (
       <Card
         title={
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-            <TrophyOutlined style={{ color: '#faad14', fontSize: '18px' }} />
-            <span style={{ fontWeight: 'bold' }}>Top người dùng theo streak</span>
+          <div className="flex items-center gap-2">
+            <TrophyOutlined className="text-yellow-500 text-lg" />
+            <span className="font-bold">Top người dùng theo streak</span>
           </div>
         }
-        style={{ borderRadius: '8px' }}
+        className="rounded-lg"
       >
-        <div style={{ textAlign: 'center', padding: '20px' }}>
+        <div className="text-center p-5">
           <Text type="secondary">Chưa có dữ liệu người dùng</Text>
         </div>
       </Card>
@@ -115,43 +115,34 @@ export default function TopUsersWidget({ topUsers, loading }: TopUsersWidgetProp
   return (
     <Card
       title={
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-          <TrophyOutlined style={{ color: '#faad14', fontSize: '18px' }} />
-          <span style={{ fontWeight: 'bold' }}>Top người dùng theo streak</span>
+        <div className="flex items-center gap-2">
+          <TrophyOutlined className="text-yellow-500 text-lg" />
+          <span className="font-bold">Top người dùng theo streak</span>
         </div>
       }
-      style={{ 
-        borderRadius: '8px',
-        boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
-      }}
+      className="rounded-lg shadow-md"
     >
       <List
         itemLayout="horizontal"
         dataSource={topUsers}
         renderItem={(user, index) => (
           <List.Item
-            style={{
-              backgroundColor: getBackgroundColor(index),
-              border: `2px solid ${getBorderColor(index)}`,
-              borderRadius: '8px',
-              marginBottom: '8px',
-              padding: '12px 16px',
-              transition: 'all 0.3s ease'
-            }}
+            className={`rounded-lg mb-2 px-4 py-3 transition-all duration-300 ${
+              index === 0 ? 'bg-yellow-50 border-2 border-yellow-400' :
+              index === 1 ? 'bg-cyan-50 border-2 border-cyan-400' :
+              index === 2 ? 'bg-orange-50 border-2 border-orange-400' :
+              'bg-gray-50 border border-gray-200'
+            }`}
           >
             <List.Item.Meta
               avatar={
-                <div style={{ position: 'relative', display: 'flex', alignItems: 'center', gap: 12 }}>
-                  {/* Rank number hoặc medal */}
-                  <div style={{ minWidth: '32px', textAlign: 'center' }}>
+                <div className="relative flex items-center gap-3">
+                  {/* Rank number or medal */}
+                  <div className="min-w-[32px] text-center">
                     {index < 3 ? (
                       getRankIcon(index)
                     ) : (
-                      <div style={{ 
-                        fontWeight: 'bold', 
-                        color: '#666',
-                        fontSize: '16px' 
-                      }}>
+                      <div className="font-bold text-gray-500 text-base">
                         #{index + 1}
                       </div>
                     )}
@@ -162,41 +153,34 @@ export default function TopUsersWidget({ topUsers, loading }: TopUsersWidgetProp
                     size="large" 
                     style={{ 
                       backgroundColor: getAvatarColor(index),
-                      fontSize: '16px',
-                      fontWeight: 'bold',
                       border: index < 3 ? `2px solid ${getBorderColor(index)}` : 'none'
                     }}
+                    className="text-base font-bold"
                   >
                     {user.displayName?.charAt(0)?.toUpperCase() || 'U'}
                   </Avatar>
                 </div>
               }
               title={
-                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                <div className="flex items-center gap-2">
                   <Text 
                     strong 
-                    style={{ 
-                      fontSize: '16px',
-                      color: index < 3 ? '#333' : '#666'
-                    }}
+                    className={`text-base ${index < 3 ? 'text-gray-800' : 'text-gray-500'}`}
                   >
                     {user.displayName || 'Unknown User'}
                   </Text>
                   <Tag 
                     color={getRankColor(index)}
-                    style={{ fontWeight: 'bold' }}
+                    className="font-bold"
                   >
                     #{index + 1}
                   </Tag>
                 </div>
               }
               description={
-                <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                  <FireOutlined style={{ color: '#ff4d4f' }} />
-                  <Text style={{ 
-                    fontWeight: 'bold',
-                    color: index < 3 ? '#333' : '#888'
-                  }}>
+                <div className="flex items-center gap-1.5">
+                  <FireOutlined className="text-red-500" />
+                  <Text className={`font-bold ${index < 3 ? 'text-gray-800' : 'text-gray-400'}`}>
                     Streak: {user.metric || 0} ngày
                   </Text>
                 </div>

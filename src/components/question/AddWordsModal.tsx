@@ -79,7 +79,7 @@ const AddWordsModal: React.FC<AddWordsModalProps> = ({
       setFilteredWords(wordSenses);
     } catch (error) {
       console.error("Error fetching words:", error);
-      message.error("Failed to fetch words");
+      message.error("Không thể tải danh sách từ vựng");
     } finally {
       setLoading(false);
     }
@@ -119,7 +119,7 @@ const AddWordsModal: React.FC<AddWordsModalProps> = ({
 
   const handleAddWords = async () => {
     if (selectedWordSenses.length === 0) {
-      message.warning("Please select at least one word");
+      message.warning("Vui lòng chọn ít nhất một từ");
       return;
     }
 
@@ -133,12 +133,12 @@ const AddWordsModal: React.FC<AddWordsModalProps> = ({
 
       await lessonApi.addWordsToLesson(parseInt(lessonId), wordsToAdd);
       
-      message.success(`Successfully added ${selectedWordSenses.length} words to lesson`);
+      message.success(`Đã thêm thành công ${selectedWordSenses.length} từ vào bài học`);
       onSuccess();
       onCancel();
     } catch (error) {
       console.error("Error adding words to lesson:", error);
-      message.error("Failed to add words to lesson");
+      message.error("Không thể thêm từ vào bài học");
     } finally {
       setLoading(false);
     }
@@ -152,7 +152,7 @@ const AddWordsModal: React.FC<AddWordsModalProps> = ({
           indeterminate={selectedWordSenses.length > 0 && selectedWordSenses.length < filteredWords.length}
           onChange={(e) => handleSelectAll(e.target.checked)}
         >
-          Select
+          Chọn
         </Checkbox>
       ),
       key: "select",
@@ -165,7 +165,7 @@ const AddWordsModal: React.FC<AddWordsModalProps> = ({
       ),
     },
     {
-      title: "Chinese",
+      title: "Tiếng Trung",
       key: "chinese",
       render: (_: any, record: WordSenseWithSelection) => (
         <Space direction="vertical" size="small">
@@ -180,19 +180,19 @@ const AddWordsModal: React.FC<AddWordsModalProps> = ({
       ),
     },
     {
-      title: "Part of Speech",
+      title: "Loại Từ",
       dataIndex: "partOfSpeech",
       key: "partOfSpeech",
       render: (pos: string) => pos && <Tag color="blue">{pos}</Tag>,
     },
     {
-      title: "HSK Level",
+      title: "Cấp HSK",
       dataIndex: "hskLevel",
       key: "hskLevel",
       render: (level: number) => level && <Tag color="green">HSK {level}</Tag>,
     },
     {
-      title: "Translation",
+      title: "Bản Dịch",
       key: "translation",
       render: (_: any, record: WordSenseWithSelection) => (
         <div>
@@ -212,24 +212,24 @@ const AddWordsModal: React.FC<AddWordsModalProps> = ({
       ),
     },
     {
-      title: "Primary",
+      title: "Chính",
       dataIndex: "isPrimary",
       key: "isPrimary",
       render: (isPrimary: boolean) => (
-        isPrimary ? <Tag color="gold">Primary</Tag> : null
+        isPrimary ? <Tag color="gold">Chính</Tag> : null
       ),
     },
   ];
 
   return (
     <Modal
-      title="Add Words to Lesson"
+      title="Thêm Từ Vào Bài Học"
       open={visible}
       onCancel={onCancel}
       width={1000}
       footer={[
         <Button key="cancel" onClick={onCancel}>
-          Cancel
+          Hủy
         </Button>,
         <Button
           key="add"
@@ -239,13 +239,13 @@ const AddWordsModal: React.FC<AddWordsModalProps> = ({
           disabled={selectedWordSenses.length === 0}
           icon={<PlusOutlined />}
         >
-          Add {selectedWordSenses.length} Word{selectedWordSenses.length !== 1 ? 's' : ''}
+          Thêm {selectedWordSenses.length} Từ
         </Button>,
       ]}
     >
       <Space direction="vertical" style={{ width: "100%" }}>
         <Search
-          placeholder="Search by Chinese characters, pinyin, or translation..."
+          placeholder="Tìm kiếm theo ký tự Trung Quốc, pinyin hoặc bản dịch..."
           allowClear
           onSearch={handleSearch}
           style={{ width: "100%" }}
@@ -254,7 +254,7 @@ const AddWordsModal: React.FC<AddWordsModalProps> = ({
 
         {selectedWordSenses.length > 0 && (
           <>
-            <Text>Selected {selectedWordSenses.length} word sense{selectedWordSenses.length !== 1 ? 's' : ''}</Text>
+            <Text>Đã chọn {selectedWordSenses.length} nghĩa</Text>
             <Divider style={{ margin: "12px 0" }} />
           </>
         )}
@@ -275,7 +275,7 @@ const AddWordsModal: React.FC<AddWordsModalProps> = ({
             showSizeChanger: false,
             showQuickJumper: true,
             showTotal: (total, range) =>
-              `${range[0]}-${range[1]} of ${total} word senses`,
+              `${range[0]}-${range[1]} trong ${total} nghĩa từ`,
           }}
           scroll={{ y: 400 }}
           size="small"
