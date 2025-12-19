@@ -451,7 +451,6 @@ const SelectionAudioImageForm = forwardRef<SelectionAudioImageFormRef, Selection
       const allOptionsHaveImages = options.every(option => option.image);
 
       if (uploadedAudioUrl && allOptionsHaveImages) {
-        console.log('All files already uploaded');
         return true;
       }
 
@@ -620,7 +619,7 @@ const SelectionAudioImageForm = forwardRef<SelectionAudioImageFormRef, Selection
   return (
     <div>
       {/* Question Setup */}
-      <Card title="Thiết Lập Câu Hỏi" style={{ marginBottom: '24px' }}>
+      <Card title="Thiết Lập Câu Hỏi" className="mb-6">
         <Form.Item
           label="Hướng Dẫn Câu Hỏi"
           name={['data', 'instruction']}
@@ -631,7 +630,7 @@ const SelectionAudioImageForm = forwardRef<SelectionAudioImageFormRef, Selection
       </Card>
 
       {/* Audio Section */}
-      <Card title="File Âm Thanh" style={{ marginBottom: "24px" }}>
+      <Card title="File Âm Thanh" className="mb-6">
         <Form.Item
           label="File Âm Thanh"
           name={['data', 'audio']}
@@ -671,10 +670,10 @@ const SelectionAudioImageForm = forwardRef<SelectionAudioImageFormRef, Selection
               />
             </Space>
             {uploadedAudioUrl && (
-              <div style={{ marginTop: 8 }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                  <SoundOutlined style={{ color: '#52c41a' }} />
-                  <span style={{ color: '#52c41a' }}>Âm thanh đã tải lên</span>
+              <div className="mt-2">
+                <div className="flex items-center gap-2">
+                  <SoundOutlined className="text-green-500" />
+                  <span className="text-green-500">Âm thanh đã tải lên</span>
                   <Button
                     size="small"
                     icon={<DeleteOutlined />}
@@ -683,8 +682,8 @@ const SelectionAudioImageForm = forwardRef<SelectionAudioImageFormRef, Selection
                     danger
                   />
                 </div>
-                <div style={{ marginTop: 4 }}>
-                  <audio controls style={{ width: '100%' }}>
+                <div className="mt-1">
+                  <audio controls className="w-full">
                     <source src={uploadedAudioUrl} />
                     Trình duyệt của bạn không hỗ trợ phần tử âm thanh.
                   </audio>
@@ -704,19 +703,13 @@ const SelectionAudioImageForm = forwardRef<SelectionAudioImageFormRef, Selection
             rows={2}
             placeholder="Nhập bản ghi tiếng Trung của âm thanh"
             onChange={(e) => handleTranscriptChange(e.target.value)}
-            style={{ fontSize: "16px" }}
+            className="text-base"
           />
         </Form.Item>
 
         {audioTranscriptPinyin && (
           <Form.Item label="Pinyin Tự Động Tạo">
-            <div style={{ 
-              padding: '8px 12px', 
-              backgroundColor: '#f5f5f5', 
-              borderRadius: '6px',
-              fontSize: '14px',
-              color: '#666'
-            }}>
+            <div className="px-3 py-2 bg-gray-100 rounded-md text-sm text-gray-500">
               {audioTranscriptPinyin}
             </div>
           </Form.Item>
@@ -734,10 +727,10 @@ const SelectionAudioImageForm = forwardRef<SelectionAudioImageFormRef, Selection
         </Form.Item>
 
         {/* Hidden form fields */}
-        <Form.Item name={['data', 'audio_url']} style={{ display: 'none' }}>
+        <Form.Item name={['data', 'audio_url']} className="hidden">
           <Input />
         </Form.Item>
-        <Form.Item name={['data', 'audio_transcript_pinyin']} style={{ display: 'none' }}>
+        <Form.Item name={['data', 'audio_transcript_pinyin']} className="hidden">
           <Input />
         </Form.Item>
       </Card>
@@ -755,21 +748,18 @@ const SelectionAudioImageForm = forwardRef<SelectionAudioImageFormRef, Selection
             Thêm Tùy Chọn
           </Button>
         }
-        style={{ marginBottom: '24px' }}
+        className="mb-6"
       >
-        <Space direction="vertical" style={{ width: '100%' }} size="large">
+        <Space direction="vertical" className="w-full" size="large">
           {options.map((option, index) => {
             const answerUpload = answerImageUploads[index];
             return (
               <Card
                 key={option.id}
                 size="small"
-                style={{
-                  border: correctAnswer === option.id ? '2px solid #1890ff' : '1px solid #d9d9d9',
-                  backgroundColor: correctAnswer === option.id ? '#f6ffed' : 'white'
-                }}
+                className={`${correctAnswer === option.id ? 'border-2 border-blue-500 bg-green-50' : 'border border-gray-300 bg-white'}`}
                 title={
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <div className="flex justify-between items-center">
                     <span>Tùy Chọn {index + 1}</span>
                     <Space>
                       <Button
@@ -792,9 +782,9 @@ const SelectionAudioImageForm = forwardRef<SelectionAudioImageFormRef, Selection
                 }
               >
                 {/* Image Upload */}
-                <div style={{ marginBottom: '16px' }}>
+                <div className="mb-4">
                   <Text strong>Hình Ảnh Tùy Chọn</Text>
-                  <div style={{ marginTop: '4px' }}>
+                  <div className="mt-1">
                     <Upload
                       accept="image/*"
                       maxCount={1}
@@ -811,10 +801,10 @@ const SelectionAudioImageForm = forwardRef<SelectionAudioImageFormRef, Selection
                       </Button>
                     </Upload>
                     {answerUpload?.uploadedUrl && (
-                      <div style={{ marginTop: 8 }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                          <PictureOutlined style={{ color: '#52c41a' }} />
-                          <span style={{ color: '#52c41a' }}>Hình ảnh đã tải lên</span>
+                      <div className="mt-2">
+                        <div className="flex items-center gap-2">
+                          <PictureOutlined className="text-green-500" />
+                          <span className="text-green-500">Hình ảnh đã tải lên</span>
                           <Button
                             size="small"
                             icon={<DeleteOutlined />}
@@ -823,11 +813,11 @@ const SelectionAudioImageForm = forwardRef<SelectionAudioImageFormRef, Selection
                             danger
                           />
                         </div>
-                        <div style={{ marginTop: 4 }}>
+                        <div className="mt-1">
                           <img
                             src={answerUpload.uploadedUrl}
                             alt={option.alt || `Option ${index + 1}`}
-                            style={{ maxWidth: 150, maxHeight: 150, objectFit: 'cover', borderRadius: '4px' }}
+                            className="max-w-[150px] max-h-[150px] object-cover rounded"
                           />
                         </div>
                       </div>
@@ -842,7 +832,7 @@ const SelectionAudioImageForm = forwardRef<SelectionAudioImageFormRef, Selection
                     placeholder="Mô tả nội dung trong hình ảnh"
                     value={option.alt}
                     onChange={(e) => handleAltTextChange(option.id, e.target.value)}
-                    style={{ marginTop: '4px' }}
+                    className="mt-1"
                   />
                 </div>
 
@@ -870,7 +860,7 @@ const SelectionAudioImageForm = forwardRef<SelectionAudioImageFormRef, Selection
         </Space>
 
         {/* Correct Answer Summary */}
-        <div style={{ marginTop: '16px', padding: '12px', backgroundColor: '#e6f7ff', borderRadius: '6px' }}>
+        <div className="mt-4 p-3 bg-blue-50 rounded-md">
           <Text strong>Đáp Án Đúng: </Text>
           <Text>Tùy Chọn {options.findIndex(opt => opt.id === correctAnswer) + 1}</Text>
           {options.find(opt => opt.id === correctAnswer)?.alt && (
@@ -880,7 +870,7 @@ const SelectionAudioImageForm = forwardRef<SelectionAudioImageFormRef, Selection
       </Card>
 
       {/* Additional Settings */}
-      <Card title="Cài Đặt Thêm" style={{ marginBottom: '24px' }}>
+      <Card title="Cài Đặt Thêm" className="mb-6">
         <Form.Item
           label="Giải Thích (Tùy Chọn)"
           name={['data', 'explanation']}
@@ -894,10 +884,10 @@ const SelectionAudioImageForm = forwardRef<SelectionAudioImageFormRef, Selection
       </Card>
 
       {/* Hidden form fields for proper data structure */}
-      <Form.Item name={['data', 'options']} style={{ display: 'none' }}>
+      <Form.Item name={['data', 'options']} className="hidden">
         <Input />
       </Form.Item>
-      <Form.Item name={['data', 'correctAnswer']} style={{ display: 'none' }}>
+      <Form.Item name={['data', 'correctAnswer']} className="hidden">
         <Input />
       </Form.Item>
 

@@ -151,7 +151,7 @@ const MatchingTextTextForm: React.FC<MatchingTextTextFormProps> = ({
   return (
     <div>
       {/* Question Setup */}
-      <Card title="Thiết Lập Câu Hỏi" style={{ marginBottom: '24px' }}>
+      <Card title="Thiết Lập Câu Hỏi" className="mb-6">
         <Form.Item
           label="Hướng Dẫn Câu Hỏi"
           name={["data", "instruction"]}
@@ -167,7 +167,7 @@ const MatchingTextTextForm: React.FC<MatchingTextTextFormProps> = ({
       {/* Left Column */}
       <Card
         title="Cột Trái (Tiếng Trung)"
-        style={{ marginBottom: '24px' }}
+        className="mb-6"
       >
         <Form.List
           name={["data", "leftColumn"]}
@@ -176,9 +176,9 @@ const MatchingTextTextForm: React.FC<MatchingTextTextFormProps> = ({
           {(fields, { add, remove }) => (
             <>
               {fields.map(({ key, name, ...restField }, index) => (
-                <div key={key} style={{ marginBottom: 16 }}>
+                <div key={key} className="mb-4">
                   <Space
-                    style={{ display: "flex", marginBottom: 8 }}
+                    className="flex mb-2"
                     align="baseline"
                   >
                     {/* ID (Number) */}
@@ -186,11 +186,11 @@ const MatchingTextTextForm: React.FC<MatchingTextTextFormProps> = ({
                       {...restField}
                       name={[name, "id"]}
                       initialValue={`${index + 1}`}
-                      style={{ width: "60px", marginRight: 8 }}
+                      className="w-[60px] mr-2"
                     >
                       <Input
                         disabled
-                        style={{ textAlign: "center", fontWeight: "bold" }}
+                        className="text-center font-bold"
                         placeholder="#"
                       />
                     </Form.Item>
@@ -200,7 +200,7 @@ const MatchingTextTextForm: React.FC<MatchingTextTextFormProps> = ({
                       {...restField}
                       name={[name, "text"]}
                       rules={[{ required: true, message: "Thiếu văn bản" }]}
-                      style={{ width: "300px" }}
+                      className="w-[300px]"
                     >
                       <Input
                         placeholder="Nhập chữ Trung"
@@ -237,7 +237,7 @@ const MatchingTextTextForm: React.FC<MatchingTextTextFormProps> = ({
                     index,
                     "pinyin",
                   ]) && (
-                    <div style={{ marginLeft: 68, marginTop: -8, marginBottom: 8 }}>
+                    <div className="ml-[68px] -mt-2 mb-2">
                       <Tag color="blue">
                         Pinyin: {form.getFieldValue([
                           "data",
@@ -253,7 +253,7 @@ const MatchingTextTextForm: React.FC<MatchingTextTextFormProps> = ({
                   <Form.Item
                     {...restField}
                     name={[name, "pinyin"]}
-                    style={{ display: 'none' }}
+                    className="hidden"
                   >
                     <Input />
                   </Form.Item>
@@ -279,7 +279,7 @@ const MatchingTextTextForm: React.FC<MatchingTextTextFormProps> = ({
       {/* Right Column */}
       <Card
         title="Cột Phải (Tiếng Anh/Bản Dịch)"
-        style={{ marginBottom: '24px' }}
+        className="mb-6"
       >
         <Form.List
           name={["data", "rightColumn"]}
@@ -290,7 +290,7 @@ const MatchingTextTextForm: React.FC<MatchingTextTextFormProps> = ({
               {fields.map(({ key, name, ...restField }, index) => (
                 <Space
                   key={key}
-                  style={{ display: "flex", marginBottom: 8 }}
+                  className="flex mb-2"
                   align="baseline"
                 >
                   {/* ID (Letter) */}
@@ -298,11 +298,11 @@ const MatchingTextTextForm: React.FC<MatchingTextTextFormProps> = ({
                     {...restField}
                     name={[name, "id"]}
                     initialValue={generateRightId(index)}
-                    style={{ width: "60px", marginRight: 8 }}
+                    className="w-[60px] mr-2"
                   >
                     <Input
                       disabled
-                      style={{ textAlign: "center", fontWeight: "bold" }}
+                      className="text-center font-bold"
                       placeholder="Chữ Cái"
                     />
                   </Form.Item>
@@ -312,7 +312,7 @@ const MatchingTextTextForm: React.FC<MatchingTextTextFormProps> = ({
                     {...restField}
                     name={[name, "text"]}
                     rules={[{ required: true, message: "Thiếu văn bản" }]}
-                    style={{ width: "300px" }}
+                    className="w-[300px]"
                   >
                     <Input placeholder="Nhập văn bản tiếng Anh/bản dịch" />
                   </Form.Item>
@@ -355,7 +355,7 @@ const MatchingTextTextForm: React.FC<MatchingTextTextFormProps> = ({
             Chọn các cặp ghép từ cột trái và cột phải
           </Text>
         }
-        style={{ marginBottom: '24px' }}
+        className="mb-6"
       >
         <Form.List
           name={["data", "correctMatches"]}
@@ -366,7 +366,7 @@ const MatchingTextTextForm: React.FC<MatchingTextTextFormProps> = ({
               {fields.map(({ key, name, ...restField }, index) => (
                 <Space
                   key={key}
-                  style={{ display: "flex", marginBottom: 8 }}
+                  className="flex mb-2"
                   align="baseline"
                 >
                   <Text strong>Cặp {index + 1}:</Text>
@@ -374,14 +374,14 @@ const MatchingTextTextForm: React.FC<MatchingTextTextFormProps> = ({
                     {...restField}
                     name={[name, "left"]}
                     rules={[{ required: true, message: "Chọn mục bên trái" }]}
-                    style={{ width: "200px" }}
+                    className="w-[200px]"
                   >
                     <Select placeholder="Chọn mục bên trái">
                       {leftItems.map((item, itemIndex) => (
                         <Option key={`left-option-${item.id}-${itemIndex}`} value={item.id}>
                           {item.id}: {item.text}
                           {item.pinyin && (
-                            <span style={{ color: '#666', fontSize: '12px' }}>
+                            <span className="text-gray-500 text-xs">
                               {' '}({item.pinyin})
                             </span>
                           )}
@@ -394,7 +394,7 @@ const MatchingTextTextForm: React.FC<MatchingTextTextFormProps> = ({
                     {...restField}
                     name={[name, "right"]}
                     rules={[{ required: true, message: "Chọn mục bên phải" }]}
-                    style={{ width: "200px" }}
+                    className="w-[200px]"
                   >
                     <Select placeholder="Chọn mục bên phải">
                       {rightItems.map((item, itemIndex) => (
@@ -430,19 +430,19 @@ const MatchingTextTextForm: React.FC<MatchingTextTextFormProps> = ({
 
         {/* Match Preview */}
         {form.getFieldValue(['data', 'correctMatches'])?.length > 0 && (
-          <div style={{ marginTop: '16px', padding: '12px', backgroundColor: '#e6f7ff', borderRadius: '6px' }}>
+          <div className="mt-4 p-3 bg-blue-50 rounded-md">
             <Text strong>Tóm Tắt Các Cặp:</Text>
-            <div style={{ marginTop: '8px' }}>
+            <div className="mt-2">
               {form.getFieldValue(['data', 'correctMatches'])?.map((match: any, index: number) => {
                 const leftItem = leftItems.find(item => item.id === match.left);
                 const rightItem = rightItems.find(item => item.id === match.right);
                 
                 if (leftItem && rightItem) {
                   return (
-                    <div key={index} style={{ marginBottom: '4px' }}>
+                    <div key={index} className="mb-1">
                       <Text>
                         {leftItem.id}: {leftItem.text} 
-                        {leftItem.pinyin && <span style={{ color: '#666' }}> ({leftItem.pinyin})</span>}
+                        {leftItem.pinyin && <span className="text-gray-500"> ({leftItem.pinyin})</span>}
                         {' → '}
                         {rightItem.id}: {rightItem.text}
                       </Text>
@@ -457,7 +457,7 @@ const MatchingTextTextForm: React.FC<MatchingTextTextFormProps> = ({
       </Card>
 
       {/* Additional Settings */}
-      <Card title="Cài Đặt Thêm" style={{ marginBottom: '24px' }}>
+      <Card title="Cài Đặt Thêm" className="mb-6">
         <Form.Item
           label="Giải Thích (Tùy Chọn)"
           name={['data', 'explanation']}

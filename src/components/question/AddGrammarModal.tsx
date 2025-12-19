@@ -147,7 +147,7 @@ const AddGrammarModal: React.FC<AddGrammarModalProps> = ({
       key: "pattern",
       render: (_: any, record: GrammarPattern) => (
         <Space direction="vertical" size="small">
-          <Text strong style={{ fontSize: "16px" }}>
+          <Text strong className="text-base">
             {Array.isArray(record.pattern) ? record.pattern.join(" ") : record.pattern}
           </Text>
           {record.patternPinyin && (
@@ -175,15 +175,15 @@ const AddGrammarModal: React.FC<AddGrammarModalProps> = ({
           {record.translations && record.translations.length > 0 && (
             <div>
               {record.translations.map((trans, index) => (
-                <div key={index} style={{ marginBottom: "8px" }}>
+                <div key={index} className="mb-2">
                   <Text strong>{trans.grammarPoint}</Text>
                   <br />
                   <Text type="secondary">{trans.explanation}</Text>
                   {trans.example && trans.example.length > 0 && (
-                    <div style={{ marginTop: "4px" }}>
+                    <div className="mt-1">
                       {trans.example.slice(0, 1).map((ex, exIndex) => (
                         <div key={exIndex}>
-                          <Text style={{ fontSize: "12px", color: "#666" }}>
+                          <Text className="text-xs text-gray-500">
                             Ví dụ: {Array.isArray(ex.chinese) ? ex.chinese.join("") : ex.chinese} - {ex.translation}
                           </Text>
                         </div>
@@ -221,19 +221,19 @@ const AddGrammarModal: React.FC<AddGrammarModalProps> = ({
         </Button>,
       ]}
     >
-      <Space direction="vertical" style={{ width: "100%" }}>
+      <Space direction="vertical" className="w-full">
         <Search
           placeholder="Tìm kiếm theo mẫu câu, công thức hoặc bản dịch..."
           allowClear
           onSearch={handleSearch}
-          style={{ width: "100%" }}
+          className="w-full"
           prefix={<SearchOutlined />}
         />
 
         {selectedPatterns.length > 0 && (
           <>
             <Text>Đã chọn {selectedPatterns.length} mẫu ngữ pháp</Text>
-            <Divider style={{ margin: "12px 0" }} />
+            <Divider className="my-3" />
           </>
         )}
 

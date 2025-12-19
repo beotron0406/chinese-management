@@ -12,7 +12,7 @@ export async function GET(request: NextRequest) {
     const sortBy = searchParams.get('sortBy') || 'id';
     const sortOrder = searchParams.get('sortOrder') || 'ASC';
 
-    console.log('🔄 Fetching words:', { page, limit, search, sortBy, sortOrder });
+
 
     const queryParams = new URLSearchParams({
       page,
@@ -36,7 +36,7 @@ export async function GET(request: NextRequest) {
     }
 
     const responseBody = await response.json();
-    console.log('✅ Words fetched successfully:', responseBody.total || 0, 'words');
+
     
     return NextResponse.json(responseBody);
   } catch (error) {
@@ -55,12 +55,6 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     const wordData = await request.json();
-    
-    console.log('🔄 Creating word:', {
-      isNewWord: !wordData.wordId,
-      simplified: wordData.word?.simplified,
-      pinyin: wordData.sense?.pinyin
-    });
 
     // Validate required fields
     if (!wordData.wordId && !wordData.word?.simplified) {
@@ -98,7 +92,7 @@ export async function POST(request: NextRequest) {
     }
 
     const responseBody = await response.json();
-    console.log('✅ Word created successfully:', responseBody.id);
+
     
     return NextResponse.json(responseBody, { status: 201 });
   } catch (error) {

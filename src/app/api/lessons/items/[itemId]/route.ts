@@ -10,8 +10,6 @@ export async function PUT(
   try {
     const itemId = params.itemId;
     const itemData: Partial<ContentFormValues> = await request.json();
-    
-    console.log(`🔄 Updating lesson item: ${itemId}`, itemData);
 
     const response = await fetch(`${API_BASE_URL}/lessons/items/${itemId}`, {
       method: 'PUT',
@@ -28,7 +26,6 @@ export async function PUT(
     }
 
     const responseBody: LessonContent = await response.json();
-    console.log('✅ Lesson item updated successfully');
     
     return NextResponse.json(responseBody);
   } catch (error) {
@@ -49,7 +46,6 @@ export async function DELETE(
 ) {
   try {
     const itemId = params.itemId;
-    console.log(`🔄 Deleting lesson item: ${itemId}`);
 
     const response = await fetch(`${API_BASE_URL}/lessons/items/${itemId}`, {
       method: 'DELETE',
@@ -65,7 +61,6 @@ export async function DELETE(
     }
 
     const responseBody = await response.json();
-    console.log('✅ Lesson item deleted successfully');
     
     return NextResponse.json(responseBody);
   } catch (error) {

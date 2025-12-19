@@ -18,7 +18,7 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    console.log('🔄 Searching word:', simplified);
+
 
     const response = await fetch(
       `${API_BASE_URL}/words/search?simplified=${encodeURIComponent(simplified)}`,
@@ -37,10 +37,6 @@ export async function GET(request: NextRequest) {
     }
 
     const responseBody = await response.json();
-    console.log('✅ Word search completed:', {
-      exists: responseBody.exists,
-      wordId: responseBody.wordId
-    });
     
     return NextResponse.json(responseBody);
   } catch (error) {

@@ -10,8 +10,6 @@ export async function PATCH(
   try {
     const { senseId } = params;
     const updateData = await request.json();
-    
-    console.log('🔄 Updating word sense:', senseId);
 
     const response = await fetch(`${API_BASE_URL}/words/senses/${senseId}`, {
       method: 'PATCH',
@@ -37,7 +35,6 @@ export async function PATCH(
     }
 
     const responseBody = await response.json();
-    console.log('✅ Word sense updated successfully:', responseBody.id);
     
     return NextResponse.json(responseBody);
   } catch (error) {
@@ -59,8 +56,6 @@ export async function DELETE(
 ) {
   try {
     const { senseId } = params;
-    
-    console.log('🔄 Deleting word sense:', senseId);
 
     const response = await fetch(`${API_BASE_URL}/words/senses/${senseId}`, {
       method: 'DELETE',
@@ -84,8 +79,6 @@ export async function DELETE(
       throw new Error(errorData.message || `API error: ${response.status}`);
     }
 
-    console.log('✅ Word sense deleted successfully:', senseId);
-    
     return new NextResponse(null, { status: 204 });
   } catch (error) {
     console.error('❌ Error deleting word sense:', error);

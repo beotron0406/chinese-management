@@ -9,7 +9,6 @@ export async function GET(
 ) {
   try {
     const userId = params.userId;
-    console.log(`🔄 Fetching admin user progress: ${userId}`);
 
     const response = await fetch(`${API_BASE_URL}/admin/progress/user/${userId}`, {
       method: 'GET',

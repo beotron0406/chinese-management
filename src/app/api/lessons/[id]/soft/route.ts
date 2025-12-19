@@ -8,7 +8,6 @@ export async function DELETE(
 ) {
   try {
     const lessonId = params.id;
-    console.log(`🔄 Soft deleting lesson: ${lessonId}`);
 
     const response = await fetch(`${API_BASE_URL}/lessons/${lessonId}/soft`, {
       method: 'DELETE',
@@ -24,7 +23,6 @@ export async function DELETE(
     }
 
     const responseBody = await response.json();
-    console.log('✅ Lesson soft deleted successfully');
     
     return NextResponse.json(responseBody);
   } catch (error) {

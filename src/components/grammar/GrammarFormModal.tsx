@@ -119,23 +119,14 @@ const GrammarFormModal: React.FC<GrammarFormModalProps> = ({
 
   // Reset form when modal opens/closes or data changes
   useEffect(() => {
-    console.log("🔄 Modal useEffect triggered");
-    console.log("  - visible:", visible);
-    console.log("  - initialData:", initialData);
-
     if (visible) {
       if (initialData) {
         // Edit mode
         const translation = initialData.translations?.[0];
-        console.log("✏️ Edit mode - filling form with data");
-        console.log("  - pattern:", initialData.pattern);
-        console.log("  - translation:", translation);
-
         setPatternInputs(initialData.pattern || [""]);
         setPinyinInputs(initialData.patternPinyin || [""]);
       } else {
         // Create mode
-        console.log("➕ Create mode - resetting form");
         setPatternInputs([""]);
         setPinyinInputs([""]);
       }
@@ -178,8 +169,6 @@ const GrammarFormModal: React.FC<GrammarFormModalProps> = ({
         explanation: values.explanation,
         examples: examples,
       };
-
-      console.log("📤 Final form data from modal:", formData);
 
       await onSubmit(formData);
       form.resetFields();
@@ -341,7 +330,7 @@ const GrammarFormModal: React.FC<GrammarFormModalProps> = ({
                   <Card
                     key={key}
                     size="small"
-                    style={{ marginBottom: 16 }}
+                    className="mb-4"
                     title={`Ví dụ ${name + 1}`}
                   >
                     <Row gutter={16}>
@@ -394,7 +383,7 @@ const GrammarFormModal: React.FC<GrammarFormModalProps> = ({
                         >
                           <Input
                             placeholder="Tā bāngmáng zuò le zhè jiàn shì"
-                            style={{ backgroundColor: "#f0f0f0" }}
+                            className="bg-gray-100"
                           />
                         </Form.Item>
                       </Col>

@@ -38,19 +38,19 @@ export default function OverviewCards({ data, loading }: OverviewCardsProps) {
       title: "Tổng người dùng",
       value: data.totalUsers,
       icon: <UserOutlined className="text-blue-500" />,
-      color: "#1890ff",
+      valueClassName: "!text-blue-500 !font-bold !text-xl",
     },
     {
       title: "Đang hoạt động",
       value: data.activeUsers,
       icon: <UserOutlined className="text-green-500" />,
-      color: "#52c41a",
+      valueClassName: "!text-green-500 !font-bold !text-xl",
     },
     {
       title: "Bài hoàn thành",
       value: data.totalCompletions,
       icon: <CheckCircleOutlined className="text-purple-600" />,
-      color: "#722ed1",
+      valueClassName: "!text-purple-600 !font-bold !text-xl",
     },
     {
       title: "Điểm trung bình",
@@ -58,7 +58,7 @@ export default function OverviewCards({ data, loading }: OverviewCardsProps) {
       precision: 1,
       suffix: "%",
       icon: <TrophyOutlined className="text-orange-500" />,
-      color: "#fa8c16",
+      valueClassName: "!text-orange-500 !font-bold !text-xl",
     },
     {
       title: "Streak TB",
@@ -66,7 +66,7 @@ export default function OverviewCards({ data, loading }: OverviewCardsProps) {
       precision: 1,
       suffix: "ngày",
       icon: <FireOutlined className="text-red-500" />,
-      color: "#f5222d",
+      valueClassName: "!text-red-500 !font-bold !text-xl",
     },
   ];
 
@@ -80,7 +80,7 @@ export default function OverviewCards({ data, loading }: OverviewCardsProps) {
             precision={card.precision}
             suffix={card.suffix}
             prefix={card.icon}
-            valueStyle={{ color: card.color, fontWeight: "bold", fontSize: "20px" }}
+            className={`[&_.ant-statistic-content-value]:${card.valueClassName}`}
           />
         </Card>
       ))}

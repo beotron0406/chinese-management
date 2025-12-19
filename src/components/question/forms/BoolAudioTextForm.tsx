@@ -332,7 +332,7 @@ const BoolAudioTextForm = forwardRef<
   return (
     <div>
       {/* Question Setup */}
-      <Card title="Thiết Lập Câu Hỏi" style={{ marginBottom: "24px" }}>
+      <Card title="Thiết Lập Câu Hỏi" className="mb-6">
         <Form.Item
           label="Hướng Dẫn Câu Hỏi"
           name={["data", "instruction"]}
@@ -348,7 +348,7 @@ const BoolAudioTextForm = forwardRef<
       </Card>
 
       {/* Audio Section */}
-      <Card title="File Âm Thanh" style={{ marginBottom: "24px" }}>
+      <Card title="File Âm Thanh" className="mb-6">
         <Form.Item
           label="File Âm Thanh"
           name={["data", "audio"]}
@@ -388,10 +388,10 @@ const BoolAudioTextForm = forwardRef<
               />
             </Space>
             {uploadedAudioUrl && (
-              <div style={{ marginTop: 8 }}>
-                <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                  <SoundOutlined style={{ color: "#52c41a" }} />
-                  <span style={{ color: "#52c41a" }}>Đã tải lên âm thanh</span>
+              <div className="mt-2">
+                <div className="flex items-center gap-2">
+                  <SoundOutlined className="text-green-500" />
+                  <span className="text-green-500">Đã tải lên âm thanh</span>
                   <Button
                     size="small"
                     icon={<DeleteOutlined />}
@@ -400,8 +400,8 @@ const BoolAudioTextForm = forwardRef<
                     danger
                   />
                 </div>
-                <div style={{ marginTop: 4 }}>
-                  <audio controls style={{ width: "100%" }}>
+                <div className="mt-1">
+                  <audio controls className="w-full">
                     <source src={uploadedAudioUrl} />
                     Trình duyệt của bạn không hỗ trợ phát âm thanh.
                   </audio>
@@ -412,13 +412,13 @@ const BoolAudioTextForm = forwardRef<
         </Form.Item>
 
         {/* Hidden audio_url field */}
-        <Form.Item name={["data", "audio_url"]} style={{ display: "none" }}>
+        <Form.Item name={["data", "audio_url"]} className="hidden">
           <Input />
         </Form.Item>
       </Card>
 
       {/* Audio Content */}
-      <Card title="Nội Dung Âm Thanh" style={{ marginBottom: "24px" }}>
+      <Card title="Nội Dung Âm Thanh" className="mb-6">
         <Form.Item
           label="Bản Ghi (Tiếng Trung)"
           name={["data", "transcript"]}
@@ -429,17 +429,17 @@ const BoolAudioTextForm = forwardRef<
           <Input
             placeholder="Nhập bản ghi tiếng Trung của âm thanh"
             onChange={handleTranscriptChange}
-            style={{ fontSize: "16px" }}
+            className="text-base"
           />
         </Form.Item>
 
         <Form.Item label="Pinyin" name={["data", "pinyin"]}>
-          <Space style={{ width: "100%" }}>
+          <Space className="w-full">
             <Input
               placeholder="Pinyin sẽ được tự động tạo"
               value={generatedPinyin}
               onChange={(e) => setGeneratedPinyin(e.target.value)}
-              style={{ width: 400 }}
+              className="w-[400px]"
             />
             {transcriptText && (
               <Button
@@ -454,19 +454,11 @@ const BoolAudioTextForm = forwardRef<
 
         {/* Pinyin Preview */}
         {generatedPinyin && (
-          <div style={{ marginBottom: "16px" }}>
-            <div style={{ margin: "8px 0" }}>
+          <div className="mb-4">
+            <div className="my-2">
               <Text strong>Pinyin Đã Tạo:</Text>
             </div>
-            <div
-              style={{
-                padding: "12px",
-                backgroundColor: "#f5f5f5",
-                borderRadius: "6px",
-                fontSize: "16px",
-                color: "#1890ff",
-              }}
-            >
+            <div className="p-3 bg-gray-100 rounded-md text-base text-blue-500">
               {generatedPinyin}
             </div>
           </div>
@@ -482,7 +474,7 @@ const BoolAudioTextForm = forwardRef<
       </Card>
 
       {/* Answer Section */}
-      <Card title="Đáp Án" style={{ marginBottom: "24px" }}>
+      <Card title="Đáp Án" className="mb-6">
         <Form.Item
           label="Đáp Án Đúng"
           name={["data", "correctAnswer"]}
@@ -498,22 +490,14 @@ const BoolAudioTextForm = forwardRef<
 
         {/* Answer Preview */}
         {form.getFieldValue(["data", "correctAnswer"]) !== undefined && (
-          <div
-            style={{
-              marginTop: "12px",
-              padding: "8px",
-              backgroundColor: "#f6ffed",
-              borderRadius: "4px",
-            }}
-          >
+          <div className="mt-3 p-2 bg-green-50 rounded">
             <Text strong>Đáp Án Đã Chọn: </Text>
             <span
-              style={{
-                fontSize: "16px",
-                color: form.getFieldValue(["data", "correctAnswer"])
-                  ? "#52c41a"
-                  : "#ff4d4f",
-              }}
+              className={`text-base ${
+                form.getFieldValue(["data", "correctAnswer"])
+                  ? "text-green-500"
+                  : "text-red-500"
+              }`}
             >
               {form.getFieldValue(["data", "correctAnswer"]) ? "Đúng" : "Sai"}
             </span>
@@ -522,7 +506,7 @@ const BoolAudioTextForm = forwardRef<
       </Card>
 
       {/* Additional Settings */}
-      <Card title="Cài Đặt Bổ Sung" style={{ marginBottom: "24px" }}>
+      <Card title="Cài Đặt Bổ Sung" className="mb-6">
         <Form.Item
           label="Giải Thích (Tùy Chọn)"
           name={["data", "explanation"]}

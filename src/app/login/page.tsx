@@ -34,19 +34,13 @@ const LoginPage = () => {
   };
 
   return (
-    <div style={{ 
-      display: 'flex', 
-      justifyContent: 'center', 
-      alignItems: 'center', 
-      minHeight: '100vh',
-      background: '#f0f2f5'
-    }}>
+    <div className="flex justify-center items-center min-h-screen bg-gray-100">
       <Card 
-        style={{ width: 400, boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1)' }}
+        className="w-[400px] shadow-lg"
         title={
-          <div style={{ textAlign: 'center' }}>
+          <div className="text-center">
             <Title level={3}>Chinese Learning Platform</Title>
-            <Title level={5} style={{ marginTop: 0, fontWeight: 'normal' }}>Admin Login</Title>
+            <Title level={5} className="!mt-0 !font-normal">Admin Login</Title>
           </div>
         }
       >

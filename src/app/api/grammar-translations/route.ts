@@ -5,8 +5,6 @@ const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || "http://26.112.47.2
 export async function POST(request: NextRequest) {
   try {
     const translationData = await request.json();
-    
-    console.log('🔄 Creating grammar translation (translation only):', translationData);
 
     const response = await fetch(`${API_BASE_URL}/grammar-translations`, {
       method: 'POST',
@@ -23,7 +21,7 @@ export async function POST(request: NextRequest) {
     }
 
     const responseBody = await response.json();
-    console.log('✅ Grammar translation created successfully');
+
     
     return NextResponse.json(responseBody, { status: 201 });
   } catch (error) {

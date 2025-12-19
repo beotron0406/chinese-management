@@ -168,8 +168,7 @@ const WordPage = () => {
     return (
       <Col xs={24} sm={12} md={12} lg={8} xl={6} key={word.id}>
         <Card
-          className="h-full shadow-sm hover:shadow-lg transition-all duration-300 border-l-4 border-l-blue-500"
-          bodyStyle={{ padding: "16px" }}
+          className="h-full shadow-sm hover:shadow-lg transition-all duration-300 border-l-4 border-l-blue-500 [&_.ant-card-body]:p-4"
           actions={[
             <Tooltip title="Chỉnh sửa từ vựng" key="edit">
               <Button
@@ -293,8 +292,7 @@ const WordPage = () => {
               </div>
               <audio
                 controls
-                className="w-full h-10"
-                style={{ maxHeight: '40px' }}
+                className="w-full h-10 max-h-10"
               >
                 <source src={primarySense.audioUrl!} type="audio/mpeg" />
                 <source src={primarySense.audioUrl!} type="audio/wav" />
@@ -327,7 +325,7 @@ const WordPage = () => {
           </div>
 
           {/* Footer with date */}
-          <Divider style={{ margin: "12px 0" }} />
+          <Divider className="!my-3" />
           <div className="flex items-center justify-between text-xs text-gray-500">
             <div className="flex items-center gap-1">
               <CalendarOutlined />

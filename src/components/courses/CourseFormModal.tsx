@@ -98,12 +98,12 @@ const CourseFormModal: React.FC<CourseFormModalProps> = ({
 
         <Divider orientation="left">Cài đặt khóa học</Divider>
 
-        <div style={{ display: "flex", gap: "16px" }}>
+        <div className="flex gap-4">
           <Form.Item
             name="hskLevel"
             label="Cấp độ HSK"
             rules={[{ required: true, message: "Vui lòng chọn cấp độ HSK" }]}
-            style={{ flex: 1 }}
+            className="flex-1"
           >
             <Select placeholder="Chọn cấp độ HSK">
               {[1, 2, 3, 4, 5, 6, 7, 8, 9].map((level) => (

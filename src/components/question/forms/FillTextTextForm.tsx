@@ -228,11 +228,11 @@ const FillTextTextForm: React.FC<FillTextTextFormProps> = ({
         message="Công Cụ Tạo Câu Hỏi Điền Chỗ Trống"
         description="Tạo câu hỏi để học sinh điền từ tiếng Trung. Sử dụng [1], [2], v.v. để đánh dấu vị trí chỗ trống."
         type="info"
-        style={{ marginBottom: "24px" }}
+        className="mb-6"
       />
 
       {/* Step 1: Question Setup */}
-      <Card title="Bước 1: Thiết Lập Câu Hỏi" style={{ marginBottom: "24px" }}>
+      <Card title="Bước 1: Thiết Lập Câu Hỏi" className="mb-6">
         <Form.Item
           label="Hướng Dẫn"
           name={["data", "instruction"]}
@@ -257,9 +257,9 @@ const FillTextTextForm: React.FC<FillTextTextFormProps> = ({
             Thêm Phần
           </Button>
         }
-        style={{ marginBottom: "24px" }}
+        className="mb-6"
       >
-        <div style={{ marginBottom: "16px" }}>
+        <div className="mb-4">
           <Text type="secondary">
             Xây dựng câu từng phần. Sử dụng [1], [2], v.v. cho vị trí chỗ trống.
           </Text>
@@ -269,22 +269,13 @@ const FillTextTextForm: React.FC<FillTextTextFormProps> = ({
           <Card
             key={index}
             size="small"
-            style={{
-              marginBottom: "12px",
-              backgroundColor: isBlankMarker(part) ? "#fff7e6" : "#ffffff",
-            }}
+            className={`mb-3 ${isBlankMarker(part) ? 'bg-orange-50' : 'bg-white'}`}
             title={
-              <div
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "space-between",
-                }}
-              >
+              <div className="flex items-center justify-between">
                 <div>
                   Phần {index + 1}
                   {isBlankMarker(part) && (
-                    <Tag color="orange" style={{ marginLeft: 8 }}>
+                    <Tag color="orange" className="ml-2">
                       CHỖ TRỐNG {part.match(/\d+/)?.[0]}
                     </Tag>
                   )}
@@ -295,7 +286,7 @@ const FillTextTextForm: React.FC<FillTextTextFormProps> = ({
                       type="primary"
                       size="small"
                       onClick={() => markAsBlank(index)}
-                      style={{ fontSize: "12px" }}
+                      className="text-xs"
                     >
                       Đánh Dấu Chỗ Trống
                     </Button>
@@ -304,7 +295,7 @@ const FillTextTextForm: React.FC<FillTextTextFormProps> = ({
                       type="default"
                       size="small"
                       onClick={() => unmarkBlank(index)}
-                      style={{ fontSize: "12px" }}
+                      className="text-xs"
                     >
                       Bỏ Đánh Dấu
                     </Button>
@@ -323,22 +314,11 @@ const FillTextTextForm: React.FC<FillTextTextFormProps> = ({
           >
             <Row gutter={16}>
               <Col span={12}>
-                <div style={{ marginBottom: "8px" }}>
+                <div className="mb-2">
                   <Text strong>Chữ Trung:</Text>
                 </div>
                 {isBlankMarker(part) ? (
-                  <div
-                    style={{
-                      padding: "8px 12px",
-                      backgroundColor: "#ffeaa7",
-                      border: "2px dashed #ffa940",
-                      borderRadius: "6px",
-                      textAlign: "center",
-                      fontSize: "16px",
-                      fontWeight: "bold",
-                      color: "#d68910",
-                    }}
-                  >
+                  <div className="py-2 px-3 bg-yellow-200 border-2 border-dashed border-orange-400 rounded-md text-center text-base font-bold text-yellow-700">
                     VỊ TRÍ CHỖ TRỐNG {part.match(/\d+/)?.[0]}
                   </div>
                 ) : (
@@ -348,21 +328,19 @@ const FillTextTextForm: React.FC<FillTextTextFormProps> = ({
                     onChange={(e) =>
                       handleSentencePartChange(index, e.target.value)
                     }
-                    style={{
-                      fontSize: "16px",
-                    }}
+                    className="text-base"
                   />
                 )}
                 {isBlankMarker(part) && (
-                  <div style={{ marginTop: 4 }}>
-                    <Text type="secondary" style={{ fontSize: "12px" }}>
+                  <div className="mt-1">
+                    <Text type="secondary" className="text-xs">
                       Vị trí này sẽ là chỗ trống để học sinh điền
                     </Text>
                   </div>
                 )}
               </Col>
               <Col span={12}>
-                <div style={{ marginBottom: "8px" }}>
+                <div className="mb-2">
                   <Text strong>Pinyin:</Text>
                   {!isBlankMarker(part) && (
                     <Button
@@ -370,25 +348,14 @@ const FillTextTextForm: React.FC<FillTextTextFormProps> = ({
                       size="small"
                       icon={<ReloadOutlined />}
                       onClick={() => generatePartPinyin(index, part)}
-                      style={{ padding: 0, marginLeft: 8 }}
+                      className="p-0 ml-2"
                     >
                       Tự động tạo
                     </Button>
                   )}
                 </div>
                 {isBlankMarker(part) ? (
-                  <div
-                    style={{
-                      padding: "8px 12px",
-                      backgroundColor: "#ffeaa7",
-                      border: "2px dashed #ffa940",
-                      borderRadius: "6px",
-                      textAlign: "center",
-                      fontSize: "16px",
-                      fontWeight: "bold",
-                      color: "#d68910",
-                    }}
-                  >
+                  <div className="py-2 px-3 bg-yellow-200 border-2 border-dashed border-orange-400 rounded-md text-center text-base font-bold text-yellow-700">
                     {part}
                   </div>
                 ) : (
@@ -398,10 +365,7 @@ const FillTextTextForm: React.FC<FillTextTextFormProps> = ({
                     onChange={(e) =>
                       handlePinyinPartChange(index, e.target.value)
                     }
-                    style={{
-                      fontSize: "16px",
-                      color: "#1890ff",
-                    }}
+                    className="text-base text-blue-500"
                   />
                 )}
               </Col>
@@ -410,10 +374,10 @@ const FillTextTextForm: React.FC<FillTextTextFormProps> = ({
         ))}
 
         {/* Hidden form fields */}
-        <Form.Item name={["data", "sentence"]} style={{ display: "none" }}>
+        <Form.Item name={["data", "sentence"]} className="hidden">
           <Input />
         </Form.Item>
-        <Form.Item name={["data", "pinyin"]} style={{ display: "none" }}>
+        <Form.Item name={["data", "pinyin"]} className="hidden">
           <Input />
         </Form.Item>
       </Card>
@@ -421,7 +385,7 @@ const FillTextTextForm: React.FC<FillTextTextFormProps> = ({
       {/* Step 3: Vietnamese Translation */}
       <Card
         title="Bước 3: Bản Dịch Tiếng Việt"
-        style={{ marginBottom: "24px" }}
+        className="mb-6"
       >
         <Form.Item
           label="Bản Dịch Tiếng Việt"
@@ -511,9 +475,9 @@ const FillTextTextForm: React.FC<FillTextTextFormProps> = ({
       {/* Step 5: Option Bank */}
       <Card
         title="Bước 5: Ngân Hàng Lựa Chọn (Gợi Ý)"
-        style={{ marginBottom: "24px" }}
+        className="mb-6"
       >
-        <div style={{ marginBottom: "12px" }}>
+        <div className="mb-3">
           <Text type="secondary">
             Thêm các từ tiếng Trung làm lựa chọn cho học sinh.
           </Text>
@@ -524,7 +488,7 @@ const FillTextTextForm: React.FC<FillTextTextFormProps> = ({
               {fields.map(({ key, name, ...restField }) => (
                 <Space
                   key={key}
-                  style={{ display: "flex", marginBottom: 8 }}
+                  className="flex mb-2"
                   align="baseline"
                 >
                   <Form.Item
@@ -536,7 +500,7 @@ const FillTextTextForm: React.FC<FillTextTextFormProps> = ({
                   >
                     <Input
                       placeholder="Nhập từ tiếng Trung"
-                      style={{ width: 200, fontSize: "16px" }}
+                      className="w-[200px] text-base"
                       onChange={handleOptionBankChange}
                       onBlur={handleOptionBankChange}
                     />
@@ -572,17 +536,13 @@ const FillTextTextForm: React.FC<FillTextTextFormProps> = ({
 
         {/* Display current options */}
         {optionBankItems.filter(Boolean).length > 0 && (
-          <div style={{ marginTop: "16px" }}>
+          <div className="mt-4">
             <Text strong>Lựa Chọn Hiện Tại: </Text>
-            <div style={{ marginTop: "8px" }}>
+            <div className="mt-2">
               {optionBankItems.filter(Boolean).map((option, index) => (
                 <Tag
                   key={index}
-                  style={{
-                    margin: "4px",
-                    fontSize: "14px",
-                    padding: "4px 8px",
-                  }}
+                  className="m-1 text-sm py-1 px-2"
                 >
                   {option}
                 </Tag>
@@ -593,8 +553,8 @@ const FillTextTextForm: React.FC<FillTextTextFormProps> = ({
       </Card>
 
       {/* Step 6: Set Correct Answers */}
-      <Card title="Bước 6: Đặt Đáp Án Đúng" style={{ marginBottom: "24px" }}>
-        <div style={{ marginBottom: "12px" }}>
+      <Card title="Bước 6: Đặt Đáp Án Đúng" className="mb-6">
+        <div className="mb-3">
           <Text type="secondary">
             Xác định đáp án đúng cho mỗi vị trí chỗ trống. Bạn có thể chọn từ
             ngân hàng lựa chọn hoặc nhập đáp án mới.
@@ -614,13 +574,13 @@ const FillTextTextForm: React.FC<FillTextTextFormProps> = ({
               <Card
                 key={`blank-${blankNumber}`}
                 size="small"
-                style={{ marginBottom: "12px" }}
+                className="mb-3"
                 title={
                   <div>
                     <span>
                       Chỗ Trống {blankNumber} - Vị Trí {originalIndex + 1}
                     </span>
-                    <Tag color="blue" style={{ marginLeft: 8 }}>
+                    <Tag color="blue" className="ml-2">
                       Ngữ cảnh: {sentenceParts[originalIndex - 1] || ""} ___{" "}
                       {sentenceParts[originalIndex + 1] || ""}
                     </Tag>
@@ -647,30 +607,20 @@ const FillTextTextForm: React.FC<FillTextTextFormProps> = ({
                         dropdownRender={(menu) => (
                           <div>
                             {currentOptions.filter(Boolean).length > 0 && (
-                              <div
-                                style={{
-                                  padding: "8px",
-                                  borderBottom: "1px solid #f0f0f0",
-                                }}
-                              >
+                              <div className="p-2 border-b border-gray-200">
                                 <Text
                                   type="secondary"
-                                  style={{ fontSize: "12px" }}
+                                  className="text-xs"
                                 >
                                   Lựa chọn khả dụng:
                                 </Text>
                               </div>
                             )}
                             {menu}
-                            <div
-                              style={{
-                                padding: "8px",
-                                borderTop: "1px solid #f0f0f0",
-                              }}
-                            >
+                            <div className="p-2 border-t border-gray-200">
                               <Text
                                 type="secondary"
-                                style={{ fontSize: "12px" }}
+                                className="text-xs"
                               >
                                 Nhập để thêm đáp án tùy chỉnh
                               </Text>
@@ -682,15 +632,8 @@ const FillTextTextForm: React.FC<FillTextTextFormProps> = ({
                           .filter(Boolean)
                           .map((option: string, idx: number) => (
                             <Option key={`option-${idx}`} value={option}>
-                              <div
-                                style={{
-                                  display: "flex",
-                                  alignItems: "center",
-                                }}
-                              >
-                                <span
-                                  style={{ fontSize: "16px", marginRight: 8 }}
-                                >
+                              <div className="flex items-center">
+                                <span className="text-base mr-2">
                                   {option}
                                 </span>
                                 <Tag color="green">Từ Ngân Hàng</Tag>
@@ -701,11 +644,11 @@ const FillTextTextForm: React.FC<FillTextTextFormProps> = ({
                     </Form.Item>
                   </Col>
                   <Col span={8}>
-                    <div style={{ padding: "8px 0" }}>
-                      <Text strong style={{ fontSize: "12px" }}>
+                    <div className="py-2">
+                      <Text strong className="text-xs">
                         Chọn Nhanh:
                       </Text>
-                      <div style={{ marginTop: "4px" }}>
+                      <div className="mt-1">
                         {currentOptions
                           .filter(Boolean)
                           .slice(0, 3)
@@ -713,11 +656,7 @@ const FillTextTextForm: React.FC<FillTextTextFormProps> = ({
                             <Button
                               key={`quick-${idx}`}
                               size="small"
-                              style={{
-                                margin: "2px",
-                                fontSize: "12px",
-                                height: "24px",
-                              }}
+                              className="m-0.5 text-xs h-6"
                               onClick={() => {
                                 const currentAnswers =
                                   form.getFieldValue([
@@ -761,7 +700,7 @@ const FillTextTextForm: React.FC<FillTextTextFormProps> = ({
                 <Form.Item
                   name={["data", "blanks", blankNumber - 1, "index"]}
                   initialValue={blankNumber}
-                  style={{ display: "none" }}
+                  className="hidden"
                 >
                   <Input />
                 </Form.Item>
@@ -783,11 +722,11 @@ const FillTextTextForm: React.FC<FillTextTextFormProps> = ({
           <Card
             title="Tóm Tắt"
             size="small"
-            style={{ marginTop: "16px", backgroundColor: "#fafafa" }}
+            className="mt-4 bg-gray-50"
           >
             <div>
               <Text strong>Tổng Quan Chỗ Trống:</Text>
-              <div style={{ marginTop: "8px" }}>
+              <div className="mt-2">
                 {sentenceParts
                   .map((part, index) => ({ part, originalIndex: index }))
                   .filter(({ part }) => isBlankMarker(part))
@@ -804,16 +743,16 @@ const FillTextTextForm: React.FC<FillTextTextFormProps> = ({
                     return (
                       <div
                         key={`summary-${blankNumber}`}
-                        style={{ margin: "4px 0" }}
+                        className="my-1"
                       >
                         <Tag color="orange">Chỗ Trống {blankNumber}</Tag>
-                        <span style={{ margin: "0 8px" }}>→</span>
+                        <span className="mx-2">→</span>
                         {answers.length > 0 ? (
                           answers.map((answer: string, idx: number) => (
                             <Tag
                               key={idx}
                               color="green"
-                              style={{ margin: "2px" }}
+                              className="m-0.5"
                             >
                               {answer}
                             </Tag>
@@ -831,7 +770,7 @@ const FillTextTextForm: React.FC<FillTextTextFormProps> = ({
       </Card>
 
       {/* Step 7: Explanation */}
-      <Card title="Bước 7: Giải Thích" style={{ marginBottom: "24px" }}>
+      <Card title="Bước 7: Giải Thích" className="mb-6">
         <Form.Item
           label="Giải Thích"
           name={["data", "explanation"]}
@@ -845,7 +784,7 @@ const FillTextTextForm: React.FC<FillTextTextFormProps> = ({
       </Card>
 
       {/* Additional Settings */}
-      <Card title="Cài Đặt Bổ Sung" style={{ marginBottom: "24px" }}>
+      <Card title="Cài Đặt Bổ Sung" className="mb-6">
         <Form.Item
           label="Kích Hoạt"
           name="isActive"

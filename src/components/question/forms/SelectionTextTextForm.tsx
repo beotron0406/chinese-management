@@ -106,7 +106,7 @@ const SelectionTextTextForm: React.FC<SelectionTextTextFormProps> = ({ form, ini
   return (
     <div>
       {/* Question Setup */}
-      <Card title="Thiết Lập Câu Hỏi" style={{ marginBottom: '24px' }}>
+      <Card title="Thiết Lập Câu Hỏi" className="mb-6">
         <Form.Item
           label="Hướng Dẫn Câu Hỏi"
           name={['data', 'instruction']}
@@ -140,19 +140,16 @@ const SelectionTextTextForm: React.FC<SelectionTextTextFormProps> = ({ form, ini
             Thêm Lựa Chọn
           </Button>
         }
-        style={{ marginBottom: '24px' }}
+        className="mb-6"
       >
-        <Space direction="vertical" style={{ width: '100%' }} size="large">
+        <Space direction="vertical" className="w-full" size="large">
           {options.map((option, index) => (
             <Card
               key={option.id}
               size="small"
-              style={{
-                border: correctAnswer === option.id ? '2px solid #1890ff' : '1px solid #d9d9d9',
-                backgroundColor: correctAnswer === option.id ? '#f6ffed' : 'white'
-              }}
+              className={`${correctAnswer === option.id ? 'border-2 border-blue-500 bg-green-50' : 'border border-gray-300 bg-white'}`}
               title={
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <div className="flex justify-between items-center">
                   <span>Lựa Chọn {index + 1}</span>
                   <Space>
                     <Button
@@ -180,7 +177,7 @@ const SelectionTextTextForm: React.FC<SelectionTextTextFormProps> = ({ form, ini
                   placeholder="Nhập nội dung lựa chọn"
                   value={option.text}
                   onChange={(e) => handleTextChange(option.id, e.target.value)}
-                  style={{ marginTop: '4px' }}
+                  className="mt-1"
                 />
               </div>
 
@@ -196,7 +193,7 @@ const SelectionTextTextForm: React.FC<SelectionTextTextFormProps> = ({ form, ini
         </Space>
 
         {/* Correct Answer Summary */}
-        <div style={{ marginTop: '16px', padding: '12px', backgroundColor: '#e6f7ff', borderRadius: '6px' }}>
+        <div className="mt-4 p-3 bg-blue-50 rounded-md">
           <Text strong>Đáp Án Đúng: </Text>
           <Text>Lựa Chọn {options.findIndex(opt => opt.id === correctAnswer) + 1}</Text>
           {options.find(opt => opt.id === correctAnswer)?.text && (
@@ -206,7 +203,7 @@ const SelectionTextTextForm: React.FC<SelectionTextTextFormProps> = ({ form, ini
       </Card>
 
       {/* Additional Settings */}
-      <Card title="Cài Đặt Bổ Sung" style={{ marginBottom: '24px' }}>
+      <Card title="Cài Đặt Bổ Sung" className="mb-6">
         <Form.Item
           label="Giải Thích (Tùy Chọn)"
           name={['data', 'explanation']}
@@ -229,10 +226,10 @@ const SelectionTextTextForm: React.FC<SelectionTextTextFormProps> = ({ form, ini
       </Card>
 
       {/* Hidden form fields for proper data structure */}
-      <Form.Item name={['data', 'options']} style={{ display: 'none' }}>
+      <Form.Item name={['data', 'options']} className="hidden">
         <Input />
       </Form.Item>
-      <Form.Item name={['data', 'correctAnswer']} style={{ display: 'none' }}>
+      <Form.Item name={['data', 'correctAnswer']} className="hidden">
         <Input />
       </Form.Item>
     </div>

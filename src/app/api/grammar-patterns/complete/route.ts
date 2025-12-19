@@ -6,9 +6,7 @@ const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || "http://26.112.47.2
 export async function POST(request: NextRequest) {
   try {
     const formData: GrammarPatternFormData = await request.json();
-    
-    console.log('🔄 Creating complete grammar pattern:', JSON.stringify(formData, null, 2));
-    console.log('🌐 API endpoint: POST /grammar-patterns/complete');
+
 
     const response = await fetch(`${API_BASE_URL}/grammar-patterns/complete`, {
       method: 'POST',
@@ -26,8 +24,8 @@ export async function POST(request: NextRequest) {
     }
 
     const responseBody: GrammarPattern = await response.json();
-    console.log('✅ Complete grammar pattern created successfully');
-    console.log('📨 Response data:', responseBody);
+
+
     
     return NextResponse.json(responseBody, { status: 201 });
   } catch (error) {

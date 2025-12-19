@@ -9,7 +9,6 @@ export async function GET(
 ) {
   try {
     const patternId = params.id;
-    console.log(`🔄 Fetching grammar pattern: ${patternId}`);
 
     const response = await fetch(`${API_BASE_URL}/grammar-patterns/${patternId}`, {
       method: 'GET',
@@ -25,7 +24,6 @@ export async function GET(
     }
 
     const responseBody: GrammarPattern = await response.json();
-    console.log('✅ Grammar pattern fetched successfully');
     
     return NextResponse.json(responseBody);
   } catch (error) {
@@ -46,7 +44,6 @@ export async function DELETE(
 ) {
   try {
     const patternId = params.id;
-    console.log(`🔄 Deleting grammar pattern: ${patternId}`);
 
     const response = await fetch(`${API_BASE_URL}/grammar-patterns/${patternId}`, {
       method: 'DELETE',
@@ -61,8 +58,6 @@ export async function DELETE(
       throw new Error(errorData.message || `API error: ${response.status}`);
     }
 
-    console.log('✅ Grammar pattern deleted successfully');
-    
     return NextResponse.json({ message: 'Grammar pattern deleted successfully' }, { status: 204 });
   } catch (error) {
     console.error('❌ Error deleting grammar pattern:', error);

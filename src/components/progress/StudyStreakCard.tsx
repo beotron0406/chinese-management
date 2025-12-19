@@ -16,10 +16,10 @@ export default function StudyStreakCard({
   const progressPercent = Math.min((averageStreak / 30) * 100, 100);
 
   const getStreakLevel = (streak: number) => {
-    if (streak >= 30) return { level: "Xuất sắc", color: "#52c41a" };
-    if (streak >= 20) return { level: "Tốt", color: "#1890ff" };
-    if (streak >= 10) return { level: "Khá", color: "#faad14" };
-    return { level: "Yếu", color: "#ff4d4f" };
+    if (streak >= 30) return { level: "Xuất sắc", valueClassName: "!text-green-500 !text-3xl" };
+    if (streak >= 20) return { level: "Tốt", valueClassName: "!text-blue-500 !text-3xl" };
+    if (streak >= 10) return { level: "Khá", valueClassName: "!text-yellow-500 !text-3xl" };
+    return { level: "Yếu", valueClassName: "!text-red-500 !text-3xl" };
   };
 
   const streakInfo = getStreakLevel(averageStreak);
@@ -28,8 +28,9 @@ export default function StudyStreakCard({
     <Card
       loading={loading}
       title={
-        <div>
-          <FireOutlined /> Streak trung bình hệ thống
+        <div className="flex items-center gap-2">
+          <FireOutlined className="text-orange-500" />
+          <span className="font-bold">Streak trung bình hệ thống</span>
         </div>
       }
     >
@@ -39,8 +40,8 @@ export default function StudyStreakCard({
           value={averageStreak}
           precision={1}
           suffix="ngày"
-          prefix={<FireOutlined className="text-orange-600" />}
-          valueStyle={{ color: streakInfo.color, fontSize: "32px" }}
+          prefix={<FireOutlined className="text-orange-500" />}
+          className={`[&_.ant-statistic-content-value]:${streakInfo.valueClassName}`}
         />
       </div>
     </Card>

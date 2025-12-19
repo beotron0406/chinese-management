@@ -9,7 +9,6 @@ export async function GET(
 ) {
   try {
     const hskLevel = params.level;
-    console.log(`🔄 Fetching courses for HSK level: ${hskLevel}`);
 
     const response = await fetch(`${API_BASE_URL}/courses/hsk/${hskLevel}`, {
       method: 'GET',
@@ -25,7 +24,6 @@ export async function GET(
     }
 
     const responseBody: Course[] = await response.json();
-    console.log(`✅ Courses fetched for HSK ${hskLevel}`);
     
     return NextResponse.json(responseBody);
   } catch (error) {

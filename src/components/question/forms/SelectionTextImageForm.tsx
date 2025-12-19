@@ -291,7 +291,6 @@ const SelectionTextImageForm = forwardRef<SelectionTextImageFormRef, SelectionTe
       const allOptionsHaveImages = options.every(option => option.image);
 
       if (allOptionsHaveImages) {
-        console.log('All images already uploaded');
         return true;
       }
 
@@ -415,7 +414,7 @@ const SelectionTextImageForm = forwardRef<SelectionTextImageFormRef, SelectionTe
   return (
     <div>
       {/* Question Setup */}
-      <Card title="Thiết Lập Câu Hỏi" style={{ marginBottom: '24px' }}>
+      <Card title="Thiết Lập Câu Hỏi" className="mb-6">
         <Form.Item
           label="Hướng Dẫn Câu Hỏi"
           name={['data', 'instruction']}
@@ -432,7 +431,7 @@ const SelectionTextImageForm = forwardRef<SelectionTextImageFormRef, SelectionTe
           <TextArea
             rows={3}
             placeholder="Nhập văn bản câu hỏi mà học viên sẽ đọc"
-            style={{ fontSize: '16px' }}
+            className="text-base"
           />
         </Form.Item>
       </Card>
@@ -450,21 +449,18 @@ const SelectionTextImageForm = forwardRef<SelectionTextImageFormRef, SelectionTe
             Thêm Tùy Chọn
           </Button>
         }
-        style={{ marginBottom: '24px' }}
+        className="mb-6"
       >
-        <Space direction="vertical" style={{ width: '100%' }} size="large">
+        <Space direction="vertical" className="w-full" size="large">
           {options.map((option, index) => {
             const answerUpload = answerImageUploads[index];
             return (
               <Card
                 key={option.id}
                 size="small"
-                style={{
-                  border: correctAnswer === option.id ? '2px solid #1890ff' : '1px solid #d9d9d9',
-                  backgroundColor: correctAnswer === option.id ? '#f6ffed' : 'white'
-                }}
+                className={`${correctAnswer === option.id ? 'border-2 border-blue-500 bg-green-50' : 'border border-gray-300 bg-white'}`}
                 title={
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <div className="flex justify-between items-center">
                     <span>Tùy Chọn {index + 1}</span>
                     <Space>
                       <Button
@@ -487,9 +483,9 @@ const SelectionTextImageForm = forwardRef<SelectionTextImageFormRef, SelectionTe
                 }
               >
                 {/* Image Upload */}
-                <div style={{ marginBottom: '16px' }}>
+                <div className="mb-4">
                   <Text strong>Hình Ảnh Tùy Chọn</Text>
-                  <div style={{ marginTop: '4px' }}>
+                  <div className="mt-1">
                     <Upload
                       accept="image/*"
                       maxCount={1}
@@ -508,10 +504,10 @@ const SelectionTextImageForm = forwardRef<SelectionTextImageFormRef, SelectionTe
                       </Button>
                     </Upload>
                     {answerUpload?.uploadedUrl && (
-                      <div style={{ marginTop: 8 }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                          <PictureOutlined style={{ color: '#52c41a' }} />
-                          <span style={{ color: '#52c41a' }}>Hình ảnh đã tải lên</span>
+                      <div className="mt-2">
+                        <div className="flex items-center gap-2">
+                          <PictureOutlined className="text-green-500" />
+                          <span className="text-green-500">Hình ảnh đã tải lên</span>
                           <Button
                             size="small"
                             icon={<DeleteOutlined />}
@@ -520,11 +516,11 @@ const SelectionTextImageForm = forwardRef<SelectionTextImageFormRef, SelectionTe
                             danger
                           />
                         </div>
-                        <div style={{ marginTop: 4 }}>
+                        <div className="mt-1">
                           <img
                             src={answerUpload.uploadedUrl}
                             alt={option.alt || `Option ${index + 1}`}
-                            style={{ maxWidth: 200, maxHeight: 200, objectFit: 'cover', borderRadius: '4px' }}
+                            className="max-w-[200px] max-h-[200px] object-cover rounded"
                           />
                         </div>
                       </div>
@@ -539,7 +535,7 @@ const SelectionTextImageForm = forwardRef<SelectionTextImageFormRef, SelectionTe
                     placeholder="Mô tả nội dung trong hình ảnh"
                     value={option.alt}
                     onChange={(e) => handleAltTextChange(option.id, e.target.value)}
-                    style={{ marginTop: '4px' }}
+                    className="mt-1"
                   />
                 </div>
 
@@ -567,7 +563,7 @@ const SelectionTextImageForm = forwardRef<SelectionTextImageFormRef, SelectionTe
         </Space>
 
         {/* Correct Answer Summary */}
-        <div style={{ marginTop: '16px', padding: '12px', backgroundColor: '#e6f7ff', borderRadius: '6px' }}>
+        <div className="mt-4 p-3 bg-blue-50 rounded-md">
           <Text strong>Đáp Án Đúng: </Text>
           <Text>Tùy Chọn {options.findIndex(opt => opt.id === correctAnswer) + 1}</Text>
           {options.find(opt => opt.id === correctAnswer)?.alt && (
@@ -577,7 +573,7 @@ const SelectionTextImageForm = forwardRef<SelectionTextImageFormRef, SelectionTe
       </Card>
 
       {/* Additional Settings */}
-      <Card title="Cài Đặt Thêm" style={{ marginBottom: '24px' }}>
+      <Card title="Cài Đặt Thêm" className="mb-6">
         <Form.Item
           label="Giải Thích (Tùy Chọn)"
           name={['data', 'explanation']}
@@ -591,10 +587,10 @@ const SelectionTextImageForm = forwardRef<SelectionTextImageFormRef, SelectionTe
       </Card>
 
       {/* Hidden form fields for proper data structure */}
-      <Form.Item name={['data', 'options']} style={{ display: 'none' }}>
+      <Form.Item name={['data', 'options']} className="hidden">
         <Input />
       </Form.Item>
-      <Form.Item name={['data', 'correctAnswer']} style={{ display: 'none' }}>
+      <Form.Item name={['data', 'correctAnswer']} className="hidden">
         <Input />
       </Form.Item>
 

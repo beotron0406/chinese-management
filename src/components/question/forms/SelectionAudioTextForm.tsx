@@ -289,7 +289,6 @@ const SelectionAudioTextForm = forwardRef<SelectionAudioTextFormRef, SelectionAu
     if (!hasAudioToUpload) {
       // Check if audio is already uploaded
       if (uploadedAudioUrl) {
-        console.log('Audio already uploaded');
         return true;
       }
 
@@ -387,7 +386,7 @@ const SelectionAudioTextForm = forwardRef<SelectionAudioTextFormRef, SelectionAu
   return (
     <div>
       {/* Question Setup */}
-      <Card title="Thiết Lập Câu Hỏi" style={{ marginBottom: '24px' }}>
+      <Card title="Thiết Lập Câu Hỏi" className="mb-6">
         <Form.Item
           label="Hướng Dẫn Câu Hỏi"
           name={['data', 'instruction']}
@@ -398,7 +397,7 @@ const SelectionAudioTextForm = forwardRef<SelectionAudioTextFormRef, SelectionAu
       </Card>
 
       {/* Audio Section */}
-      <Card title="File Âm Thanh" style={{ marginBottom: "24px" }}>
+      <Card title="File Âm Thanh" className="mb-6">
         <Form.Item
           label="File Âm Thanh"
           name={['data', 'audio']}
@@ -428,10 +427,10 @@ const SelectionAudioTextForm = forwardRef<SelectionAudioTextFormRef, SelectionAu
               />
             </Space>
             {uploadedAudioUrl && (
-              <div style={{ marginTop: 8 }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                  <SoundOutlined style={{ color: '#52c41a' }} />
-                  <span style={{ color: '#52c41a' }}>Âm thanh đã tải lên</span>
+              <div className="mt-2">
+                <div className="flex items-center gap-2">
+                  <SoundOutlined className="text-green-500" />
+                  <span className="text-green-500">Âm thanh đã tải lên</span>
                   <Button
                     size="small"
                     icon={<DeleteOutlined />}
@@ -440,8 +439,8 @@ const SelectionAudioTextForm = forwardRef<SelectionAudioTextFormRef, SelectionAu
                     danger
                   />
                 </div>
-                <div style={{ marginTop: 4 }}>
-                  <audio controls style={{ width: '100%' }}>
+                <div className="mt-1">
+                  <audio controls className="w-full">
                     <source src={uploadedAudioUrl} />
                     Trình duyệt của bạn không hỗ trợ phần tử âm thanh.
                   </audio>
@@ -461,19 +460,13 @@ const SelectionAudioTextForm = forwardRef<SelectionAudioTextFormRef, SelectionAu
             rows={2}
             placeholder="Nhập bản ghi tiếng Trung của âm thanh"
             onChange={(e) => handleTranscriptChange(e.target.value)}
-            style={{ fontSize: "16px" }}
+            className="text-base"
           />
         </Form.Item>
 
         {audioTranscriptPinyin && (
           <Form.Item label="Pinyin Tự Động Tạo">
-            <div style={{ 
-              padding: '8px 12px', 
-              backgroundColor: '#f5f5f5', 
-              borderRadius: '6px',
-              fontSize: '14px',
-              color: '#666'
-            }}>
+            <div className="px-3 py-2 bg-gray-100 rounded-md text-sm text-gray-500">
               {audioTranscriptPinyin}
             </div>
           </Form.Item>
@@ -491,10 +484,10 @@ const SelectionAudioTextForm = forwardRef<SelectionAudioTextFormRef, SelectionAu
         </Form.Item>
 
         {/* Hidden form fields */}
-        <Form.Item name={['data', 'audio_url']} style={{ display: 'none' }}>
+        <Form.Item name={['data', 'audio_url']} className="hidden">
           <Input />
         </Form.Item>
-        <Form.Item name={['data', 'audio_transcript_pinyin']} style={{ display: 'none' }}>
+        <Form.Item name={['data', 'audio_transcript_pinyin']} className="hidden">
           <Input />
         </Form.Item>
       </Card>
@@ -512,19 +505,16 @@ const SelectionAudioTextForm = forwardRef<SelectionAudioTextFormRef, SelectionAu
             Thêm Tùy Chọn
           </Button>
         }
-        style={{ marginBottom: '24px' }}
+        className="mb-6"
       >
-        <Space direction="vertical" style={{ width: '100%' }} size="large">
+        <Space direction="vertical" className="w-full" size="large">
           {options.map((option, index) => (
             <Card
               key={option.id}
               size="small"
-              style={{
-                border: correctAnswer === option.id ? '2px solid #1890ff' : '1px solid #d9d9d9',
-                backgroundColor: correctAnswer === option.id ? '#f6ffed' : 'white'
-              }}
+              className={`${correctAnswer === option.id ? 'border-2 border-blue-500 bg-green-50' : 'border border-gray-300 bg-white'}`}
               title={
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <div className="flex justify-between items-center">
                   <span>Tùy Chọn {index + 1}</span>
                   <Space>
                     <Button
@@ -553,7 +543,7 @@ const SelectionAudioTextForm = forwardRef<SelectionAudioTextFormRef, SelectionAu
                   placeholder={`Nhập văn bản tùy chọn ${index + 1}`}
                   value={option.text}
                   onChange={(e) => handleOptionTextChange(option.id, e.target.value)}
-                  style={{ marginTop: '4px', fontSize: '16px' }}
+                  className="mt-1 text-base"
                 />
               </div>
 
@@ -571,7 +561,7 @@ const SelectionAudioTextForm = forwardRef<SelectionAudioTextFormRef, SelectionAu
         </Space>
 
         {/* Correct Answer Summary */}
-        <div style={{ marginTop: '16px', padding: '12px', backgroundColor: '#e6f7ff', borderRadius: '6px' }}>
+        <div className="mt-4 p-3 bg-blue-50 rounded-md">
           <Text strong>Đáp Án Đúng: </Text>
           <Text>Tùy Chọn {options.findIndex(opt => opt.id === correctAnswer) + 1}</Text>
           {options.find(opt => opt.id === correctAnswer)?.text && (
@@ -581,7 +571,7 @@ const SelectionAudioTextForm = forwardRef<SelectionAudioTextFormRef, SelectionAu
       </Card>
 
       {/* Additional Settings */}
-      <Card title="Cài Đặt Thêm" style={{ marginBottom: '24px' }}>
+      <Card title="Cài Đặt Thêm" className="mb-6">
         <Form.Item
           label="Giải Thích (Tùy Chọn)"
           name={['data', 'explanation']}
@@ -595,10 +585,10 @@ const SelectionAudioTextForm = forwardRef<SelectionAudioTextFormRef, SelectionAu
       </Card>
 
       {/* Hidden form fields for proper data structure */}
-      <Form.Item name={['data', 'options']} style={{ display: 'none' }}>
+      <Form.Item name={['data', 'options']} className="hidden">
         <Input />
       </Form.Item>
-      <Form.Item name={['data', 'correctAnswer']} style={{ display: 'none' }}>
+      <Form.Item name={['data', 'correctAnswer']} className="hidden">
         <Input />
       </Form.Item>
 

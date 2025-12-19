@@ -7,7 +7,7 @@ export async function PUT(request: NextRequest) {
   try {
     const data: CompleteListsonRequest = await request.json();
     
-    console.log('🔄 Completing lesson:', data);
+
 
     const response = await fetch(`${API_BASE_URL}/users/progress/complete`, {
       method: 'PUT',
@@ -24,7 +24,7 @@ export async function PUT(request: NextRequest) {
     }
 
     const responseBody: UserProgressResponse = await response.json();
-    console.log('✅ Lesson completed successfully');
+
     
     return NextResponse.json(responseBody);
   } catch (error) {

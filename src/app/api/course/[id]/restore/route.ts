@@ -24,7 +24,6 @@ export async function PUT(
     }
 
     const responseBody: Course = await response.json();
-    console.log('✅ Course restored successfully');
     
     return NextResponse.json(responseBody);
   } catch (error) {
