@@ -77,7 +77,10 @@ export async function DELETE(
       throw new Error(errorData.message || `API error: ${response.status}`);
     }
 
-    return new NextResponse(null, { status: 204 });
+    return NextResponse.json({
+      status: true,
+      message: 'Word deleted successfully'
+    });
   } catch (error) {
     console.error('❌ Error deleting word:', error);
     return NextResponse.json(
