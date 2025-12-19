@@ -273,7 +273,7 @@ const CourseList = ({ filterActive }: CourseListProps) => {
               icon={<DeleteOutlined />}
               onClick={(e) => e.stopPropagation()}
             >
-              Xóa tạm thời
+              Xóa
             </Button>
           </Popconfirm>
         ) : (
