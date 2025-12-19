@@ -7,12 +7,13 @@ import type { FormInstance } from 'antd/es/form';
 import { WordDefinitionData } from '@/types/contentTypes';
 import { uploadImageByType, uploadAudioByType, validateFile, UploadProgress } from '@/utils/s3Upload';
 import UploadModal from '@/components/common/UploadModal';
+import TTSButton from '@/components/shared/TTSButton';
 
 const { Text } = Typography;
 const { TextArea } = Input;
 
 // Dev mode flag - set to false to hide individual upload buttons
-const DEV_MODE = true;
+const DEV_MODE = false;
 
 interface WordDefinitionFormProps {
   form: FormInstance;
@@ -75,13 +76,103 @@ const WordDefinitionForm = forwardRef<WordDefinitionFormRef, WordDefinitionFormP
     }
   }, [initialValues]);
 
-  const handleImageFileChange = (file: File | null) => {
+  const handleImageFileChange = async (file: File) => {
     setSelectedImageFile(file);
+    
+    // Auto-upload immediately
+    const imageValidation = validateFile(file, 'image', 10);
+    if (!imageValidation.isValid) {
+      message.error(imageValidation.error);
+      return false;
+    }
+
+    setUploadModalVisible(true);
+    setUploadStatus('uploading');
+    setUploadProgress(0);
+    setUploadError('');
+
+    try {
+      const result = await uploadImageByType(
+        file,
+        contentType,
+        (progress: UploadProgress) => {
+          setUploadProgress(Math.round(progress.percentage));
+        }
+      );
+
+      if (result.success) {
+        setUploadedUrls(prev => ({ ...prev, imageUrl: result.url }));
+        const currentData = form.getFieldValue('data') || {};
+        form.setFieldsValue({
+          data: {
+            ...currentData,
+            picture_url: result.url,
+          }
+        });
+        setUploadStatus('success');
+        setUploadProgress(100);
+        setSelectedImageFile(null);
+        message.success('Tải hình ảnh lên thành công!');
+      } else {
+        throw new Error(result.error);
+      }
+    } catch (error) {
+      console.error('Upload error:', error);
+      setUploadStatus('error');
+      setUploadError(error instanceof Error ? error.message : 'Upload failed');
+      message.error('Tải lên thất bại. Vui lòng thử lại.');
+    }
+
     return false; // Prevent automatic upload
   };
 
-  const handleAudioFileChange = (file: File | null) => {
+  const handleAudioFileChange = async (file: File) => {
     setSelectedAudioFile(file);
+    
+    // Auto-upload immediately
+    const audioValidation = validateFile(file, 'audio', 10);
+    if (!audioValidation.isValid) {
+      message.error(audioValidation.error);
+      return false;
+    }
+
+    setUploadModalVisible(true);
+    setUploadStatus('uploading');
+    setUploadProgress(0);
+    setUploadError('');
+
+    try {
+      const result = await uploadAudioByType(
+        file,
+        contentType,
+        (progress: UploadProgress) => {
+          setUploadProgress(Math.round(progress.percentage));
+        }
+      );
+
+      if (result.success) {
+        setUploadedUrls(prev => ({ ...prev, audioUrl: result.url }));
+        const currentData = form.getFieldValue('data') || {};
+        form.setFieldsValue({
+          data: {
+            ...currentData,
+            audio_url: result.url,
+          }
+        });
+        setUploadStatus('success');
+        setUploadProgress(100);
+        setSelectedAudioFile(null);
+        message.success('Tải âm thanh lên thành công!');
+      } else {
+        throw new Error(result.error);
+      }
+    } catch (error) {
+      console.error('Upload error:', error);
+      setUploadStatus('error');
+      setUploadError(error instanceof Error ? error.message : 'Upload failed');
+      message.error('Tải lên thất bại. Vui lòng thử lại.');
+    }
+
     return false; // Prevent automatic upload
   };
 
@@ -91,7 +182,7 @@ const WordDefinitionForm = forwardRef<WordDefinitionFormRef, WordDefinitionFormP
         // Already uploaded
         return true;
       }
-      message.warning('Please select at least one file to upload');
+      message.warning('Vui lòng chọn ít nhất một file để tải lên');
       return false;
     }
 
@@ -189,14 +280,14 @@ const WordDefinitionForm = forwardRef<WordDefinitionFormRef, WordDefinitionFormP
       setSelectedAudioFile(null);
 
       if (showModal) {
-        message.success('Files uploaded successfully!');
+        message.success('Tải file lên thành công!');
       }
       return true;
     } catch (error) {
       console.error('Upload error:', error);
       setUploadStatus('error');
       setUploadError(error instanceof Error ? error.message : 'Upload failed');
-      message.error('Upload failed. Please try again.');
+      message.error('Tải lên thất bại. Vui lòng thử lại.');
       return false;
     }
   };
@@ -232,13 +323,13 @@ const WordDefinitionForm = forwardRef<WordDefinitionFormRef, WordDefinitionFormP
 
   return (
     <div>
-      <Card title="Word Information" style={{ marginBottom: '24px' }}>
+      <Card title="Thông Tin Từ Vựng" style={{ marginBottom: '24px' }}>
         <Row gutter={16}>
           <Col span={12}>
             <Form.Item
-              label="Chinese Text"
+              label="Văn Bản Tiếng Trung"
               name={['data', 'chinese_text']}
-              rules={[{ required: true, message: 'Please enter the Chinese text' }]}
+              rules={[{ required: true, message: 'Vui lòng nhập văn bản tiếng Trung' }]}
             >
               <Input
                 onChange={(e) => handleChineseTextChange(e.target.value)}
@@ -248,9 +339,9 @@ const WordDefinitionForm = forwardRef<WordDefinitionFormRef, WordDefinitionFormP
           </Col>
           <Col span={12}>
             <Form.Item
-              label="Pinyin (Auto-generated)"
+              label="Pinyin (Tự Động Tạo)"
               name={['data', 'pinyin']}
-              rules={[{ required: true, message: 'Pinyin is required' }]}
+              rules={[{ required: true, message: 'Pinyin là bắt buộc' }]}
             >
               <Input
                 value={generatedPinyin}
@@ -262,36 +353,36 @@ const WordDefinitionForm = forwardRef<WordDefinitionFormRef, WordDefinitionFormP
         </Row>
 
         <Form.Item
-          label="Part of Speech"
+          label="Loại Từ"
           name={['data', 'speech']}
-          rules={[{ required: true, message: 'Please enter the part of speech' }]}
+          rules={[{ required: true, message: 'Vui lòng nhập loại từ' }]}
         >
           <Input />
         </Form.Item>
 
         <Form.Item
-          label="Translation"
+          label="Dịch Nghĩa"
           name={['data', 'translation']}
-          rules={[{ required: true, message: 'Please enter the translation' }]}
+          rules={[{ required: true, message: 'Vui lòng nhập bản dịch' }]}
         >
           <TextArea rows={3} />
         </Form.Item>
 
         <Form.Item
-          label="Additional Information"
+          label="Thông Tin Bổ Sung"
           name={['data', 'additional_info']}
         >
           <TextArea rows={4} />
         </Form.Item>
       </Card>
 
-      <Card title="Media Files" style={{ marginBottom: '24px' }}>
+      <Card title="File Đa Phương Tiện" style={{ marginBottom: '24px' }}>
         <Row gutter={16}>
           <Col span={12}>
             <Form.Item
-              label="Picture File"
+              label="File Hình Ảnh"
               name={['data', 'picture_url']}
-              rules={[{ required: true, message: 'Please upload a picture file' }]}
+              rules={[{ required: true, message: 'Vui lòng tải lên file hình ảnh' }]}
             >
               <div>
                 <Upload
@@ -309,14 +400,14 @@ const WordDefinitionForm = forwardRef<WordDefinitionFormRef, WordDefinitionFormP
                     disabled={!!uploadedUrls.imageUrl}
                     style={{ marginBottom: 8 }}
                   >
-                    {selectedImageFile ? selectedImageFile.name : 'Select Image'}
+                    {selectedImageFile ? selectedImageFile.name : 'Chọn Hình Ảnh'}
                   </Button>
                 </Upload>
                 {uploadedUrls.imageUrl && (
                   <div style={{ marginTop: 8 }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                       <PictureOutlined style={{ color: '#52c41a' }} />
-                      <span style={{ color: '#52c41a' }}>Image uploaded</span>
+                      <span style={{ color: '#52c41a' }}>Hình ảnh đã tải lên</span>
                       <Button
                         size="small"
                         icon={<DeleteOutlined />}
@@ -339,34 +430,51 @@ const WordDefinitionForm = forwardRef<WordDefinitionFormRef, WordDefinitionFormP
           </Col>
           <Col span={12}>
             <Form.Item
-              label="Audio File"
+              label="File Âm Thanh"
               name={['data', 'audio_url']}
-              rules={[{ required: true, message: 'Please upload an audio file' }]}
+              rules={[{ required: true, message: 'Vui lòng tải lên file âm thanh' }]}
             >
               <div>
-                <Upload
-                  accept="audio/*"
-                  maxCount={1}
-                  showUploadList={false}
-                  beforeUpload={(file) => {
-                    handleAudioFileChange(file);
-                    return false;
-                  }}
-                  disabled={!!uploadedUrls.audioUrl}
-                >
-                  <Button
-                    icon={<UploadOutlined />}
+                <div style={{ marginBottom: 8, display: 'flex', gap: 8 }}>
+                  <Upload
+                    accept="audio/*"
+                    maxCount={1}
+                    showUploadList={false}
+                    beforeUpload={(file) => {
+                      handleAudioFileChange(file);
+                      return false;
+                    }}
                     disabled={!!uploadedUrls.audioUrl}
-                    style={{ marginBottom: 8 }}
                   >
-                    {selectedAudioFile ? selectedAudioFile.name : 'Select Audio'}
-                  </Button>
-                </Upload>
+                    <Button
+                      icon={<UploadOutlined />}
+                      disabled={!!uploadedUrls.audioUrl}
+                    >
+                      {selectedAudioFile ? selectedAudioFile.name : 'Chọn Âm Thanh'}
+                    </Button>
+                  </Upload>
+                  <TTSButton
+                    text={chineseText}
+                    onAudioGenerated={(audioUrl) => {
+                      setUploadedUrls(prev => ({ ...prev, audioUrl }));
+                      const currentData = form.getFieldValue('data') || {};
+                      form.setFieldsValue({
+                        data: {
+                          ...currentData,
+                          audio_url: audioUrl,
+                        }
+                      });
+                      message.success('Âm thanh đã được tạo thành công!');
+                    }}
+                    buttonText="Tạo Giọng Nói"
+                    disabled={!chineseText}
+                  />
+                </div>
                 {uploadedUrls.audioUrl && (
                   <div style={{ marginTop: 8 }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                       <SoundOutlined style={{ color: '#52c41a' }} />
-                      <span style={{ color: '#52c41a' }}>Audio uploaded</span>
+                      <span style={{ color: '#52c41a' }}>Âm thanh đã tải lên</span>
                       <Button
                         size="small"
                         icon={<DeleteOutlined />}
@@ -378,7 +486,7 @@ const WordDefinitionForm = forwardRef<WordDefinitionFormRef, WordDefinitionFormP
                     <div style={{ marginTop: 4 }}>
                       <audio controls style={{ width: '100%' }}>
                         <source src={uploadedUrls.audioUrl} />
-                        Your browser does not support the audio element.
+                        Trình duyệt của bạn không hỗ trợ phần tử âm thanh.
                       </audio>
                     </div>
                   </div>
@@ -397,26 +505,26 @@ const WordDefinitionForm = forwardRef<WordDefinitionFormRef, WordDefinitionFormP
               loading={uploadStatus === 'uploading'}
               size="large"
             >
-              Upload to S3 (Dev Mode)
+              Tải Lên S3 (Chế Độ Dev)
             </Button>
           </div>
         )}
       </Card>
 
       {chineseText && (
-        <Card title="Preview" style={{ marginBottom: '24px' }}>
+        <Card title="Xem Trước" style={{ marginBottom: '24px' }}>
           <div style={{ padding: '16px', border: '1px solid #d9d9d9', borderRadius: '6px', backgroundColor: '#fafafa' }}>
             <div style={{ marginBottom: '8px' }}>
               <Text strong style={{ fontSize: '24px', color: '#1890ff' }}>{chineseText}</Text>
               {generatedPinyin && <Text style={{ fontSize: '16px', color: '#666', marginLeft: '12px' }}>({generatedPinyin})</Text>}
             </div>
             <div style={{ marginBottom: '4px' }}>
-              <Text strong>Part of Speech: </Text>
-              <Text>{form.getFieldValue(['data', 'speech']) || 'Not specified'}</Text>
+              <Text strong>Loại Từ: </Text>
+              <Text>{form.getFieldValue(['data', 'speech']) || 'Chưa xác định'}</Text>
             </div>
             <div>
-              <Text strong>Translation: </Text>
-              <Text>{form.getFieldValue(['data', 'translation']) || 'Not specified'}</Text>
+              <Text strong>Dịch Nghĩa: </Text>
+              <Text>{form.getFieldValue(['data', 'translation']) || 'Chưa xác định'}</Text>
             </div>
           </div>
         </Card>

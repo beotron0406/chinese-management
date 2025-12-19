@@ -163,3 +163,66 @@ export interface QuestionFillTextText {
   explanation: string;
   instruction: string;
 }
+
+export interface ContentItem {
+  id: number;
+  itemType: "content" | "question";
+  orderIndex: number;
+  type: string;
+  isActive: boolean;
+  data: any;
+}
+
+export interface LessonWord {
+  id: number;
+  lessonId: number;
+  wordSenseId: number;
+  orderIndex: number;
+  wordSense: {
+    id: number;
+    wordId: number;
+    senseNumber: number;
+    pinyin?: string;
+    partOfSpeech?: string;
+    hskLevel?: number;
+    isPrimary?: boolean;
+    imageUrl?: string | null;
+    audioUrl?: string | null;
+    word: {
+      id: number;
+      simplified: string;
+      traditional?: string;
+      createdAt: string;
+    };
+    translations?: Array<{
+      language: string;
+      translation: string;
+      additionalDetail?: string;
+    }>;
+  };
+}
+
+export interface LessonGrammarPattern {
+  id: number;
+  lessonId: number;
+  grammarPatternId: number;
+  orderIndex: number;
+  grammarPattern: {
+    id: number;
+    pattern: string[];
+    patternPinyin?: string[];
+    patternFormula?: string;
+    hskLevel?: number;
+    createdAt: string;
+    translations?: Array<{
+      language: string;
+      grammarPoint: string;
+      explanation: string;
+      example?: Array<{
+        chinese: string[];
+        pinyin?: string[];
+        translation: string;
+      }>;
+    }>;
+  };
+}

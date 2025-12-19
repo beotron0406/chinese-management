@@ -57,7 +57,7 @@ const AddGrammarModal: React.FC<AddGrammarModalProps> = ({
       setTotal(response.total);
     } catch (error) {
       console.error("Error fetching grammar patterns:", error);
-      message.error("Failed to fetch grammar patterns");
+      message.error("Không thể tải danh sách mẫu ngữ pháp");
     } finally {
       setLoading(false);
     }
@@ -97,7 +97,7 @@ const AddGrammarModal: React.FC<AddGrammarModalProps> = ({
 
   const handleAddGrammarPatterns = async () => {
     if (selectedPatterns.length === 0) {
-      message.warning("Please select at least one grammar pattern");
+      message.warning("Vui lòng chọn ít nhất một mẫu ngữ pháp");
       return;
     }
 
@@ -111,12 +111,12 @@ const AddGrammarModal: React.FC<AddGrammarModalProps> = ({
 
       await lessonApi.addGrammarPatternsToLesson(parseInt(lessonId), patternsToAdd);
       
-      message.success(`Successfully added ${selectedPatterns.length} grammar patterns to lesson`);
+      message.success(`Đã thêm thành công ${selectedPatterns.length} mẫu ngữ pháp vào bài học`);
       onSuccess();
       onCancel();
     } catch (error) {
       console.error("Error adding grammar patterns to lesson:", error);
-      message.error("Failed to add grammar patterns to lesson");
+      message.error("Không thể thêm mẫu ngữ pháp vào bài học");
     } finally {
       setLoading(false);
     }
@@ -130,7 +130,7 @@ const AddGrammarModal: React.FC<AddGrammarModalProps> = ({
           indeterminate={selectedPatterns.length > 0 && selectedPatterns.length < grammarPatterns.length}
           onChange={(e) => handleSelectAll(e.target.checked)}
         >
-          Select
+          Chọn
         </Checkbox>
       ),
       key: "select",
@@ -143,7 +143,7 @@ const AddGrammarModal: React.FC<AddGrammarModalProps> = ({
       ),
     },
     {
-      title: "Pattern",
+      title: "Mẫu Câu",
       key: "pattern",
       render: (_: any, record: GrammarPattern) => (
         <Space direction="vertical" size="small">
@@ -162,13 +162,13 @@ const AddGrammarModal: React.FC<AddGrammarModalProps> = ({
       ),
     },
     {
-      title: "HSK Level",
+      title: "Cấp HSK",
       dataIndex: "hskLevel",
       key: "hskLevel",
       render: (level: number) => level && <Tag color="green">HSK {level}</Tag>,
     },
     {
-      title: "Translation",
+      title: "Bản Dịch",
       key: "translation",
       render: (_: any, record: GrammarPattern) => (
         <div>
@@ -184,7 +184,7 @@ const AddGrammarModal: React.FC<AddGrammarModalProps> = ({
                       {trans.example.slice(0, 1).map((ex, exIndex) => (
                         <div key={exIndex}>
                           <Text style={{ fontSize: "12px", color: "#666" }}>
-                            Example: {Array.isArray(ex.chinese) ? ex.chinese.join("") : ex.chinese} - {ex.translation}
+                            Ví dụ: {Array.isArray(ex.chinese) ? ex.chinese.join("") : ex.chinese} - {ex.translation}
                           </Text>
                         </div>
                       ))}
@@ -201,13 +201,13 @@ const AddGrammarModal: React.FC<AddGrammarModalProps> = ({
 
   return (
     <Modal
-      title="Add Grammar Patterns to Lesson"
+      title="Thêm Mẫu Ngữ Pháp Vào Bài Học"
       open={visible}
       onCancel={onCancel}
       width={1200}
       footer={[
         <Button key="cancel" onClick={onCancel}>
-          Cancel
+          Hủy
         </Button>,
         <Button
           key="add"
@@ -217,13 +217,13 @@ const AddGrammarModal: React.FC<AddGrammarModalProps> = ({
           disabled={selectedPatterns.length === 0}
           icon={<PlusOutlined />}
         >
-          Add {selectedPatterns.length} Pattern{selectedPatterns.length !== 1 ? 's' : ''}
+          Thêm {selectedPatterns.length} Mẫu
         </Button>,
       ]}
     >
       <Space direction="vertical" style={{ width: "100%" }}>
         <Search
-          placeholder="Search by pattern, formula, or translation..."
+          placeholder="Tìm kiếm theo mẫu câu, công thức hoặc bản dịch..."
           allowClear
           onSearch={handleSearch}
           style={{ width: "100%" }}
@@ -232,7 +232,7 @@ const AddGrammarModal: React.FC<AddGrammarModalProps> = ({
 
         {selectedPatterns.length > 0 && (
           <>
-            <Text>Selected {selectedPatterns.length} grammar pattern{selectedPatterns.length !== 1 ? 's' : ''}</Text>
+            <Text>Đã chọn {selectedPatterns.length} mẫu ngữ pháp</Text>
             <Divider style={{ margin: "12px 0" }} />
           </>
         )}
@@ -253,7 +253,7 @@ const AddGrammarModal: React.FC<AddGrammarModalProps> = ({
             showSizeChanger: false,
             showQuickJumper: true,
             showTotal: (total, range) =>
-              `${range[0]}-${range[1]} of ${total} grammar patterns`,
+              `${range[0]}-${range[1]} trong ${total} mẫu ngữ pháp`,
           }}
           scroll={{ y: 400 }}
           size="small"

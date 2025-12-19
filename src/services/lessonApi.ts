@@ -221,8 +221,25 @@ export const lessonApi = {
 
   // Get all lessons by course ID (including inactive)
   getAllLessonsByCourse: async (courseId: number): Promise<Lesson[]> => {
-    const response = await api.get(`/lessons/course/${courseId}/all`);
-    return response.data as Lesson[];
+    try {
+      const response = await api.get(`/lessons/course/${courseId}/all`);
+
+      if (!response) {
+        return [];
+      }
+
+      if (response.data === undefined) {
+        if (Array.isArray(response)) {
+          return response;
+        }
+        return [];
+      }
+
+      return response.data as Lesson[];
+    } catch (error) {
+      console.error('Error fetching lessons:', error);
+      return [];
+    }
   },
 
   // Create a new lesson
@@ -240,9 +257,9 @@ export const lessonApi = {
     return response.data as Lesson;
   },
 
-  // Soft delete a lesson
-  softDeleteLesson: async (id: number): Promise<any> => {
-    const response = await api.delete(`/lessons/${id}/soft`);
+  // Soft delete a lesson (marks as inactive)
+  deleteLesson: async (id: number): Promise<any> => {
+    const response = await api.delete(`/lessons/${id}`);
     return response.data;
   },
 
@@ -250,6 +267,12 @@ export const lessonApi = {
   restoreLesson: async (id: number): Promise<Lesson> => {
     const response = await api.patch(`/lessons/${id}/restore`, {});
     return response.data as Lesson;
+  },
+
+  // Hard delete a lesson (permanent)
+  hardDeleteLesson: async (id: number): Promise<any> => {
+    const response = await api.delete(`/lessons/${id}/hard`);
+    return response.data;
   },
 
   // Add content and questions to a lesson

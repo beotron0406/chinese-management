@@ -9,7 +9,6 @@ export async function PATCH(
 ) {
   try {
     const lessonId = params.id;
-    console.log(`🔄 Restoring lesson: ${lessonId}`);
 
     const response = await fetch(`${API_BASE_URL}/lessons/${lessonId}/restore`, {
       method: 'PATCH',
@@ -26,15 +25,13 @@ export async function PATCH(
     }
 
     const responseBody: Lesson = await response.json();
-    console.log('✅ Lesson restored successfully');
     
     return NextResponse.json(responseBody);
   } catch (error) {
-    console.error('❌ Error restoring lesson:', error);
     return NextResponse.json(
       { 
         status: false, 
-        message: error instanceof Error ? error.message : 'Failed to restore lesson' 
+        message: error instanceof Error ? error.message : 'Có lỗi khi khôi phục bài học' 
       },
       { status: 500 }
     );

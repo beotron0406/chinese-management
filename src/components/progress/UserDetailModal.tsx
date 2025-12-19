@@ -115,13 +115,13 @@ export default function UserDetailModal({ visible, onClose, userId, userName }: 
       destroyOnClose
     >
       {loading ? (
-        <div style={{ textAlign: 'center', padding: '40px' }}>
+        <div className="text-center p-10">
           <Spin size="large" />
         </div>
       ) : userDetail ? (
         <>
           {/* User Info */}
-          <Descriptions bordered column={2} style={{ marginBottom: 24 }}>
+          <Descriptions bordered column={2} className="mb-6">
             <Descriptions.Item label="Tên hiển thị" span={1}>
               {userDetail.user.displayName}
             </Descriptions.Item>
@@ -140,7 +140,7 @@ export default function UserDetailModal({ visible, onClose, userId, userName }: 
           </Descriptions>
 
           {/* Study Statistics */}
-          <Row gutter={[16, 16]} style={{ marginBottom: 24 }}>
+          <Row gutter={[16, 16]} className="mb-6">
             <Col xs={12} sm={6}>
               <Statistic
                 title="Streak hiện tại"
@@ -180,7 +180,7 @@ export default function UserDetailModal({ visible, onClose, userId, userName }: 
           </Row>
 
           {/* Course Progress */}
-          <div style={{ marginBottom: 24 }}>
+          <div className="mb-6">
             <h3>Tiến trình khóa học</h3>
             <Table
               columns={courseColumns}

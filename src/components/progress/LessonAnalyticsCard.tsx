@@ -1,39 +1,43 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { Card, Select, Row, Col, Statistic, Table, Spin, message } from 'antd';
+import { Card, Row, Col, Statistic, Table, Spin, message, Space } from 'antd';
 import { FileTextOutlined, UserOutlined, TrophyOutlined, ClockCircleOutlined } from '@ant-design/icons';
 import { LessonAnalytics } from '@/types/userprogressTypes';
 import { adminProgressApi } from '@/services/userprogressApi';
 import { Column } from '@ant-design/plots';
+import CourseSelect from '@/components/shared/button/CourseSelect';
+import LessonSelect, { ILessonByCourse } from '@/components/shared/button/LessonSelect';
+import { Course } from '@/types';
 
-const { Option } = Select;
+interface LessonAnalyticsCardProps {}
 
-interface LessonAnalyticsCardProps {
-  lessons?: Array<{ id: number; title: string; courseId: number }>;
-}
-
-export default function LessonAnalyticsCard({ lessons = [] }: LessonAnalyticsCardProps) {
+export default function LessonAnalyticsCard({}: LessonAnalyticsCardProps) {
   const [analytics, setAnalytics] = useState<LessonAnalytics | null>(null);
   const [loading, setLoading] = useState(false);
-  const [selectedLessonId, setSelectedLessonId] = useState<number | null>(null);
+  const [selectedCourseId, setSelectedCourseId] = useState<number | undefined>(undefined);
+  const [selectedLessonId, setSelectedLessonId] = useState<number | undefined>(undefined);
 
-  // Default lessons if not provided
-  const defaultLessons = [
-    { id: 1, title: 'Introduction to Pinyin', courseId: 1 },
-    { id: 2, title: 'Basic Tones', courseId: 1 },
-    { id: 3, title: 'Simple Greetings', courseId: 1 },
-    { id: 4, title: 'Numbers 1-10', courseId: 1 },
-    { id: 5, title: 'Colors and Objects', courseId: 2 },
-  ];
-
-  const lessonList = lessons.length > 0 ? lessons : defaultLessons;
-
-  useEffect(() => {
-    if (lessonList.length > 0 && !selectedLessonId) {
-      setSelectedLessonId(lessonList[0].id);
+  // Auto-select first course when courses are loaded
+  const handleCoursesLoaded = (courses: Course[]) => {
+    if (courses.length > 0 && !selectedCourseId) {
+      setSelectedCourseId(courses[0].id);
     }
-  }, [lessonList]);
+  };
+
+  // Auto-select first lesson when lessons are loaded
+  const handleLessonsLoaded = (lessons: ILessonByCourse[]) => {
+    if (lessons.length > 0) {
+      setSelectedLessonId(lessons[0].id);
+    }
+  };
+
+  // Reset lesson selection when course changes
+  const handleCourseChange = (courseId: number) => {
+    setSelectedCourseId(courseId);
+    setSelectedLessonId(undefined);
+    setAnalytics(null);
+  };
 
   useEffect(() => {
     if (selectedLessonId) {
@@ -106,31 +110,33 @@ export default function LessonAnalyticsCard({ lessons = [] }: LessonAnalyticsCar
   return (
     <Card
       title={
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+        <div className="flex items-center justify-between flex-wrap gap-2">
           <span><FileTextOutlined /> Phân tích bài học</span>
-          <Select
-            style={{ width: 250 }}
-            placeholder="Chọn bài học"
-            value={selectedLessonId}
-            onChange={setSelectedLessonId}
-            showSearch
-            filterOption={(input, option) =>
-              option?.children?.toString().toLowerCase().includes(input.toLowerCase()) ?? false
-            }
-          >
-            {lessonList.map(lesson => (
-              <Option key={lesson.id} value={lesson.id}>
-                {lesson.title}
-              </Option>
-            ))}
-          </Select>
+          <Space size="small">
+            <CourseSelect
+              value={selectedCourseId}
+              onChange={handleCourseChange}
+              onCoursesLoaded={handleCoursesLoaded}
+              style={{ width: 180 }}
+              placeholder="Chọn khóa học"
+            />
+            <LessonSelect
+              courseId={selectedCourseId}
+              value={selectedLessonId}
+              onChange={setSelectedLessonId}
+              onLessonsLoaded={handleLessonsLoaded}
+              style={{ width: 200 }}
+              disabled={!selectedCourseId}
+              placeholder="Chọn bài học"
+            />
+          </Space>
         </div>
       }
       loading={loading}
     >
       {analytics ? (
         <>
-          <Row gutter={[16, 16]} style={{ marginBottom: 24 }}>
+          <Row gutter={[16, 16]} className="mb-6">
             <Col xs={12} sm={8}>
               <Statistic
                 title="Tổng lượt hoàn thành"
@@ -154,13 +160,11 @@ export default function LessonAnalyticsCard({ lessons = [] }: LessonAnalyticsCar
             </Col>
             <Col xs={24} sm={8}>
               <div>
-                <div style={{ marginBottom: 8, color: '#666' }}>Độ khó bài học</div>
-                <div style={{ 
-                  fontSize: '16px', 
-                  fontWeight: 'bold',
-                  color: analytics.averageScore >= 80 ? '#52c41a' : 
-                         analytics.averageScore >= 60 ? '#faad14' : '#ff4d4f' 
-                }}>
+                <div className="mb-2 text-gray-500">Độ khó bài học</div>
+                <div className={`text-base font-bold ${
+                  analytics.averageScore >= 80 ? 'text-green-500' : 
+                  analytics.averageScore >= 60 ? 'text-yellow-500' : 'text-red-500'
+                }`}>
                   {analytics.averageScore >= 80 ? '🟢 Dễ' : 
                    analytics.averageScore >= 60 ? '🟡 Trung bình' : '🔴 Khó'}
                 </div>
@@ -191,7 +195,7 @@ export default function LessonAnalyticsCard({ lessons = [] }: LessonAnalyticsCar
           </Row>
         </>
       ) : (
-        <div style={{ textAlign: 'center', padding: '40px' }}>
+        <div className="text-center p-10">
           <Spin size="large" />
         </div>
       )}

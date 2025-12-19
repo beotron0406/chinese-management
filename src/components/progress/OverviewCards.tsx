@@ -1,7 +1,7 @@
 "use client";
 
 import React from "react";
-import { Card, Statistic, Row, Col, Spin } from "antd";
+import { Card, Statistic, Spin } from "antd";
 import {
   UserOutlined,
   BookOutlined,
@@ -19,82 +19,71 @@ interface OverviewCardsProps {
 export default function OverviewCards({ data, loading }: OverviewCardsProps) {
   if (loading) {
     return (
-      <Row gutter={[16, 16]}>
+      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
         {[1, 2, 3, 4, 5].map((i) => (
-          <Col xs={24} sm={12} lg={8} xl={4} key={i}>
-            <Card>
-              <div style={{ textAlign: "center", padding: "20px" }}>
-                <Spin size="large" />
-              </div>
-            </Card>
-          </Col>
+          <Card key={i} className="min-w-0">
+            <div className="text-center p-5">
+              <Spin size="large" />
+            </div>
+          </Card>
         ))}
-      </Row>
+      </div>
     );
   }
 
   if (!data) return null;
 
-  const streakInfo = data.averageStreak;
+  const cards = [
+    {
+      title: "Tổng người dùng",
+      value: data.totalUsers,
+      icon: <UserOutlined className="text-blue-500" />,
+      color: "#1890ff",
+    },
+    {
+      title: "Đang hoạt động",
+      value: data.activeUsers,
+      icon: <UserOutlined className="text-green-500" />,
+      color: "#52c41a",
+    },
+    {
+      title: "Bài hoàn thành",
+      value: data.totalCompletions,
+      icon: <CheckCircleOutlined className="text-purple-600" />,
+      color: "#722ed1",
+    },
+    {
+      title: "Điểm trung bình",
+      value: data.averageScore,
+      precision: 1,
+      suffix: "%",
+      icon: <TrophyOutlined className="text-orange-500" />,
+      color: "#fa8c16",
+    },
+    {
+      title: "Streak TB",
+      value: data.averageStreak,
+      precision: 1,
+      suffix: "ngày",
+      icon: <FireOutlined className="text-red-500" />,
+      color: "#f5222d",
+    },
+  ];
 
   return (
-    <Row gutter={[16, 16]}>
-      <Col xs={24} sm={12} lg={8} xl={4}>
-        <Card hoverable style={{ textAlign: "center" }}>
+    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
+      {cards.map((card, index) => (
+        <Card key={index} hoverable className="text-center min-w-0">
           <Statistic
-            title="Tổng người dùng"
-            value={data.totalUsers}
-            prefix={<UserOutlined style={{ color: "#1890ff" }} />}
-            valueStyle={{ color: "#1890ff", fontWeight: "bold" }}
+            title={card.title}
+            value={card.value}
+            precision={card.precision}
+            suffix={card.suffix}
+            prefix={card.icon}
+            valueStyle={{ color: card.color, fontWeight: "bold", fontSize: "20px" }}
           />
         </Card>
-      </Col>
-
-      <Col xs={24} sm={12} lg={8} xl={4}>
-        <Card hoverable style={{ textAlign: "center" }}>
-          <Statistic
-            title="Đang hoạt động"
-            value={data.activeUsers}
-            prefix={<UserOutlined style={{ color: "#52c41a" }} />}
-            valueStyle={{ color: "#52c41a", fontWeight: "bold" }}
-          />
-        </Card>
-      </Col>
-
-      <Col xs={24} sm={12} lg={8} xl={4}>
-        <Card hoverable style={{ textAlign: "center" }}>
-          <Statistic
-            title="Bài hoàn thành"
-            value={data.totalCompletions}
-            prefix={<CheckCircleOutlined style={{ color: "#722ed1" }} />}
-            valueStyle={{ color: "#722ed1", fontWeight: "bold" }}
-          />
-        </Card>
-      </Col>
-
-      <Col xs={24} sm={12} lg={8} xl={4}>
-        <Card hoverable style={{ textAlign: "center" }}>
-          <Statistic
-            title="Điểm trung bình"
-            value={data.averageScore}
-            precision={1}
-            suffix="%"
-            prefix={<TrophyOutlined style={{ color: "#fa8c16" }} />}
-            valueStyle={{ color: "#fa8c16", fontWeight: "bold" }}
-          />
-        </Card>
-      </Col>
-
-      <Col xs={24} sm={12} lg={8} xl={4}>
-        <Card hoverable style={{ textAlign: "center" }}>
-          <Statistic
-            title="Streak TB"
-            value={data.averageStreak}
-            precision={1}
-            suffix="ngày"
-          />
-        </Card>
-      </Col>
-    </Row>
+      ))}
+    </div>
   );
 }

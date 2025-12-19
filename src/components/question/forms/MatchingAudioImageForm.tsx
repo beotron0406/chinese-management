@@ -24,13 +24,14 @@ import type { FormInstance } from "antd/es/form";
 import { MatchingAudioImageQuestionData } from '@/types/questionType';
 import { uploadImageByType, uploadAudioByType, validateFile, UploadProgress } from '@/utils/s3Upload';
 import UploadModal from '@/components/common/UploadModal';
+import TTSButton from '@/components/shared/TTSButton';
 
 const { Text } = Typography;
 const { TextArea } = Input;
 const { Option } = Select;
 
 // Dev mode flag - set to false to hide individual upload buttons
-const DEV_MODE = true;
+const DEV_MODE = false;
 
 interface MatchingAudioImageFormProps {
   form: FormInstance;
@@ -137,19 +138,81 @@ const MatchingAudioImageForm = forwardRef<MatchingAudioImageFormRef, MatchingAud
     setRightItems(updatedRightItems);
   }, [rightValues]);
 
-  // Audio upload handlers for left column
-  const handleLeftAudioChange = (itemIndex: number, file: File | null) => {
+  // Audio upload handlers for left column - auto upload
+  const handleLeftAudioChange = async (itemIndex: number, file: File | null) => {
+    if (!file) {
+      setLeftAudioUploads(prev => ({
+        ...prev,
+        [itemIndex]: { file: null, uploadedUrl: prev[itemIndex]?.uploadedUrl }
+      }));
+      return false;
+    }
+
+    const audioValidation = validateFile(file, 'audio', 10);
+    if (!audioValidation.isValid) {
+      message.error(audioValidation.error);
+      return false;
+    }
+
     setLeftAudioUploads(prev => ({
       ...prev,
       [itemIndex]: { file, uploadedUrl: prev[itemIndex]?.uploadedUrl }
     }));
+
+    // Auto upload
+    setUploadModalVisible(true);
+    setUploadStatus('uploading');
+    setUploadProgress(0);
+    setUploadError('');
+
+    try {
+      const result = await uploadAudioByType(
+        file,
+        questionType,
+        (progress: UploadProgress) => {
+          setUploadProgress(Math.round(progress.percentage));
+        }
+      );
+
+      if (result.success && result.url) {
+        setLeftAudioUploads(prev => ({
+          ...prev,
+          [itemIndex]: { file: null, uploadedUrl: result.url }
+        }));
+
+        const leftItems = form.getFieldValue(['data', 'leftColumn']) || [];
+        leftItems[itemIndex] = {
+          ...leftItems[itemIndex],
+          audio: result.url,
+          audio_url: result.url,
+        };
+        form.setFieldsValue({
+          data: {
+            ...form.getFieldValue('data'),
+            leftColumn: leftItems,
+          }
+        });
+
+        setUploadStatus('success');
+        setUploadProgress(100);
+        message.success('Tải âm thanh lên thành công!');
+      } else {
+        throw new Error(result.error || 'Tải lên thất bại - không có URL trả về');
+      }
+    } catch (error) {
+      console.error('Upload error:', error);
+      setUploadStatus('error');
+      setUploadError(error instanceof Error ? error.message : 'Tải lên thất bại');
+      message.error('Tải lên thất bại. Vui lòng thử lại.');
+    }
+
     return false;
   };
 
   const handleUploadLeftAudio = async (itemIndex: number) => {
     const audioUpload = leftAudioUploads[itemIndex];
     if (!audioUpload?.file) {
-      message.warning('Please select an audio file to upload');
+      message.warning('Vui lòng chọn file âm thanh để tải lên');
       return;
     }
 
@@ -196,7 +259,7 @@ const MatchingAudioImageForm = forwardRef<MatchingAudioImageFormRef, MatchingAud
 
         setUploadStatus('success');
         setUploadProgress(100);
-        message.success('Audio uploaded successfully!');
+        message.success('Tải âm thanh lên thành công!');
       } else {
         throw new Error(result.error || 'Upload failed - no URL returned');
       }
@@ -204,7 +267,7 @@ const MatchingAudioImageForm = forwardRef<MatchingAudioImageFormRef, MatchingAud
       console.error('Upload error:', error);
       setUploadStatus('error');
       setUploadError(error instanceof Error ? error.message : 'Upload failed');
-      message.error('Upload failed. Please try again.');
+      message.error('Tải lên thất bại. Vui lòng thử lại.');
     }
   };
 
@@ -230,19 +293,80 @@ const MatchingAudioImageForm = forwardRef<MatchingAudioImageFormRef, MatchingAud
     }
   };
 
-  // Image upload handlers for right column
-  const handleRightImageChange = (itemIndex: number, file: File | null) => {
+  // Image upload handlers for right column - auto upload
+  const handleRightImageChange = async (itemIndex: number, file: File | null) => {
+    if (!file) {
+      setRightImageUploads(prev => ({
+        ...prev,
+        [itemIndex]: { file: null, uploadedUrl: prev[itemIndex]?.uploadedUrl }
+      }));
+      return false;
+    }
+
+    const imageValidation = validateFile(file, 'image', 10);
+    if (!imageValidation.isValid) {
+      message.error(imageValidation.error);
+      return false;
+    }
+
     setRightImageUploads(prev => ({
       ...prev,
       [itemIndex]: { file, uploadedUrl: prev[itemIndex]?.uploadedUrl }
     }));
+
+    // Auto upload
+    setUploadModalVisible(true);
+    setUploadStatus('uploading');
+    setUploadProgress(0);
+    setUploadError('');
+
+    try {
+      const result = await uploadImageByType(
+        file,
+        questionType,
+        (progress: UploadProgress) => {
+          setUploadProgress(Math.round(progress.percentage));
+        }
+      );
+
+      if (result.success && result.url) {
+        setRightImageUploads(prev => ({
+          ...prev,
+          [itemIndex]: { file: null, uploadedUrl: result.url }
+        }));
+
+        const rightItems = form.getFieldValue(['data', 'rightColumn']) || [];
+        rightItems[itemIndex] = {
+          ...rightItems[itemIndex],
+          image: result.url,
+        };
+        form.setFieldsValue({
+          data: {
+            ...form.getFieldValue('data'),
+            rightColumn: rightItems,
+          }
+        });
+
+        setUploadStatus('success');
+        setUploadProgress(100);
+        message.success('Tải hình ảnh lên thành công!');
+      } else {
+        throw new Error(result.error || 'Tải lên thất bại - không có URL trả về');
+      }
+    } catch (error) {
+      console.error('Upload error:', error);
+      setUploadStatus('error');
+      setUploadError(error instanceof Error ? error.message : 'Tải lên thất bại');
+      message.error('Tải lên thất bại. Vui lòng thử lại.');
+    }
+
     return false;
   };
 
   const handleUploadRightImage = async (itemIndex: number) => {
     const imageUpload = rightImageUploads[itemIndex];
     if (!imageUpload?.file) {
-      message.warning('Please select an image file to upload');
+      message.warning('Vui lòng chọn file hình ảnh để tải lên');
       return;
     }
 
@@ -288,7 +412,7 @@ const MatchingAudioImageForm = forwardRef<MatchingAudioImageFormRef, MatchingAud
 
         setUploadStatus('success');
         setUploadProgress(100);
-        message.success('Image uploaded successfully!');
+        message.success('Tải hình ảnh lên thành công!');
       } else {
         throw new Error(result.error || 'Upload failed - no URL returned');
       }
@@ -296,7 +420,7 @@ const MatchingAudioImageForm = forwardRef<MatchingAudioImageFormRef, MatchingAud
       console.error('Upload error:', error);
       setUploadStatus('error');
       setUploadError(error instanceof Error ? error.message : 'Upload failed');
-      message.error('Upload failed. Please try again.');
+      message.error('Tải lên thất bại. Vui lòng thử lại.');
     }
   };
 
@@ -363,7 +487,7 @@ const MatchingAudioImageForm = forwardRef<MatchingAudioImageFormRef, MatchingAud
         return true;
       }
 
-      message.warning('Please select and upload all required audio and image files');
+      message.warning('Vui lòng chọn và tải lên tất cả file âm thanh và hình ảnh yêu cầu');
       return false;
     }
 
@@ -479,7 +603,7 @@ const MatchingAudioImageForm = forwardRef<MatchingAudioImageFormRef, MatchingAud
       setUploadProgress(100);
 
       if (showModal) {
-        message.success('All files uploaded successfully!');
+        message.success('Tất cả file đã tải lên thành công!');
       }
       return true;
     } catch (error) {
@@ -504,14 +628,14 @@ const MatchingAudioImageForm = forwardRef<MatchingAudioImageFormRef, MatchingAud
   return (
     <div>
       {/* Question Setup */}
-      <Card title="Question Setup" style={{ marginBottom: '24px' }}>
+      <Card title="Thiết Lập Câu Hỏi" style={{ marginBottom: '24px' }}>
         <Form.Item
-          label="Question Instruction"
+          label="Hướng Dẫn Câu Hỏi"
           name={["data", "instruction"]}
-          rules={[{ required: true, message: "Please enter the question instruction" }]}
+          rules={[{ required: true, message: "Vui lòng nhập hướng dẫn câu hỏi" }]}
         >
           <TextArea
-            placeholder="Enter instruction for the student (e.g., 'Listen to the audio and match with the correct image')"
+            placeholder="Nhập hướng dẫn cho học viên (ví dụ: 'Nghe audio và ghép với hình ảnh đúng')"
             autoSize={{ minRows: 2, maxRows: 4 }}
           />
         </Form.Item>
@@ -519,7 +643,7 @@ const MatchingAudioImageForm = forwardRef<MatchingAudioImageFormRef, MatchingAud
 
       {/* Left Column (Audio) */}
       <Card
-        title="Left Column (Audio)"
+        title="Cột Trái (Âm Thanh)"
         style={{ marginBottom: '24px' }}
       >
         <Form.List
@@ -535,7 +659,7 @@ const MatchingAudioImageForm = forwardRef<MatchingAudioImageFormRef, MatchingAud
                     key={key}
                     size="small"
                     style={{ marginBottom: '16px' }}
-                    title={`Audio Item ${index + 1}`}
+                    title={`Mục Âm Thanh ${index + 1}`}
                     extra={
                       fields.length > 1 && (
                         <Button
@@ -564,34 +688,60 @@ const MatchingAudioImageForm = forwardRef<MatchingAudioImageFormRef, MatchingAud
                     {/* Audio Upload */}
                     <Form.Item
                       {...restField}
-                      label="Audio File"
+                      label="File Âm Thanh"
                       name={[name, "audio"]}
-                      rules={[{ required: true, message: "Please upload an audio file" }]}
+                      rules={[{ required: true, message: "Vui lòng tải lên file âm thanh" }]}
                     >
                       <div>
-                        <Upload
-                          accept="audio/*"
-                          maxCount={1}
-                          showUploadList={false}
-                          beforeUpload={(file) => {
-                            handleLeftAudioChange(index, file);
-                            return false;
-                          }}
-                          disabled={!!audioUpload?.uploadedUrl}
-                        >
-                          <Button
-                            icon={<UploadOutlined />}
+                        <Space>
+                          <Upload
+                            accept="audio/*"
+                            maxCount={1}
+                            showUploadList={false}
+                            beforeUpload={(file) => {
+                              handleLeftAudioChange(index, file);
+                              return false;
+                            }}
                             disabled={!!audioUpload?.uploadedUrl}
-                            style={{ marginBottom: 8 }}
                           >
-                            {audioUpload?.file ? audioUpload.file.name : 'Select Audio'}
-                          </Button>
-                        </Upload>
+                            <Button
+                              icon={<UploadOutlined />}
+                              disabled={!!audioUpload?.uploadedUrl}
+                            >
+                              {audioUpload?.file ? audioUpload.file.name : 'Chọn Âm Thanh'}
+                            </Button>
+                          </Upload>
+                          <TTSButton
+                            text={form.getFieldValue(['data', 'leftColumn', index, 'transcript']) || ''}
+                            buttonText="Tạo Giọng Nói"
+                            size="middle"
+                            disabled={!!audioUpload?.uploadedUrl}
+                            onAudioGenerated={(audioUrl) => {
+                              setLeftAudioUploads(prev => ({
+                                ...prev,
+                                [index]: { file: null, uploadedUrl: audioUrl }
+                              }));
+                              const leftItems = form.getFieldValue(['data', 'leftColumn']) || [];
+                              leftItems[index] = {
+                                ...leftItems[index],
+                                audio: audioUrl,
+                                audio_url: audioUrl,
+                              };
+                              form.setFieldsValue({
+                                data: {
+                                  ...form.getFieldValue('data'),
+                                  leftColumn: leftItems,
+                                }
+                              });
+                              message.success('Tạo giọng nói thành công!');
+                            }}
+                          />
+                        </Space>
                         {audioUpload?.uploadedUrl && (
                           <div style={{ marginTop: 8 }}>
                             <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                               <SoundOutlined style={{ color: '#52c41a' }} />
-                              <span style={{ color: '#52c41a' }}>Audio uploaded</span>
+                              <span style={{ color: '#52c41a' }}>Âm thanh đã tải lên</span>
                               <Button
                                 size="small"
                                 icon={<DeleteOutlined />}
@@ -608,30 +758,17 @@ const MatchingAudioImageForm = forwardRef<MatchingAudioImageFormRef, MatchingAud
                             </div>
                           </div>
                         )}
-                        {DEV_MODE && audioUpload?.file && !audioUpload?.uploadedUrl && (
-                          <div style={{ marginTop: 8 }}>
-                            <Button
-                              type="primary"
-                              icon={<UploadOutlined />}
-                              onClick={() => handleUploadLeftAudio(index)}
-                              loading={uploadStatus === 'uploading'}
-                              size="small"
-                            >
-                              Upload Audio to S3 (Dev Mode)
-                            </Button>
-                          </div>
-                        )}
                       </div>
                     </Form.Item>
 
                     {/* Transcript (Optional) */}
                     <Form.Item
                       {...restField}
-                      label="Transcript (Optional)"
+                      label="Bản Ghi (Tùy Chọn)"
                       name={[name, "transcript"]}
-                      help="Optional transcript of the audio content"
+                      help="Bản ghi tùy chọn của nội dung âm thanh"
                     >
-                      <Input placeholder="Enter transcript of the audio" />
+                      <Input placeholder="Nhập bản ghi của âm thanh" />
                     </Form.Item>
 
                     {/* Hidden audio_url field */}
@@ -654,7 +791,7 @@ const MatchingAudioImageForm = forwardRef<MatchingAudioImageFormRef, MatchingAud
                   block
                   icon={<PlusOutlined />}
                 >
-                  Add Audio Item
+                  Thêm Mục Âm Thanh
                 </Button>
               </Form.Item>
             </>
@@ -664,7 +801,7 @@ const MatchingAudioImageForm = forwardRef<MatchingAudioImageFormRef, MatchingAud
 
       {/* Right Column (Images) */}
       <Card
-        title="Right Column (Images)"
+        title="Cột Phải (Hình Ảnh)"
         style={{ marginBottom: '24px' }}
       >
         <Form.List
@@ -680,7 +817,7 @@ const MatchingAudioImageForm = forwardRef<MatchingAudioImageFormRef, MatchingAud
                     key={key}
                     size="small"
                     style={{ marginBottom: '16px' }}
-                    title={`Image Item ${generateRightId(index)}`}
+                    title={`Mục Hình Ảnh ${generateRightId(index)}`}
                     extra={
                       fields.length > 1 && (
                         <Button
@@ -709,9 +846,9 @@ const MatchingAudioImageForm = forwardRef<MatchingAudioImageFormRef, MatchingAud
                     {/* Image Upload */}
                     <Form.Item
                       {...restField}
-                      label="Image File"
+                      label="File Hình Ảnh"
                       name={[name, "image"]}
-                      rules={[{ required: true, message: "Please upload an image file" }]}
+                      rules={[{ required: true, message: "Vui lòng tải lên file hình ảnh" }]}
                     >
                       <div>
                         <Upload
@@ -727,16 +864,15 @@ const MatchingAudioImageForm = forwardRef<MatchingAudioImageFormRef, MatchingAud
                           <Button
                             icon={<UploadOutlined />}
                             disabled={!!imageUpload?.uploadedUrl}
-                            style={{ marginBottom: 8 }}
                           >
-                            {imageUpload?.file ? imageUpload.file.name : 'Select Image'}
+                            {imageUpload?.file ? imageUpload.file.name : 'Chọn Hình Ảnh'}
                           </Button>
                         </Upload>
                         {imageUpload?.uploadedUrl && (
                           <div style={{ marginTop: 8 }}>
                             <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                               <PictureOutlined style={{ color: '#52c41a' }} />
-                              <span style={{ color: '#52c41a' }}>Image uploaded</span>
+                              <span style={{ color: '#52c41a' }}>Hình ảnh đã tải lên</span>
                               <Button
                                 size="small"
                                 icon={<DeleteOutlined />}
@@ -754,31 +890,18 @@ const MatchingAudioImageForm = forwardRef<MatchingAudioImageFormRef, MatchingAud
                             </div>
                           </div>
                         )}
-                        {DEV_MODE && imageUpload?.file && !imageUpload?.uploadedUrl && (
-                          <div style={{ marginTop: 8 }}>
-                            <Button
-                              type="primary"
-                              icon={<UploadOutlined />}
-                              onClick={() => handleUploadRightImage(index)}
-                              loading={uploadStatus === 'uploading'}
-                              size="small"
-                            >
-                              Upload Image to S3 (Dev Mode)
-                            </Button>
-                          </div>
-                        )}
                       </div>
                     </Form.Item>
 
                     {/* Alt Text */}
                     <Form.Item
                       {...restField}
-                      label="Alt Text (for accessibility)"
+                      label="Văn Bản Thay Thế (cho khả năng tiếp cận)"
                       name={[name, "alt"]}
-                      help="Describe what's in the image"
+                      help="Mô tả nội dung trong hình ảnh"
                     >
                       <Input
-                        placeholder="Describe what's in the image"
+                        placeholder="Mô tả nội dung trong hình ảnh"
                         onChange={(e) => handleRightAltTextChange(index, e.target.value)}
                       />
                     </Form.Item>
@@ -798,7 +921,7 @@ const MatchingAudioImageForm = forwardRef<MatchingAudioImageFormRef, MatchingAud
                   block
                   icon={<PlusOutlined />}
                 >
-                  Add Image Item
+                  Thêm Mục Hình Ảnh
                 </Button>
               </Form.Item>
             </>
@@ -828,32 +951,32 @@ const MatchingAudioImageForm = forwardRef<MatchingAudioImageFormRef, MatchingAud
                   style={{ display: "flex", marginBottom: 8 }}
                   align="baseline"
                 >
-                  <Text strong>Match {index + 1}:</Text>
+                  <Text strong>Cặp {index + 1}:</Text>
                   <Form.Item
                     {...restField}
                     name={[name, "left"]}
-                    rules={[{ required: true, message: "Select left item" }]}
+                    rules={[{ required: true, message: "Chọn mục bên trái" }]}
                     style={{ width: "200px" }}
                   >
-                    <Select placeholder="Select audio item">
+                    <Select placeholder="Chọn mục âm thanh">
                       {leftItems.map((item, itemIndex) => (
                         <Option key={`left-option-${item.id}-${itemIndex}`} value={item.id}>
-                          {item.id}: {item.transcript || 'Audio file'}
+                          {item.id}: {item.transcript || 'File âm thanh'}
                         </Option>
                       ))}
                     </Select>
                   </Form.Item>
-                  <Text type="secondary">matches with</Text>
+                  <Text type="secondary">ghép với</Text>
                   <Form.Item
                     {...restField}
                     name={[name, "right"]}
-                    rules={[{ required: true, message: "Select right item" }]}
+                    rules={[{ required: true, message: "Chọn mục bên phải" }]}
                     style={{ width: "200px" }}
                   >
-                    <Select placeholder="Select image item">
+                    <Select placeholder="Chọn mục hình ảnh">
                       {rightItems.map((item, itemIndex) => (
                         <Option key={`right-option-${item.id}-${itemIndex}`} value={item.id}>
-                          {item.id}: {item.alt || 'Image'}
+                          {item.id}: {item.alt || 'Hình ảnh'}
                         </Option>
                       ))}
                     </Select>
@@ -875,7 +998,7 @@ const MatchingAudioImageForm = forwardRef<MatchingAudioImageFormRef, MatchingAud
                   block
                   icon={<PlusOutlined />}
                 >
-                  Add Match
+                  Thêm Cặp
                 </Button>
               </Form.Item>
             </>
@@ -885,7 +1008,7 @@ const MatchingAudioImageForm = forwardRef<MatchingAudioImageFormRef, MatchingAud
         {/* Match Preview */}
         {form.getFieldValue(['data', 'correctMatches'])?.length > 0 && (
           <div style={{ marginTop: '16px', padding: '12px', backgroundColor: '#e6f7ff', borderRadius: '6px' }}>
-            <Text strong>Match Summary:</Text>
+            <Text strong>Tóm Tắt Các Cặp:</Text>
             <div style={{ marginTop: '8px' }}>
               {form.getFieldValue(['data', 'correctMatches'])?.map((match: any, index: number) => {
                 const leftItem = leftItems.find(item => item.id === match.left);
@@ -895,9 +1018,9 @@ const MatchingAudioImageForm = forwardRef<MatchingAudioImageFormRef, MatchingAud
                   return (
                     <div key={index} style={{ marginBottom: '4px' }}>
                       <Text>
-                        {leftItem.id}: {leftItem.transcript || 'Audio file'} 
+                        {leftItem.id}: {leftItem.transcript || 'File âm thanh'} 
                         {' → '}
-                        {rightItem.id}: {rightItem.alt || 'Image'}
+                        {rightItem.id}: {rightItem.alt || 'Hình ảnh'}
                       </Text>
                     </div>
                   );
@@ -910,20 +1033,20 @@ const MatchingAudioImageForm = forwardRef<MatchingAudioImageFormRef, MatchingAud
       </Card>
 
       {/* Additional Settings */}
-      <Card title="Additional Settings" style={{ marginBottom: '24px' }}>
+      <Card title="Cài Đặt Thêm" style={{ marginBottom: '24px' }}>
         <Form.Item
-          label="Explanation (Optional)"
+          label="Giải Thích (Tùy Chọn)"
           name={['data', 'explanation']}
-          help="Provide an explanation that will be shown after the student answers"
+          help="Cung cấp giải thích sẽ được hiển thị sau khi học viên trả lời"
         >
           <TextArea
             rows={3}
-            placeholder="Explain the matching logic or provide additional context..."
+            placeholder="Giải thích logic ghép hoặc cung cấp ngữ cảnh thêm..."
           />
         </Form.Item>
 
         <Form.Item
-          label="Active"
+          label="Kích Hoạt"
           name="isActive"
           valuePropName="checked"
           initialValue={true}

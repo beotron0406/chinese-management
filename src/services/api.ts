@@ -137,6 +137,11 @@ export const courseService = {
       method: "DELETE",
     }),
 
+  hardDeleteCourse: (id: number): Promise<void> =>
+    apiRequest(`/course/${id}/hard`, {
+      method: "DELETE",
+    }),
+
   restoreCourse: (id: number): Promise<Course> =>
     apiRequest(`/course/${id}/restore`, {
       method: "PUT",
@@ -152,6 +157,7 @@ export const {
   createCourse,
   updateCourse,
   deleteCourse,
+  hardDeleteCourse,
   restoreCourse,
   getCourseStats,
 } = courseService;

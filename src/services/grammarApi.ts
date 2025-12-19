@@ -26,7 +26,16 @@ export const grammarApi = {
 
   // Get single grammar pattern by ID
   getGrammarPatternById: async (id: number): Promise<GrammarPattern> => {
+    console.log('🔗 API Call: getGrammarPatternById, id:', id);
     const response = await api.get<GrammarPattern>(`/grammar-patterns/${id}`);
+    console.log('📨 API Response:', response);
+    
+    // Handle response structure - data might be in response.data or response directly
+    if (!response.data && response) {
+      console.log('⚠️ No response.data, returning response directly');
+      return response as any;
+    }
+    
     return response.data;
   },
 

@@ -25,11 +25,9 @@ export async function GET(
     }
 
     const responseBody: UserProgressDetail = await response.json();
-    console.log('✅ Admin user progress fetched successfully');
     
     return NextResponse.json(responseBody);
   } catch (error) {
-    console.error('❌ Error fetching admin user progress:', error);
     return NextResponse.json(
       { 
         status: false, 

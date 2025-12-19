@@ -123,7 +123,6 @@ export interface CourseCreateInput {
   title: string;
   description?: string;
   prerequisiteCourseId?: number | null;
-  orderIndex: number;
   isActive?: boolean;
 }
 

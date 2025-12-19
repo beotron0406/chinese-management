@@ -225,21 +225,21 @@ const FillTextTextForm: React.FC<FillTextTextFormProps> = ({
     <div>
       {/* Instructions */}
       <Alert
-        message="Fill Blank Question Builder"
-        description="Create questions where students fill in Chinese words. Use [1], [2], etc. to mark blank positions."
+        message="Công Cụ Tạo Câu Hỏi Điền Chỗ Trống"
+        description="Tạo câu hỏi để học sinh điền từ tiếng Trung. Sử dụng [1], [2], v.v. để đánh dấu vị trí chỗ trống."
         type="info"
         style={{ marginBottom: "24px" }}
       />
 
       {/* Step 1: Question Setup */}
-      <Card title="Step 1: Question Setup" style={{ marginBottom: "24px" }}>
+      <Card title="Bước 1: Thiết Lập Câu Hỏi" style={{ marginBottom: "24px" }}>
         <Form.Item
-          label="Instruction"
+          label="Hướng Dẫn"
           name={["data", "instruction"]}
-          rules={[{ required: true, message: "Please enter the instruction" }]}
+          rules={[{ required: true, message: "Vui lòng nhập hướng dẫn" }]}
         >
           <TextArea
-            placeholder="Enter instruction (e.g., 'Điền từ tiếng Trung thích hợp vào chỗ trống.')"
+            placeholder="Nhập hướng dẫn (ví dụ: 'Điền từ tiếng Trung thích hợp vào chỗ trống.')"
             autoSize={{ minRows: 2, maxRows: 4 }}
           />
         </Form.Item>
@@ -247,22 +247,21 @@ const FillTextTextForm: React.FC<FillTextTextFormProps> = ({
 
       {/* Step 2: Sentence Builder */}
       <Card
-        title="Step 2: Build Sentence with Blanks"
+        title="Bước 2: Xây Dựng Câu Với Chỗ Trống"
         extra={
           <Button
             type="primary"
             icon={<PlusOutlined />}
             onClick={addSentencePart}
           >
-            Add Part
+            Thêm Phần
           </Button>
         }
         style={{ marginBottom: "24px" }}
       >
         <div style={{ marginBottom: "16px" }}>
           <Text type="secondary">
-            Build your sentence part by part. Use [1], [2], etc. for blank
-            positions.
+            Xây dựng câu từng phần. Sử dụng [1], [2], v.v. cho vị trí chỗ trống.
           </Text>
         </div>
 
@@ -283,10 +282,10 @@ const FillTextTextForm: React.FC<FillTextTextFormProps> = ({
                 }}
               >
                 <div>
-                  Part {index + 1}
+                  Phần {index + 1}
                   {isBlankMarker(part) && (
                     <Tag color="orange" style={{ marginLeft: 8 }}>
-                      BLANK {part.match(/\d+/)?.[0]}
+                      CHỖ TRỐNG {part.match(/\d+/)?.[0]}
                     </Tag>
                   )}
                 </div>
@@ -298,7 +297,7 @@ const FillTextTextForm: React.FC<FillTextTextFormProps> = ({
                       onClick={() => markAsBlank(index)}
                       style={{ fontSize: "12px" }}
                     >
-                      Mark as Blank
+                      Đánh Dấu Chỗ Trống
                     </Button>
                   ) : (
                     <Button
@@ -307,7 +306,7 @@ const FillTextTextForm: React.FC<FillTextTextFormProps> = ({
                       onClick={() => unmarkBlank(index)}
                       style={{ fontSize: "12px" }}
                     >
-                      Unmark Blank
+                      Bỏ Đánh Dấu
                     </Button>
                   )}
                   {sentenceParts.length > 1 && (
@@ -325,7 +324,7 @@ const FillTextTextForm: React.FC<FillTextTextFormProps> = ({
             <Row gutter={16}>
               <Col span={12}>
                 <div style={{ marginBottom: "8px" }}>
-                  <Text strong>Chinese Text:</Text>
+                  <Text strong>Chữ Trung:</Text>
                 </div>
                 {isBlankMarker(part) ? (
                   <div
@@ -340,11 +339,11 @@ const FillTextTextForm: React.FC<FillTextTextFormProps> = ({
                       color: "#d68910",
                     }}
                   >
-                    BLANK POSITION {part.match(/\d+/)?.[0]}
+                    VỊ TRÍ CHỖ TRỐNG {part.match(/\d+/)?.[0]}
                   </div>
                 ) : (
                   <Input
-                    placeholder="Enter Chinese text"
+                    placeholder="Nhập chữ Trung"
                     value={part}
                     onChange={(e) =>
                       handleSentencePartChange(index, e.target.value)
@@ -357,7 +356,7 @@ const FillTextTextForm: React.FC<FillTextTextFormProps> = ({
                 {isBlankMarker(part) && (
                   <div style={{ marginTop: 4 }}>
                     <Text type="secondary" style={{ fontSize: "12px" }}>
-                      This position will be a blank for students to fill
+                      Vị trí này sẽ là chỗ trống để học sinh điền
                     </Text>
                   </div>
                 )}
@@ -373,7 +372,7 @@ const FillTextTextForm: React.FC<FillTextTextFormProps> = ({
                       onClick={() => generatePartPinyin(index, part)}
                       style={{ padding: 0, marginLeft: 8 }}
                     >
-                      Auto-generate
+                      Tự động tạo
                     </Button>
                   )}
                 </div>
@@ -394,7 +393,7 @@ const FillTextTextForm: React.FC<FillTextTextFormProps> = ({
                   </div>
                 ) : (
                   <Input
-                    placeholder="Pinyin (auto-generated or manual)"
+                    placeholder="Pinyin (tự động tạo hoặc nhập thủ công)"
                     value={pinyinParts[index] || ""}
                     onChange={(e) =>
                       handlePinyinPartChange(index, e.target.value)
@@ -421,25 +420,25 @@ const FillTextTextForm: React.FC<FillTextTextFormProps> = ({
 
       {/* Step 3: Vietnamese Translation */}
       <Card
-        title="Step 3: Vietnamese Translation"
+        title="Bước 3: Bản Dịch Tiếng Việt"
         style={{ marginBottom: "24px" }}
       >
         <Form.Item
-          label="Vietnamese Translation"
+          label="Bản Dịch Tiếng Việt"
           name={["data", "vietnamese"]}
           rules={[
-            { required: true, message: "Please enter Vietnamese translation" },
+            { required: true, message: "Vui lòng nhập bản dịch tiếng Việt" },
           ]}
         >
           <TextArea
-            placeholder="Enter Vietnamese translation with [1], [2], etc. for blank positions (e.g., '[1] xin chào, [2] là Lý Minh.')"
+            placeholder="Nhập bản dịch tiếng Việt với [1], [2], v.v. cho vị trí chỗ trống (ví dụ: '[1] xin chào, [2] là Lý Minh.')"
             autoSize={{ minRows: 2, maxRows: 4 }}
           />
         </Form.Item>
       </Card>
 
       {/* Step 4: Preview */}
-      <Card title="Sentence Preview" style={{ marginBottom: "24px" }}>
+      <Card title="Xem Trước Câu" style={{ marginBottom: "24px" }}>
         <div
           style={{
             padding: "16px",
@@ -500,10 +499,10 @@ const FillTextTextForm: React.FC<FillTextTextFormProps> = ({
             </span>
           </div>
           <div>
-            <Text strong>Vietnamese: </Text>
+            <Text strong>Tiếng Việt: </Text>
             <span style={{ fontSize: "16px", color: "#666" }}>
               {form.getFieldValue(["data", "vietnamese"]) ||
-                "Enter Vietnamese translation above"}
+                "Nhập bản dịch tiếng Việt ở trên"}
             </span>
           </div>
         </div>
@@ -511,12 +510,12 @@ const FillTextTextForm: React.FC<FillTextTextFormProps> = ({
 
       {/* Step 5: Option Bank */}
       <Card
-        title="Step 5: Option Bank (Hints)"
+        title="Bước 5: Ngân Hàng Lựa Chọn (Gợi Ý)"
         style={{ marginBottom: "24px" }}
       >
         <div style={{ marginBottom: "12px" }}>
           <Text type="secondary">
-            Add Chinese words as options for students to choose from.
+            Thêm các từ tiếng Trung làm lựa chọn cho học sinh.
           </Text>
         </div>
         <Form.List name={["data", "optionBank"]}>
@@ -531,10 +530,10 @@ const FillTextTextForm: React.FC<FillTextTextFormProps> = ({
                   <Form.Item
                     {...restField}
                     name={name}
-                    rules={[{ required: true, message: "Please enter option" }]}
+                    rules={[{ required: true, message: "Vui lòng nhập lựa chọn" }]}
                   >
                     <Input
-                      placeholder="Enter Chinese word"
+                      placeholder="Nhập từ tiếng Trung"
                       style={{ width: 200, fontSize: "16px" }}
                       onChange={handleOptionBankChange}
                       onBlur={handleOptionBankChange}
@@ -562,7 +561,7 @@ const FillTextTextForm: React.FC<FillTextTextFormProps> = ({
                   block
                   icon={<PlusOutlined />}
                 >
-                  Add Option
+                  Thêm Lựa Chọn
                 </Button>
               </Form.Item>
             </>
@@ -572,7 +571,7 @@ const FillTextTextForm: React.FC<FillTextTextFormProps> = ({
         {/* Display current options */}
         {optionBankItems.filter(Boolean).length > 0 && (
           <div style={{ marginTop: "16px" }}>
-            <Text strong>Current Options: </Text>
+            <Text strong>Lựa Chọn Hiện Tại: </Text>
             <div style={{ marginTop: "8px" }}>
               {optionBankItems.filter(Boolean).map((option, index) => (
                 <Tag
@@ -593,13 +592,13 @@ const FillTextTextForm: React.FC<FillTextTextFormProps> = ({
 
       {/* Step 6: Set Correct Answers */}
       <Card
-        title="Step 6: Set Correct Answers"
+        title="Bước 6: Đặt Đáp Án Đúng"
         style={{ marginBottom: "24px" }}
       >
         <div style={{ marginBottom: "12px" }}>
           <Text type="secondary">
-            Define correct answers for each blank position. You can select from
-            the option bank or type new answers.
+            Xác định đáp án đúng cho mỗi vị trí chỗ trống. Bạn có thể chọn từ
+            ngân hàng lựa chọn hoặc nhập đáp án mới.
           </Text>
         </div>
 
@@ -620,10 +619,10 @@ const FillTextTextForm: React.FC<FillTextTextFormProps> = ({
                 title={
                   <div>
                     <span>
-                      Blank {blankNumber} - Position {originalIndex + 1}
+                      Chỗ Trống {blankNumber} - Vị Trí {originalIndex + 1}
                     </span>
                     <Tag color="blue" style={{ marginLeft: 8 }}>
-                      Context: {sentenceParts[originalIndex - 1] || ""} ___{" "}
+                      Ngữ cảnh: {sentenceParts[originalIndex - 1] || ""} ___{" "}
                       {sentenceParts[originalIndex + 1] || ""}
                     </Tag>
                   </div>
@@ -632,19 +631,19 @@ const FillTextTextForm: React.FC<FillTextTextFormProps> = ({
                 <Row gutter={16}>
                   <Col span={16}>
                     <Form.Item
-                      label="Correct Answers"
+                      label="Đáp Án Đúng"
                       name={["data", "blanks", blankNumber - 1, "correct"]}
                       rules={[
                         {
                           required: true,
-                          message: "Please add at least one correct answer",
+                          message: "Vui lòng thêm ít nhất một đáp án đúng",
                         },
                       ]}
                       initialValue={[]}
                     >
                       <Select
                         mode="tags"
-                        placeholder="Select from option bank or type correct answers"
+                        placeholder="Chọn từ ngân hàng lựa chọn hoặc nhập đáp án đúng"
                         style={{ width: "100%" }}
                         dropdownRender={(menu) => (
                           <div>
@@ -659,7 +658,7 @@ const FillTextTextForm: React.FC<FillTextTextFormProps> = ({
                                   type="secondary"
                                   style={{ fontSize: "12px" }}
                                 >
-                                  Available options:
+                                  Lựa chọn khả dụng:
                                 </Text>
                               </div>
                             )}
@@ -674,7 +673,7 @@ const FillTextTextForm: React.FC<FillTextTextFormProps> = ({
                                 type="secondary"
                                 style={{ fontSize: "12px" }}
                               >
-                                Type to add custom answers
+                                Nhập để thêm đáp án tùy chỉnh
                               </Text>
                             </div>
                           </div>
@@ -696,7 +695,7 @@ const FillTextTextForm: React.FC<FillTextTextFormProps> = ({
                                   {option}
                                 </span>
                                 <Tag color="green">
-                                  From Bank
+                                  Từ Ngân Hàng
                                 </Tag>
                               </div>
                             </Option>
@@ -707,7 +706,7 @@ const FillTextTextForm: React.FC<FillTextTextFormProps> = ({
                   <Col span={8}>
                     <div style={{ padding: "8px 0" }}>
                       <Text strong style={{ fontSize: "12px" }}>
-                        Quick Select:
+                        Chọn Nhanh:
                       </Text>
                       <div style={{ marginTop: "4px" }}>
                         {currentOptions
@@ -775,8 +774,8 @@ const FillTextTextForm: React.FC<FillTextTextFormProps> = ({
 
         {sentenceParts.filter((part) => isBlankMarker(part)).length === 0 && (
           <Alert
-            message="No blanks detected"
-            description="Mark some sentence parts as blanks to set correct answers."
+            message="Không phát hiện chỗ trống"
+            description="Đánh dấu một số phần câu làm chỗ trống để đặt đáp án đúng."
             type="info"
             showIcon
           />
@@ -785,12 +784,12 @@ const FillTextTextForm: React.FC<FillTextTextFormProps> = ({
         {/* Summary of current blanks and answers */}
         {sentenceParts.filter((part) => isBlankMarker(part)).length > 0 && (
           <Card
-            title="Summary"
+            title="Tóm Tắt"
             size="small"
             style={{ marginTop: "16px", backgroundColor: "#fafafa" }}
           >
             <div>
-              <Text strong>Blanks Overview:</Text>
+              <Text strong>Tổng Quan Chỗ Trống:</Text>
               <div style={{ marginTop: "8px" }}>
                 {sentenceParts
                   .map((part, index) => ({ part, originalIndex: index }))
@@ -810,7 +809,7 @@ const FillTextTextForm: React.FC<FillTextTextFormProps> = ({
                         key={`summary-${blankNumber}`}
                         style={{ margin: "4px 0" }}
                       >
-                        <Tag color="orange">Blank {blankNumber}</Tag>
+                        <Tag color="orange">Chỗ Trống {blankNumber}</Tag>
                         <span style={{ margin: "0 8px" }}>→</span>
                         {answers.length > 0 ? (
                           answers.map((answer: string, idx: number) => (
@@ -823,7 +822,7 @@ const FillTextTextForm: React.FC<FillTextTextFormProps> = ({
                             </Tag>
                           ))
                         ) : (
-                          <Tag color="red">No answers set</Tag>
+                          <Tag color="red">Chưa đặt đáp án</Tag>
                         )}
                       </div>
                     );
@@ -835,23 +834,23 @@ const FillTextTextForm: React.FC<FillTextTextFormProps> = ({
       </Card>
 
       {/* Step 7: Explanation */}
-      <Card title="Step 7: Explanation" style={{ marginBottom: "24px" }}>
+      <Card title="Bước 7: Giải Thích" style={{ marginBottom: "24px" }}>
         <Form.Item
-          label="Explanation"
+          label="Giải Thích"
           name={["data", "explanation"]}
-          rules={[{ required: true, message: "Please enter explanation" }]}
+          rules={[{ required: true, message: "Vui lòng nhập giải thích" }]}
         >
           <TextArea
-            placeholder="Explain the correct answers, grammar rules, and word meanings..."
+            placeholder="Giải thích đáp án đúng, quy tắc ngữ pháp và ý nghĩa từ..."
             autoSize={{ minRows: 3, maxRows: 6 }}
           />
         </Form.Item>
       </Card>
 
       {/* Additional Settings */}
-      <Card title="Additional Settings" style={{ marginBottom: "24px" }}>
+      <Card title="Cài Đặt Bổ Sung" style={{ marginBottom: "24px" }}>
         <Form.Item
-          label="Active"
+          label="Kích Hoạt"
           name="isActive"
           valuePropName="checked"
           initialValue={true}
@@ -860,7 +859,7 @@ const FillTextTextForm: React.FC<FillTextTextFormProps> = ({
         </Form.Item>
       </Card>
 
-      <Card title="JSON Preview" style={{ marginBottom: "24px" }}>
+      <Card title="Xem Trước JSON" style={{ marginBottom: "24px" }}>
         <pre
           style={{
             backgroundColor: "#f5f5f5",

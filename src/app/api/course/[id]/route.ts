@@ -1,7 +1,8 @@
-import { NextRequest, NextResponse } from 'next/server';
-import { CourseFormValues, Course } from '@/types';
+import { NextRequest, NextResponse } from "next/server";
+import { CourseFormValues, Course } from "@/types";
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || "http://26.112.47.221:3000";
+const API_BASE_URL =
+  process.env.NEXT_PUBLIC_API_BASE_URL || "http://26.112.47.221:3000";
 
 export async function GET(
   request: NextRequest,
@@ -12,12 +13,12 @@ export async function GET(
     console.log(`🔄 Fetching course: ${courseId}`);
 
     const response = await fetch(`${API_BASE_URL}/courses/${courseId}`, {
-      method: 'GET',
+      method: "GET",
       headers: {
-        'Content-Type': 'application/json',
-        Authorization: request.headers.get('authorization') || '',
+        "Content-Type": "application/json",
+        Authorization: request.headers.get("authorization") || "",
       },
-      cache: 'no-store',
+      cache: "no-store",
     });
 
     if (!response.ok) {
@@ -25,15 +26,16 @@ export async function GET(
     }
 
     const responseBody: Course = await response.json();
-    console.log('✅ Course fetched successfully');
-    
+    console.log("✅ Course fetched successfully");
+
     return NextResponse.json(responseBody);
   } catch (error) {
-    console.error('❌ Error fetching course:', error);
+    console.error("❌ Error fetching course:", error);
     return NextResponse.json(
-      { 
-        status: false, 
-        message: error instanceof Error ? error.message : 'Failed to fetch course' 
+      {
+        status: false,
+        message:
+          error instanceof Error ? error.message : "Failed to fetch course",
       },
       { status: 500 }
     );
@@ -47,14 +49,14 @@ export async function PUT(
   try {
     const courseId = params.id;
     const courseData: Partial<CourseFormValues> = await request.json();
-    
+
     console.log(`🔄 Updating course: ${courseId}`, courseData);
 
     const response = await fetch(`${API_BASE_URL}/courses/${courseId}`, {
-      method: 'PUT',
+      method: "PUT",
       headers: {
-        'Content-Type': 'application/json',
-        Authorization: request.headers.get('authorization') || '',
+        "Content-Type": "application/json",
+        Authorization: request.headers.get("authorization") || "",
       },
       body: JSON.stringify(courseData),
     });
@@ -65,15 +67,16 @@ export async function PUT(
     }
 
     const responseBody: Course = await response.json();
-    console.log('✅ Course updated successfully');
-    
+    console.log("✅ Course updated successfully");
+
     return NextResponse.json(responseBody);
   } catch (error) {
-    console.error('❌ Error updating course:', error);
+    console.error("❌ Error updating course:", error);
     return NextResponse.json(
-      { 
-        status: false, 
-        message: error instanceof Error ? error.message : 'Failed to update course' 
+      {
+        status: false,
+        message:
+          error instanceof Error ? error.message : "Failed to update course",
       },
       { status: 500 }
     );
@@ -89,10 +92,10 @@ export async function DELETE(
     console.log(`🔄 Deleting course: ${courseId}`);
 
     const response = await fetch(`${API_BASE_URL}/courses/${courseId}`, {
-      method: 'DELETE',
+      method: "DELETE",
       headers: {
-        'Content-Type': 'application/json',
-        Authorization: request.headers.get('authorization') || '',
+        "Content-Type": "application/json",
+        Authorization: request.headers.get("authorization") || "",
       },
     });
 
@@ -101,15 +104,14 @@ export async function DELETE(
       throw new Error(errorData.message || `API error: ${response.status}`);
     }
 
-    console.log('✅ Course deleted successfully');
-    
-    return NextResponse.json({ message: 'Course deleted successfully' });
+    return NextResponse.json({ message: "Course deleted successfully" });
   } catch (error) {
-    console.error('❌ Error deleting course:', error);
+    console.error("❌ Error deleting course:", error);
     return NextResponse.json(
-      { 
-        status: false, 
-        message: error instanceof Error ? error.message : 'Failed to delete course' 
+      {
+        status: false,
+        message:
+          error instanceof Error ? error.message : "Failed to delete course",
       },
       { status: 500 }
     );

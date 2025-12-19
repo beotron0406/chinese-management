@@ -25,7 +25,7 @@ const { Text } = Typography;
 const { TextArea } = Input;
 
 // Dev mode flag - set to false to hide individual upload buttons
-const DEV_MODE = true;
+const DEV_MODE = false;
 
 interface SelectionTextImageFormProps {
   form: FormInstance;
@@ -79,14 +79,74 @@ const SelectionTextImageForm = forwardRef<SelectionTextImageFormRef, SelectionTe
   };
 
   // Answer image upload handlers
-  const handleAnswerImageChange = (optionId: string, file: File | null) => {
+  const handleAnswerImageChange = async (optionId: string, file: File | null) => {
+    if (!file) return false;
+    
     const optionIndex = options.findIndex(opt => opt.id === optionId);
-    if (optionIndex >= 0) {
-      setAnswerImageUploads(prev => ({
-        ...prev,
-        [optionIndex]: { file, uploadedUrl: prev[optionIndex]?.uploadedUrl }
-      }));
+    if (optionIndex < 0) return false;
+
+    // Validate file
+    const imageValidation = validateFile(file, 'image', 10);
+    if (!imageValidation.isValid) {
+      message.error(imageValidation.error);
+      return false;
     }
+
+    // Set file in state
+    setAnswerImageUploads(prev => ({
+      ...prev,
+      [optionIndex]: { file, uploadedUrl: prev[optionIndex]?.uploadedUrl }
+    }));
+
+    // Auto-upload immediately
+    setUploadModalVisible(true);
+    setUploadStatus('uploading');
+    setUploadProgress(0);
+    setUploadError('');
+
+    try {
+      const result = await uploadImageByType(
+        file,
+        questionType,
+        (progress: UploadProgress) => {
+          setUploadProgress(Math.round(progress.percentage));
+        }
+      );
+
+      if (result.success && result.url) {
+        // Update state
+        setAnswerImageUploads(prev => ({
+          ...prev,
+          [optionIndex]: { file: null, uploadedUrl: result.url }
+        }));
+
+        // Update options
+        const updatedOptions = options.map(option => {
+          if (option.id === optionId) {
+            return {
+              ...option,
+              image: result.url || '',
+            };
+          }
+          return option;
+        });
+
+        setOptions(updatedOptions);
+        updateFormData(updatedOptions, correctAnswer);
+
+        setUploadStatus('success');
+        setUploadProgress(100);
+        message.success('Tải hình ảnh lên thành công!');
+      } else {
+        throw new Error(result.error || 'Upload failed - no URL returned');
+      }
+    } catch (error) {
+      console.error('Upload error:', error);
+      setUploadStatus('error');
+      setUploadError(error instanceof Error ? error.message : 'Upload failed');
+      message.error('Tải lên thất bại. Vui lòng thử lại.');
+    }
+
     return false;
   };
 
@@ -95,7 +155,7 @@ const SelectionTextImageForm = forwardRef<SelectionTextImageFormRef, SelectionTe
     const answerUpload = answerImageUploads[optionIndex];
     
     if (!answerUpload?.file) {
-      message.warning('Please select an image file to upload');
+      message.warning('Vui lòng chọn file hình ảnh để tải lên');
       return;
     }
 
@@ -142,7 +202,7 @@ const SelectionTextImageForm = forwardRef<SelectionTextImageFormRef, SelectionTe
 
         setUploadStatus('success');
         setUploadProgress(100);
-        message.success('Image uploaded successfully!');
+        message.success('Tải hình ảnh lên thành công!');
       } else {
         throw new Error(result.error || 'Upload failed - no URL returned');
       }
@@ -150,7 +210,7 @@ const SelectionTextImageForm = forwardRef<SelectionTextImageFormRef, SelectionTe
       console.error('Upload error:', error);
       setUploadStatus('error');
       setUploadError(error instanceof Error ? error.message : 'Upload failed');
-      message.error('Upload failed. Please try again.');
+      message.error('Tải lên thất bại. Vui lòng thử lại.');
     }
   };
 
@@ -235,7 +295,7 @@ const SelectionTextImageForm = forwardRef<SelectionTextImageFormRef, SelectionTe
         return true;
       }
 
-      message.warning('Please select and upload all option images');
+      message.warning('Vui lòng chọn và tải lên tất cả hình ảnh tùy chọn');
       return false;
     }
 
@@ -244,7 +304,7 @@ const SelectionTextImageForm = forwardRef<SelectionTextImageFormRef, SelectionTe
       if (upload.file) {
         const imageValidation = validateFile(upload.file, 'image', 10);
         if (!imageValidation.isValid) {
-          message.error(`Option ${parseInt(index) + 1} image: ${imageValidation.error}`);
+          message.error(`Hình ảnh tùy chọn ${parseInt(index) + 1}: ${imageValidation.error}`);
           return false;
         }
       }
@@ -292,7 +352,7 @@ const SelectionTextImageForm = forwardRef<SelectionTextImageFormRef, SelectionTe
               image: item.result.url,
             };
           } else {
-            throw new Error(`Option ${item.index + 1} image upload failed: ${item.result.error}`);
+            throw new Error(`Tải hình ảnh tùy chọn ${item.index + 1} thất bại: ${item.result.error}`);
           }
         }
         completedFiles++;
@@ -313,14 +373,14 @@ const SelectionTextImageForm = forwardRef<SelectionTextImageFormRef, SelectionTe
       setUploadProgress(100);
 
       if (showModal) {
-        message.success('All images uploaded successfully!');
+        message.success('Tất cả hình ảnh đã tải lên thành công!');
       }
       return true;
     } catch (error) {
       console.error('Upload error:', error);
       setUploadStatus('error');
       setUploadError(error instanceof Error ? error.message : 'Upload failed');
-      message.error('Upload failed. Please try again.');
+      message.error('Tải lên thất bại. Vui lòng thử lại.');
       return false;
     }
   };
@@ -355,23 +415,23 @@ const SelectionTextImageForm = forwardRef<SelectionTextImageFormRef, SelectionTe
   return (
     <div>
       {/* Question Setup */}
-      <Card title="Question Setup" style={{ marginBottom: '24px' }}>
+      <Card title="Thiết Lập Câu Hỏi" style={{ marginBottom: '24px' }}>
         <Form.Item
-          label="Question Instruction"
+          label="Hướng Dẫn Câu Hỏi"
           name={['data', 'instruction']}
-          rules={[{ required: true, message: 'Please enter the question instruction' }]}
+          rules={[{ required: true, message: 'Vui lòng nhập hướng dẫn câu hỏi' }]}
         >
-          <Input placeholder="e.g., Read the text and choose the correct image" />
+          <Input placeholder="ví dụ: Đọc văn bản và chọn hình ảnh đúng" />
         </Form.Item>
 
         <Form.Item
-          label="Question Text"
+          label="Văn Bản Câu Hỏi"
           name={['data', 'question']}
-          rules={[{ required: true, message: 'Please enter the question text' }]}
+          rules={[{ required: true, message: 'Vui lòng nhập văn bản câu hỏi' }]}
         >
           <TextArea
             rows={3}
-            placeholder="Enter the question text that students will read"
+            placeholder="Nhập văn bản câu hỏi mà học viên sẽ đọc"
             style={{ fontSize: '16px' }}
           />
         </Form.Item>
@@ -379,7 +439,7 @@ const SelectionTextImageForm = forwardRef<SelectionTextImageFormRef, SelectionTe
 
       {/* Answer Options */}
       <Card
-        title="Answer Options (Images)"
+        title="Các Lựa Chọn Trả Lời (Hình Ảnh)"
         extra={
           <Button
             type="dashed"
@@ -387,7 +447,7 @@ const SelectionTextImageForm = forwardRef<SelectionTextImageFormRef, SelectionTe
             onClick={addOption}
             disabled={options.length >= 6}
           >
-            Add Option
+            Thêm Tùy Chọn
           </Button>
         }
         style={{ marginBottom: '24px' }}
@@ -405,14 +465,14 @@ const SelectionTextImageForm = forwardRef<SelectionTextImageFormRef, SelectionTe
                 }}
                 title={
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <span>Option {index + 1}</span>
+                    <span>Tùy Chọn {index + 1}</span>
                     <Space>
                       <Button
                         type={correctAnswer === option.id ? 'primary' : 'default'}
                         size="small"
                         onClick={() => handleCorrectAnswerChange(option.id)}
                       >
-                        {correctAnswer === option.id ? 'Correct Answer' : 'Mark as Correct'}
+                        {correctAnswer === option.id ? 'Đáp Án Đúng' : 'Đánh Dấu Là Đúng'}
                       </Button>
                       {options.length > 2 && (
                         <Button
@@ -428,7 +488,7 @@ const SelectionTextImageForm = forwardRef<SelectionTextImageFormRef, SelectionTe
               >
                 {/* Image Upload */}
                 <div style={{ marginBottom: '16px' }}>
-                  <Text strong>Option Image</Text>
+                  <Text strong>Hình Ảnh Tùy Chọn</Text>
                   <div style={{ marginTop: '4px' }}>
                     <Upload
                       accept="image/*"
@@ -443,16 +503,15 @@ const SelectionTextImageForm = forwardRef<SelectionTextImageFormRef, SelectionTe
                       <Button
                         icon={<UploadOutlined />}
                         disabled={!!answerUpload?.uploadedUrl}
-                        style={{ marginBottom: 8 }}
                       >
-                        {answerUpload?.file ? answerUpload.file.name : 'Select Image'}
+                        {answerUpload?.file ? answerUpload.file.name : 'Chọn Hình Ảnh'}
                       </Button>
                     </Upload>
                     {answerUpload?.uploadedUrl && (
                       <div style={{ marginTop: 8 }}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                           <PictureOutlined style={{ color: '#52c41a' }} />
-                          <span style={{ color: '#52c41a' }}>Image uploaded</span>
+                          <span style={{ color: '#52c41a' }}>Hình ảnh đã tải lên</span>
                           <Button
                             size="small"
                             icon={<DeleteOutlined />}
@@ -470,27 +529,14 @@ const SelectionTextImageForm = forwardRef<SelectionTextImageFormRef, SelectionTe
                         </div>
                       </div>
                     )}
-                    {DEV_MODE && answerUpload?.file && !answerUpload?.uploadedUrl && (
-                      <div style={{ marginTop: 8 }}>
-                        <Button
-                          type="primary"
-                          icon={<UploadOutlined />}
-                          onClick={() => handleUploadAnswerImage(option.id)}
-                          loading={uploadStatus === 'uploading'}
-                          size="small"
-                        >
-                          Upload Image to S3 (Dev Mode)
-                        </Button>
-                      </div>
-                    )}
                   </div>
                 </div>
 
                 {/* Alt Text */}
                 <div>
-                  <Text strong>Alt Text (for accessibility)</Text>
+                  <Text strong>Văn Bản Thay Thế (cho khả năng tiếp cận)</Text>
                   <Input
-                    placeholder="Describe what's in the image"
+                    placeholder="Mô tả nội dung trong hình ảnh"
                     value={option.alt}
                     onChange={(e) => handleAltTextChange(option.id, e.target.value)}
                     style={{ marginTop: '4px' }}
@@ -500,7 +546,7 @@ const SelectionTextImageForm = forwardRef<SelectionTextImageFormRef, SelectionTe
                 {/* Preview */}
                 {answerUpload?.uploadedUrl && (
                   <div style={{ marginTop: '12px', padding: '8px', backgroundColor: '#fafafa', borderRadius: '4px' }}>
-                    <Text strong>Preview: </Text>
+                    <Text strong>Xem Trước: </Text>
                     <div style={{ marginTop: '4px' }}>
                       <img
                         src={answerUpload.uploadedUrl}
@@ -509,7 +555,7 @@ const SelectionTextImageForm = forwardRef<SelectionTextImageFormRef, SelectionTe
                       />
                       {option.alt && (
                         <div style={{ fontSize: '12px', color: '#666', marginTop: '4px' }}>
-                          Alt: {option.alt}
+                          Mô tả: {option.alt}
                         </div>
                       )}
                     </div>
@@ -522,8 +568,8 @@ const SelectionTextImageForm = forwardRef<SelectionTextImageFormRef, SelectionTe
 
         {/* Correct Answer Summary */}
         <div style={{ marginTop: '16px', padding: '12px', backgroundColor: '#e6f7ff', borderRadius: '6px' }}>
-          <Text strong>Correct Answer: </Text>
-          <Text>Option {options.findIndex(opt => opt.id === correctAnswer) + 1}</Text>
+          <Text strong>Đáp Án Đúng: </Text>
+          <Text>Tùy Chọn {options.findIndex(opt => opt.id === correctAnswer) + 1}</Text>
           {options.find(opt => opt.id === correctAnswer)?.alt && (
             <Text> - {options.find(opt => opt.id === correctAnswer)?.alt}</Text>
           )}
@@ -531,15 +577,15 @@ const SelectionTextImageForm = forwardRef<SelectionTextImageFormRef, SelectionTe
       </Card>
 
       {/* Additional Settings */}
-      <Card title="Additional Settings" style={{ marginBottom: '24px' }}>
+      <Card title="Cài Đặt Thêm" style={{ marginBottom: '24px' }}>
         <Form.Item
-          label="Explanation (Optional)"
+          label="Giải Thích (Tùy Chọn)"
           name={['data', 'explanation']}
-          help="Provide an explanation that will be shown after the student answers"
+          help="Cung cấp giải thích sẽ được hiển thị sau khi học viên trả lời"
         >
           <TextArea
             rows={3}
-            placeholder="Explain why this is the correct answer..."
+            placeholder="Giải thích tại sao đây là đáp án đúng..."
           />
         </Form.Item>
       </Card>

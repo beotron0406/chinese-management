@@ -9,7 +9,6 @@ export async function GET(
 ) {
   try {
     const courseId = params.courseId;
-    console.log(`🔄 Fetching lessons by course: ${courseId}`);
 
     const response = await fetch(`${API_BASE_URL}/lessons/course/${courseId}`, {
       method: 'GET',

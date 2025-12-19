@@ -46,17 +46,17 @@ const LessonFormModal: React.FC<LessonFormModalProps> = ({
       if (lesson) {
         // Update existing lesson
         await lessonApi.updateLesson(lesson.id, values);
-        message.success('Lesson updated successfully');
+        message.success('Cập nhật lesson thành công');
       } else {
         // Create new lesson
         await lessonApi.createLesson(values as LessonFormValues);
-        message.success('Lesson created successfully');
+        message.success('Tạo lesson thành công');
       }
 
       onClose(true);
     } catch (error) {
       console.error('Error submitting form:', error);
-      message.error('Failed to save lesson');
+      message.error('Lưu lesson thất bại');
     } finally {
       setLoading(false);
     }
@@ -64,12 +64,12 @@ const LessonFormModal: React.FC<LessonFormModalProps> = ({
 
   return (
     <Modal
-      title={lesson ? 'Edit Lesson' : 'Add New Lesson'}
+      title={lesson ? 'Chỉnh sửa lesson' : 'Thêm lesson mới'}
       open={visible}
       onCancel={() => onClose(false)}
       footer={[
         <Button key="cancel" onClick={() => onClose(false)}>
-          Cancel
+          Hủy
         </Button>,
         <Button
           key="submit"
@@ -77,7 +77,7 @@ const LessonFormModal: React.FC<LessonFormModalProps> = ({
           loading={loading}
           onClick={handleSubmit}
         >
-          Save
+          Lưu
         </Button>,
       ]}
       width={600}
@@ -89,35 +89,28 @@ const LessonFormModal: React.FC<LessonFormModalProps> = ({
       >
         <Form.Item
           name="name"
-          label="Lesson name"
-          rules={[{ required: true, message: 'Please enter lesson name' }]}
+          label="Tên bài học"
+          rules={[{ required: true, message: 'Vui lòng nhập tên bài học' }]}
         >
-          <Input placeholder="Enter lesson name" />
+          <Input placeholder="Nhập tên bài học" />
         </Form.Item>
 
         <Form.Item
           name="description"
-          label="Description"
-          rules={[{ required: true, message: 'Please enter lesson description' }]}
+          label="Mô tả"
+          rules={[{ required: true, message: 'Vui lòng nhập mô tả' }]}
         >
-          <Input.TextArea rows={4} placeholder="Enter lesson description" />
+          <Input.TextArea rows={4} placeholder="Nhập mô tả bài học" />
         </Form.Item>
 
         <Form.Item
           name="courseId"
-          label="Course"
-          rules={[{ required: true, message: 'Please select a course' }]}
+          label="Khóa học"
+          rules={[{ required: true, message: 'Vui lòng chọn khóa học' }]}
         >
           <CourseSelect />
         </Form.Item>
 
-        <Form.Item
-          name="orderIndex"
-          label="Order Index"
-          rules={[{ required: true, message: 'Please enter order index' }]}
-        >
-          <InputNumber min={1} style={{ width: '100%' }} />
-        </Form.Item>
       </Form>
     </Modal>
   );

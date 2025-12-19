@@ -21,12 +21,13 @@ import type { FormInstance } from "antd/es/form";
 import { SelectionAudioTextQuestionData } from '@/types/questionType';
 import { uploadAudioByType, validateFile, UploadProgress } from '@/utils/s3Upload';
 import UploadModal from '@/components/common/UploadModal';
+import TTSButton from '@/components/shared/TTSButton';
 
 const { Text } = Typography;
 const { TextArea } = Input;
 
 // Dev mode flag - set to false to hide individual upload buttons
-const DEV_MODE = true;
+const DEV_MODE = false;
 
 interface SelectionAudioTextFormProps {
   form: FormInstance;
@@ -107,14 +108,63 @@ const SelectionAudioTextForm = forwardRef<SelectionAudioTextFormRef, SelectionAu
   };
 
   // Audio upload handlers
-  const handleAudioFileChange = (file: File | null) => {
+  const handleAudioFileChange = async (file: File | null) => {
+    if (!file) return false;
+
+    // Validate file
+    const audioValidation = validateFile(file, 'audio', 10);
+    if (!audioValidation.isValid) {
+      message.error(audioValidation.error);
+      return false;
+    }
+
+    // Set file in state
     setSelectedAudioFile(file);
+
+    // Auto-upload immediately
+    setUploadModalVisible(true);
+    setUploadStatus('uploading');
+    setUploadProgress(0);
+    setUploadError('');
+
+    try {
+      const result = await uploadAudioByType(
+        file,
+        questionType,
+        (progress: UploadProgress) => {
+          setUploadProgress(Math.round(progress.percentage));
+        }
+      );
+
+      if (result.success && result.url) {
+        setUploadedAudioUrl(result.url);
+        form.setFieldsValue({
+          data: {
+            ...form.getFieldValue('data'),
+            audio: result.url,
+            audio_url: result.url,
+          }
+        });
+        setUploadStatus('success');
+        setUploadProgress(100);
+        setSelectedAudioFile(null);
+        message.success('Tải âm thanh lên thành công!');
+      } else {
+        throw new Error(result.error || 'Upload failed');
+      }
+    } catch (error) {
+      console.error('Upload error:', error);
+      setUploadStatus('error');
+      setUploadError(error instanceof Error ? error.message : 'Upload failed');
+      message.error('Tải lên thất bại. Vui lòng thử lại.');
+    }
+
     return false;
   };
 
   const handleUploadAudio = async () => {
     if (!selectedAudioFile) {
-      message.warning('Please select an audio file to upload');
+      message.warning('Vui lòng chọn file âm thanh để tải lên');
       return;
     }
 
@@ -150,7 +200,7 @@ const SelectionAudioTextForm = forwardRef<SelectionAudioTextFormRef, SelectionAu
         setUploadStatus('success');
         setUploadProgress(100);
         setSelectedAudioFile(null);
-        message.success('Audio uploaded successfully!');
+        message.success('Tải âm thanh lên thành công!');
       } else {
         throw new Error(result.error);
       }
@@ -158,7 +208,7 @@ const SelectionAudioTextForm = forwardRef<SelectionAudioTextFormRef, SelectionAu
       console.error('Upload error:', error);
       setUploadStatus('error');
       setUploadError(error instanceof Error ? error.message : 'Upload failed');
-      message.error('Upload failed. Please try again.');
+      message.error('Tải lên thất bại. Vui lòng thử lại.');
     }
   };
 
@@ -172,6 +222,19 @@ const SelectionAudioTextForm = forwardRef<SelectionAudioTextFormRef, SelectionAu
         audio_url: undefined,
       }
     });
+  };
+
+  // Handle TTS audio generated
+  const handleTTSAudioGenerated = (audioUrl: string) => {
+    setUploadedAudioUrl(audioUrl);
+    form.setFieldsValue({
+      data: {
+        ...form.getFieldValue('data'),
+        audio: audioUrl,
+        audio_url: audioUrl,
+      }
+    });
+    message.success('Tạo giọng nói thành công!');
   };
 
   // Option management
@@ -230,7 +293,7 @@ const SelectionAudioTextForm = forwardRef<SelectionAudioTextFormRef, SelectionAu
         return true;
       }
 
-      message.warning('Please select and upload an audio file');
+      message.warning('Vui lòng chọn và tải lên file âm thanh');
       return false;
     }
 
@@ -273,7 +336,7 @@ const SelectionAudioTextForm = forwardRef<SelectionAudioTextFormRef, SelectionAu
         setSelectedAudioFile(null);
 
         if (showModal) {
-          message.success('Audio uploaded successfully!');
+          message.success('Tải âm thanh lên thành công!');
         }
         return true;
       } else {
@@ -283,7 +346,7 @@ const SelectionAudioTextForm = forwardRef<SelectionAudioTextFormRef, SelectionAu
       console.error('Upload error:', error);
       setUploadStatus('error');
       setUploadError(error instanceof Error ? error.message : 'Upload failed');
-      message.error('Upload failed. Please try again.');
+      message.error('Tải lên thất bại. Vui lòng thử lại.');
       return false;
     }
   };
@@ -324,47 +387,54 @@ const SelectionAudioTextForm = forwardRef<SelectionAudioTextFormRef, SelectionAu
   return (
     <div>
       {/* Question Setup */}
-      <Card title="Question Setup" style={{ marginBottom: '24px' }}>
+      <Card title="Thiết Lập Câu Hỏi" style={{ marginBottom: '24px' }}>
         <Form.Item
-          label="Question Instruction"
+          label="Hướng Dẫn Câu Hỏi"
           name={['data', 'instruction']}
-          rules={[{ required: true, message: 'Please enter the question instruction' }]}
+          rules={[{ required: true, message: 'Vui lòng nhập hướng dẫn câu hỏi' }]}
         >
-          <Input placeholder="e.g., Listen to the audio and choose the correct text" />
+          <Input placeholder="ví dụ: Nghe audio và chọn văn bản đúng" />
         </Form.Item>
       </Card>
 
       {/* Audio Section */}
-      <Card title="Audio File" style={{ marginBottom: "24px" }}>
+      <Card title="File Âm Thanh" style={{ marginBottom: "24px" }}>
         <Form.Item
-          label="Audio File"
+          label="File Âm Thanh"
           name={['data', 'audio']}
-          rules={[{ required: true, message: "Please upload an audio file" }]}
+          rules={[{ required: true, message: "Vui lòng tải lên file âm thanh" }]}
         >
           <div>
-            <Upload
-              accept="audio/*"
-              maxCount={1}
-              showUploadList={false}
-              beforeUpload={(file) => {
-                handleAudioFileChange(file);
-                return false;
-              }}
-              disabled={!!uploadedAudioUrl}
-            >
-              <Button
-                icon={<UploadOutlined />}
+            <Space>
+              <Upload
+                accept="audio/*"
+                maxCount={1}
+                showUploadList={false}
+                beforeUpload={(file) => {
+                  handleAudioFileChange(file);
+                  return false;
+                }}
                 disabled={!!uploadedAudioUrl}
-                style={{ marginBottom: 8 }}
               >
-                {selectedAudioFile ? selectedAudioFile.name : 'Select Audio'}
-              </Button>
-            </Upload>
+                <Button
+                  icon={<UploadOutlined />}
+                  disabled={!!uploadedAudioUrl}
+                >
+                  {selectedAudioFile ? selectedAudioFile.name : 'Chọn Âm Thanh'}
+                </Button>
+              </Upload>
+              <TTSButton
+                text={audioTranscriptChinese}
+                onAudioGenerated={handleTTSAudioGenerated}
+                disabled={!!uploadedAudioUrl}
+                buttonText="Tạo giọng nói"
+              />
+            </Space>
             {uploadedAudioUrl && (
               <div style={{ marginTop: 8 }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                   <SoundOutlined style={{ color: '#52c41a' }} />
-                  <span style={{ color: '#52c41a' }}>Audio uploaded</span>
+                  <span style={{ color: '#52c41a' }}>Âm thanh đã tải lên</span>
                   <Button
                     size="small"
                     icon={<DeleteOutlined />}
@@ -376,21 +446,9 @@ const SelectionAudioTextForm = forwardRef<SelectionAudioTextFormRef, SelectionAu
                 <div style={{ marginTop: 4 }}>
                   <audio controls style={{ width: '100%' }}>
                     <source src={uploadedAudioUrl} />
-                    Your browser does not support the audio element.
+                    Trình duyệt của bạn không hỗ trợ phần tử âm thanh.
                   </audio>
                 </div>
-              </div>
-            )}
-            {DEV_MODE && selectedAudioFile && !uploadedAudioUrl && (
-              <div style={{ marginTop: 8 }}>
-                <Button
-                  type="primary"
-                  icon={<UploadOutlined />}
-                  onClick={handleUploadAudio}
-                  loading={uploadStatus === 'uploading'}
-                >
-                  Upload Audio to S3 (Dev Mode)
-                </Button>
               </div>
             )}
           </div>
@@ -398,20 +456,20 @@ const SelectionAudioTextForm = forwardRef<SelectionAudioTextFormRef, SelectionAu
 
         {/* Audio Transcript */}
         <Form.Item
-          label="Audio Transcript (Chinese)"
+          label="Bản Ghi Âm Thanh (Tiếng Trung)"
           name={['data', 'audio_transcript_chinese']}
-          help="Optional transcript of the audio content"
+          help="Bản ghi tùy chọn của nội dung âm thanh"
         >
           <TextArea
             rows={2}
-            placeholder="Enter Chinese transcript of the audio"
+            placeholder="Nhập bản ghi tiếng Trung của âm thanh"
             onChange={(e) => handleTranscriptChange(e.target.value)}
             style={{ fontSize: "16px" }}
           />
         </Form.Item>
 
         {audioTranscriptPinyin && (
-          <Form.Item label="Auto-generated Pinyin">
+          <Form.Item label="Pinyin Tự Động Tạo">
             <div style={{ 
               padding: '8px 12px', 
               backgroundColor: '#f5f5f5', 
@@ -425,13 +483,13 @@ const SelectionAudioTextForm = forwardRef<SelectionAudioTextFormRef, SelectionAu
         )}
 
         <Form.Item
-          label="Audio Translation (Vietnamese)"
+          label="Bản Dịch Âm Thanh (Tiếng Việt)"
           name={['data', 'audio_transcript_translation']}
-          help="Optional Vietnamese translation of the audio"
+          help="Bản dịch tiếng Việt tùy chọn của âm thanh"
         >
           <TextArea
             rows={2}
-            placeholder="Enter Vietnamese translation"
+            placeholder="Nhập bản dịch tiếng Việt"
           />
         </Form.Item>
 
@@ -446,7 +504,7 @@ const SelectionAudioTextForm = forwardRef<SelectionAudioTextFormRef, SelectionAu
 
       {/* Answer Options */}
       <Card
-        title="Answer Options"
+        title="Các Lựa Chọn Trả Lời"
         extra={
           <Button
             type="dashed"
@@ -454,7 +512,7 @@ const SelectionAudioTextForm = forwardRef<SelectionAudioTextFormRef, SelectionAu
             onClick={addOption}
             disabled={options.length >= 6}
           >
-            Add Option
+            Thêm Tùy Chọn
           </Button>
         }
         style={{ marginBottom: '24px' }}
@@ -470,14 +528,14 @@ const SelectionAudioTextForm = forwardRef<SelectionAudioTextFormRef, SelectionAu
               }}
               title={
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <span>Option {index + 1}</span>
+                  <span>Tùy Chọn {index + 1}</span>
                   <Space>
                     <Button
                       type={correctAnswer === option.id ? 'primary' : 'default'}
                       size="small"
                       onClick={() => handleCorrectAnswerChange(option.id)}
                     >
-                      {correctAnswer === option.id ? 'Correct Answer' : 'Mark as Correct'}
+                      {correctAnswer === option.id ? 'Đáp Án Đúng' : 'Đánh Dấu Là Đúng'}
                     </Button>
                     {options.length > 2 && (
                       <Button
@@ -493,9 +551,9 @@ const SelectionAudioTextForm = forwardRef<SelectionAudioTextFormRef, SelectionAu
             >
               {/* Option Text */}
               <div>
-                <Text strong>Option Text</Text>
+                <Text strong>Văn Bản Tùy Chọn</Text>
                 <Input
-                  placeholder={`Enter option ${index + 1} text`}
+                  placeholder={`Nhập văn bản tùy chọn ${index + 1}`}
                   value={option.text}
                   onChange={(e) => handleOptionTextChange(option.id, e.target.value)}
                   style={{ marginTop: '4px', fontSize: '16px' }}
@@ -505,7 +563,7 @@ const SelectionAudioTextForm = forwardRef<SelectionAudioTextFormRef, SelectionAu
               {/* Preview */}
               {option.text && (
                 <div style={{ marginTop: '12px', padding: '8px', backgroundColor: '#fafafa', borderRadius: '4px' }}>
-                  <Text strong>Preview: </Text>
+                  <Text strong>Xem Trước: </Text>
                   <div style={{ marginTop: '4px', fontSize: '14px' }}>
                     {option.text}
                   </div>
@@ -517,8 +575,8 @@ const SelectionAudioTextForm = forwardRef<SelectionAudioTextFormRef, SelectionAu
 
         {/* Correct Answer Summary */}
         <div style={{ marginTop: '16px', padding: '12px', backgroundColor: '#e6f7ff', borderRadius: '6px' }}>
-          <Text strong>Correct Answer: </Text>
-          <Text>Option {options.findIndex(opt => opt.id === correctAnswer) + 1}</Text>
+          <Text strong>Đáp Án Đúng: </Text>
+          <Text>Tùy Chọn {options.findIndex(opt => opt.id === correctAnswer) + 1}</Text>
           {options.find(opt => opt.id === correctAnswer)?.text && (
             <Text> - {options.find(opt => opt.id === correctAnswer)?.text}</Text>
           )}
@@ -526,15 +584,15 @@ const SelectionAudioTextForm = forwardRef<SelectionAudioTextFormRef, SelectionAu
       </Card>
 
       {/* Additional Settings */}
-      <Card title="Additional Settings" style={{ marginBottom: '24px' }}>
+      <Card title="Cài Đặt Thêm" style={{ marginBottom: '24px' }}>
         <Form.Item
-          label="Explanation (Optional)"
+          label="Giải Thích (Tùy Chọn)"
           name={['data', 'explanation']}
-          help="Provide an explanation that will be shown after the student answers"
+          help="Cung cấp giải thích sẽ được hiển thị sau khi học viên trả lời"
         >
           <TextArea
             rows={3}
-            placeholder="Explain why this is the correct answer..."
+            placeholder="Giải thích tại sao đây là đáp án đúng..."
           />
         </Form.Item>
       </Card>

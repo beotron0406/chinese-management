@@ -11,6 +11,7 @@ import {
 import { PlatformOverview } from "@/types/userprogressTypes";
 import { adminProgressApi } from "@/services/userprogressApi";
 import OverviewCards from "@/components/progress/OverviewCards";
+import OverviewChart from "@/components/progress/OverviewChart";
 import TopUsersWidget from "@/components/progress/TopUsersWidget";
 import LeaderboardTabs from "@/components/progress/LeaderboardTabs";
 import CourseAnalyticsCard from "@/components/progress/CourseAnalyticsCard";
@@ -62,32 +63,17 @@ export default function DashboardPage() {
 
   if (error && !loading) {
     return (
-      <div style={{ padding: "24px" }}>
-        <Space direction="vertical" size="large" style={{ width: "100%" }}>
+      <div className="p-6">
+        <Space direction="vertical" size="large" className="w-full">
           <Title level={2}>Dashboard - Quản lý hệ thống học tập</Title>
-          <div
-            style={{
-              textAlign: "center",
-              padding: "40px",
-              background: "#fff2f0",
-              border: "1px solid #ffccc7",
-              borderRadius: "6px",
-            }}
-          >
-            <Typography.Text type="danger" style={{ fontSize: "16px" }}>
+          <div className="text-center p-10 bg-red-50 border border-red-200 rounded-md">
+            <Typography.Text type="danger" className="text-base">
               {error}
             </Typography.Text>
-            <div style={{ marginTop: "16px" }}>
+            <div className="mt-4">
               <button
                 onClick={() => window.location.reload()}
-                style={{
-                  padding: "8px 16px",
-                  backgroundColor: "#1890ff",
-                  color: "white",
-                  border: "none",
-                  borderRadius: "4px",
-                  cursor: "pointer",
-                }}
+                className="px-4 py-2 bg-blue-500 text-white border-none rounded cursor-pointer hover:bg-blue-600"
               >
                 Thử lại
               </button>
@@ -107,7 +93,7 @@ export default function DashboardPage() {
         </span>
       ),
       children: (
-        <Space direction="vertical" size="large" style={{ width: "100%" }}>
+        <Space direction="vertical" size="large" className="w-full">
           {/* 1. Platform Overview */}
           <OverviewCards data={overview} loading={loading} />
 
@@ -118,6 +104,10 @@ export default function DashboardPage() {
                 topUsers={overview?.topUsers || []}
                 loading={loading}
               />
+            </Col>
+            {/* Overview Chart */}
+            <Col xs={24} lg={12}>
+              <OverviewChart data={overview} loading={loading} />
             </Col>
           </Row>
         </Space>
@@ -131,7 +121,7 @@ export default function DashboardPage() {
         </span>
       ),
       children: (
-        <Space direction="vertical" size="large" style={{ width: "100%" }}>
+        <Space direction="vertical" size="large" className="w-full">
           <LeaderboardTabs />
         </Space>
       ),
@@ -144,7 +134,7 @@ export default function DashboardPage() {
         </span>
       ),
       children: (
-        <Space direction="vertical" size="large" style={{ width: "100%" }}>
+        <Space direction="vertical" size="large" className="w-full">
           <CourseAnalyticsCard />
         </Space>
       ),
@@ -157,7 +147,7 @@ export default function DashboardPage() {
         </span>
       ),
       children: (
-        <Space direction="vertical" size="large" style={{ width: "100%" }}>
+        <Space direction="vertical" size="large" className="w-full">
           <LessonAnalyticsCard />
         </Space>
       ),
@@ -165,8 +155,8 @@ export default function DashboardPage() {
   ];
 
   return (
-    <div style={{ padding: "24px" }}>
-      <Space direction="vertical" size="large" style={{ width: "100%" }}>
+    <div className="p-6">
+      <Space direction="vertical" size="large" className="w-full">
         <div>
           <Title level={2}>Dashboard - Quản lý hệ thống học tập</Title>
         </div>

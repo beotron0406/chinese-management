@@ -33,13 +33,13 @@ export default function StudyStreakCard({
         </div>
       }
     >
-      <div style={{ textAlign: "center" }}>
+      <div className="text-center">
         <Statistic
           title="Streak trung bình"
           value={averageStreak}
           precision={1}
           suffix="ngày"
-          prefix={<FireOutlined style={{ color: "#fa541c" }} />}
+          prefix={<FireOutlined className="text-orange-600" />}
           valueStyle={{ color: streakInfo.color, fontSize: "32px" }}
         />
       </div>

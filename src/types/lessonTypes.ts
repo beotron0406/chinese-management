@@ -1,15 +1,15 @@
-import { ContentType } from '@/enums/content-type.enum';
+import { ContentType } from "@/enums/content-type.enum";
 
 export interface Lesson {
   id: number;
-  name: string;            // Changed from title to name
+  name: string; // Changed from title to name
   description: string;
   courseId: number;
   orderIndex: number;
   isActive: boolean;
   createdAt?: string;
   updatedAt?: string;
-  course?: {    
+  course?: {
     id: number;
     hskLevel: number;
     title: string;
@@ -19,13 +19,19 @@ export interface Lesson {
     orderIndex: number;
     createdAt: string;
   };
-  lessonWords?: LessonWord[];           // Updated with proper type
+  lessonWords?: LessonWord[]; // Updated with proper type
   lessonGrammarPatterns?: LessonGrammarPattern[]; // Updated with proper type
 }
 
 export interface LessonContent {
   id: number;
-  type: ContentType | 'text' | 'vocabulary' | 'grammar' | 'exercise' | 'divider';
+  type:
+    | ContentType
+    | "text"
+    | "vocabulary"
+    | "grammar"
+    | "exercise"
+    | "divider";
   data: Record<string, any>;
   orderIndex?: number;
   lessonId: number;
@@ -35,7 +41,7 @@ export interface LessonContent {
 
 export interface LessonItem {
   id: number;
-  type: 'content' | 'question';
+  type: "content" | "question";
   lessonId: number;
   orderIndex?: number;
   data: Record<string, any>;
@@ -48,24 +54,29 @@ export interface LessonItem {
 
 // Also update your form values interfaces
 export interface LessonFormData {
-  name: string;             // Changed from title to name
+  name: string; // Changed from title to name
   description: string;
   courseId?: number;
   orderIndex: number;
 }
 
 export interface LessonFormValues {
-  name: string;             // Changed from title to name
+  name: string; // Changed from title to name
   description: string;
   courseId?: number | null;
-  orderIndex: number;
   isActive?: boolean;
 }
 
 // Add content form interface
 export interface ContentFormValues {
   lessonId: number;
-  type: ContentType | 'text' | 'vocabulary' | 'grammar' | 'exercise' | 'divider';
+  type:
+    | ContentType
+    | "text"
+    | "vocabulary"
+    | "grammar"
+    | "exercise"
+    | "divider";
   data: Record<string, any>;
   orderIndex?: number;
 }
@@ -86,7 +97,7 @@ export interface ILessonByCourse {
     isActive: boolean;
     orderIndex: number;
     createdAt: string; // ISO date string
-  }
+  };
 }
 
 // ===== LESSON WORD INTERFACES =====
