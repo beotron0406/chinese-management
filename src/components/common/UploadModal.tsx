@@ -1,14 +1,18 @@
 "use client";
-import React from 'react';
-import { Modal, Progress, Typography, Button, Alert } from 'antd';
-import { CheckCircleOutlined, CloseCircleOutlined, LoadingOutlined } from '@ant-design/icons';
+import React from "react";
+import { Modal, Progress, Typography, Button, Alert } from "antd";
+import {
+  CheckCircleOutlined,
+  CloseCircleOutlined,
+  LoadingOutlined,
+} from "@ant-design/icons";
 
 const { Text, Title } = Typography;
 
 export interface UploadModalProps {
   visible: boolean;
   onCancel: () => void;
-  uploadStatus: 'uploading' | 'success' | 'error' | 'idle';
+  uploadStatus: "uploading" | "success" | "error" | "idle";
   uploadProgress: number;
   uploadedUrls?: {
     imageUrl?: string;
@@ -32,25 +36,29 @@ const UploadModal: React.FC<UploadModalProps> = ({
 }) => {
   const getModalTitle = () => {
     switch (uploadStatus) {
-      case 'uploading':
-        return 'Uploading Files to S3...';
-      case 'success':
-        return 'Upload Successful!';
-      case 'error':
-        return 'Upload Failed';
+      case "uploading":
+        return "Đang Tải Tệp Lên S3...";
+      case "success":
+        return "Tải Lên Thành Công!";
+      case "error":
+        return "Tải Lên Thất Bại";
       default:
-        return 'Upload Files';
+        return "Tải Tệp Lên";
     }
   };
 
   const getStatusIcon = () => {
     switch (uploadStatus) {
-      case 'uploading':
-        return <LoadingOutlined style={{ fontSize: 24, color: '#1890ff' }} />;
-      case 'success':
-        return <CheckCircleOutlined style={{ fontSize: 24, color: '#52c41a' }} />;
-      case 'error':
-        return <CloseCircleOutlined style={{ fontSize: 24, color: '#ff4d4f' }} />;
+      case "uploading":
+        return <LoadingOutlined style={{ fontSize: 24, color: "#1890ff" }} />;
+      case "success":
+        return (
+          <CheckCircleOutlined style={{ fontSize: 24, color: "#52c41a" }} />
+        );
+      case "error":
+        return (
+          <CloseCircleOutlined style={{ fontSize: 24, color: "#ff4d4f" }} />
+        );
       default:
         return null;
     }
@@ -58,24 +66,22 @@ const UploadModal: React.FC<UploadModalProps> = ({
 
   const getProgressStatus = () => {
     switch (uploadStatus) {
-      case 'success':
-        return 'success';
-      case 'error':
-        return 'exception';
+      case "success":
+        return "success";
+      case "error":
+        return "exception";
       default:
-        return 'active';
+        return "active";
     }
   };
 
   const renderUploadContent = () => {
-    if (uploadStatus === 'uploading') {
+    if (uploadStatus === "uploading") {
       return (
-        <div style={{ textAlign: 'center', padding: '24px 0' }}>
-          <div style={{ marginBottom: 16 }}>
-            {getStatusIcon()}
-          </div>
+        <div style={{ textAlign: "center", padding: "24px 0" }}>
+          <div style={{ marginBottom: 16 }}>{getStatusIcon()}</div>
           <Title level={4} style={{ marginBottom: 24 }}>
-            Uploading your files...
+            Đang tải tệp của bạn lên...
           </Title>
           <Progress
             type="circle"
@@ -85,20 +91,20 @@ const UploadModal: React.FC<UploadModalProps> = ({
           />
           <div style={{ marginTop: 16 }}>
             <Text type="secondary">
-              Please don't close this window while uploading
+              Vui lòng không đóng cửa sổ này trong khi đang tải lên
             </Text>
           </div>
           {fileNames && (
-            <div style={{ marginTop: 16, textAlign: 'left' }}>
+            <div style={{ marginTop: 16, textAlign: "left" }}>
               {fileNames.imageName && (
                 <div style={{ marginBottom: 8 }}>
-                  <Text strong>Image: </Text>
+                  <Text strong>Hình Ảnh: </Text>
                   <Text>{fileNames.imageName}</Text>
                 </div>
               )}
               {fileNames.audioName && (
                 <div>
-                  <Text strong>Audio: </Text>
+                  <Text strong>Âm Thanh: </Text>
                   <Text>{fileNames.audioName}</Text>
                 </div>
               )}
@@ -108,23 +114,21 @@ const UploadModal: React.FC<UploadModalProps> = ({
       );
     }
 
-    if (uploadStatus === 'success') {
+    if (uploadStatus === "success") {
       return (
-        <div style={{ textAlign: 'center', padding: '24px 0' }}>
-          <div style={{ marginBottom: 16 }}>
-            {getStatusIcon()}
-          </div>
-          <Title level={4} style={{ marginBottom: 24, color: '#52c41a' }}>
-            Files uploaded successfully!
+        <div style={{ textAlign: "center", padding: "24px 0" }}>
+          <div style={{ marginBottom: 16 }}>{getStatusIcon()}</div>
+          <Title level={4} style={{ marginBottom: 24, color: "#52c41a" }}>
+            Tải tệp lên thành công!
           </Title>
           <Alert
-            message="Upload Complete"
-            description="Your files have been uploaded to S3 and are ready to use."
+            message="Tải Lên Hoàn Tất"
+            description="Các tệp của bạn đã được tải lên S3 và sẵn sàng sử dụng."
             type="success"
             showIcon
-            style={{ marginBottom: 24, textAlign: 'left' }}
+            style={{ marginBottom: 24, textAlign: "left" }}
           />
-          {uploadedUrls && (
+          {/* {uploadedUrls && (
             <div style={{ textAlign: 'left' }}>
               {uploadedUrls.imageUrl && (
                 <div style={{ marginBottom: 12 }}>
@@ -147,29 +151,31 @@ const UploadModal: React.FC<UploadModalProps> = ({
                 </div>
               )}
             </div>
-          )}
+          )} */}
         </div>
       );
     }
 
-    if (uploadStatus === 'error') {
+    if (uploadStatus === "error") {
       return (
-        <div style={{ textAlign: 'center', padding: '24px 0' }}>
-          <div style={{ marginBottom: 16 }}>
-            {getStatusIcon()}
-          </div>
-          <Title level={4} style={{ marginBottom: 24, color: '#ff4d4f' }}>
-            Upload Failed
+        <div style={{ textAlign: "center", padding: "24px 0" }}>
+          <div style={{ marginBottom: 16 }}>{getStatusIcon()}</div>
+          <Title level={4} style={{ marginBottom: 24, color: "#ff4d4f" }}>
+            Tải Lên Thất Bại
           </Title>
           <Alert
-            message="Upload Error"
-            description={errorMessage || 'An error occurred while uploading your files. Please try again.'}
+            message="Lỗi Tải Lên"
+            description={
+              errorMessage ||
+              "Đã xảy ra lỗi khi tải tệp lên. Vui lòng thử lại."
+            }
             type="error"
             showIcon
-            style={{ marginBottom: 24, textAlign: 'left' }}
+            style={{ marginBottom: 24, textAlign: "left" }}
           />
           <Text type="secondary">
-            Please check your files and try again. Make sure your files are in the correct format and under the size limit.
+            Vui lòng kiểm tra tệp của bạn và thử lại. Đảm bảo tệp đúng định dạng
+            và dưới giới hạn kích thước cho phép.
           </Text>
         </div>
       );
@@ -179,29 +185,29 @@ const UploadModal: React.FC<UploadModalProps> = ({
   };
 
   const getFooterButtons = () => {
-    if (uploadStatus === 'uploading') {
+    if (uploadStatus === "uploading") {
       return null; // No buttons while uploading
     }
 
-    if (uploadStatus === 'success') {
+    if (uploadStatus === "success") {
       return [
         <Button key="done" type="primary" onClick={onCancel}>
-          Done
+          Hoàn Tất
         </Button>,
       ];
     }
 
-    if (uploadStatus === 'error') {
+    if (uploadStatus === "error") {
       return [
         <Button key="retry" type="primary" onClick={onCancel}>
-          Close
+          Đóng
         </Button>,
       ];
     }
 
     return [
       <Button key="cancel" onClick={onCancel}>
-        Cancel
+        Hủy
       </Button>,
     ];
   };
@@ -210,10 +216,10 @@ const UploadModal: React.FC<UploadModalProps> = ({
     <Modal
       title={getModalTitle()}
       open={visible}
-      onCancel={uploadStatus === 'uploading' ? undefined : onCancel}
+      onCancel={uploadStatus === "uploading" ? undefined : onCancel}
       footer={getFooterButtons()}
-      closable={uploadStatus !== 'uploading'}
-      maskClosable={uploadStatus !== 'uploading'}
+      closable={uploadStatus !== "uploading"}
+      maskClosable={uploadStatus !== "uploading"}
       width={500}
       centered
     >

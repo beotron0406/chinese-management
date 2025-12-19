@@ -2,7 +2,6 @@
 
 import { Tabs, Typography, Row, Col } from 'antd';
 import PageHeader from '@/components/common/PageHeader';
-import CourseStatsCard from '@/components/courses/CourseStatsCard';
 import ProtectedRoute from '@/components/auth/ProtectedRoute';
 import CourseList from './courses_list';
 
@@ -14,13 +13,13 @@ export default function CoursesPage() {
     <ProtectedRoute adminOnly>
       <div>
         <PageHeader 
-          title="Course Management" 
-          subtitle="Create and manage courses for the Chinese learning platform"
+          title="Quản lý khóa học" 
+          subtitle="Tạo và quản lý các khóa học cho nền tảng học tiếng Trung"
         />
         
         <div style={{ marginTop: '16px' }}>
           <Tabs defaultActiveKey="all">
-            <TabPane tab="All Courses" key="all">
+            <TabPane tab="Tất cả khóa học" key="all">
               <CourseList key="all-courses" />
             </TabPane>
           </Tabs>

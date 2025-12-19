@@ -151,14 +151,14 @@ const MatchingTextTextForm: React.FC<MatchingTextTextFormProps> = ({
   return (
     <div>
       {/* Question Setup */}
-      <Card title="Question Setup" style={{ marginBottom: '24px' }}>
+      <Card title="Thiết Lập Câu Hỏi" style={{ marginBottom: '24px' }}>
         <Form.Item
-          label="Question Instruction"
+          label="Hướng Dẫn Câu Hỏi"
           name={["data", "instruction"]}
-          rules={[{ required: true, message: "Please enter the question instruction" }]}
+          rules={[{ required: true, message: "Vui lòng nhập hướng dẫn câu hỏi" }]}
         >
           <TextArea
-            placeholder="Enter instruction for the student (e.g., 'Match the Chinese words with their English meaning')"
+            placeholder="Nhập hướng dẫn cho học viên (ví dụ: 'Ghép các từ tiếng Trung với nghĩa tiếng Anh của chúng')"
             autoSize={{ minRows: 2, maxRows: 4 }}
           />
         </Form.Item>
@@ -166,7 +166,7 @@ const MatchingTextTextForm: React.FC<MatchingTextTextFormProps> = ({
 
       {/* Left Column */}
       <Card
-        title="Left Column (Chinese)"
+        title="Cột Trái (Tiếng Trung)"
         style={{ marginBottom: '24px' }}
       >
         <Form.List
@@ -199,11 +199,11 @@ const MatchingTextTextForm: React.FC<MatchingTextTextFormProps> = ({
                     <Form.Item
                       {...restField}
                       name={[name, "text"]}
-                      rules={[{ required: true, message: "Missing text" }]}
+                      rules={[{ required: true, message: "Thiếu văn bản" }]}
                       style={{ width: "300px" }}
                     >
                       <Input
-                        placeholder="Enter Chinese text"
+                        placeholder="Nhập chữ Trung"
                         onChange={(e) =>
                           handleLeftItemChange(index, e.target.value)
                         }
@@ -217,7 +217,7 @@ const MatchingTextTextForm: React.FC<MatchingTextTextFormProps> = ({
                       size="small"
                       type="default"
                     >
-                      Regenerate Pinyin
+                      Tạo Lại Pinyin
                     </Button>
 
                     {fields.length > 1 && (
@@ -268,7 +268,7 @@ const MatchingTextTextForm: React.FC<MatchingTextTextFormProps> = ({
                   block
                   icon={<PlusOutlined />}
                 >
-                  Add Left Item
+                  Thêm Mục Trái
                 </Button>
               </Form.Item>
             </>
@@ -278,7 +278,7 @@ const MatchingTextTextForm: React.FC<MatchingTextTextFormProps> = ({
 
       {/* Right Column */}
       <Card
-        title="Right Column (English/Translation)"
+        title="Cột Phải (Tiếng Anh/Bản Dịch)"
         style={{ marginBottom: '24px' }}
       >
         <Form.List
@@ -303,7 +303,7 @@ const MatchingTextTextForm: React.FC<MatchingTextTextFormProps> = ({
                     <Input
                       disabled
                       style={{ textAlign: "center", fontWeight: "bold" }}
-                      placeholder="Letter"
+                      placeholder="Chữ Cái"
                     />
                   </Form.Item>
 
@@ -311,10 +311,10 @@ const MatchingTextTextForm: React.FC<MatchingTextTextFormProps> = ({
                   <Form.Item
                     {...restField}
                     name={[name, "text"]}
-                    rules={[{ required: true, message: "Missing text" }]}
+                    rules={[{ required: true, message: "Thiếu văn bản" }]}
                     style={{ width: "300px" }}
                   >
-                    <Input placeholder="Enter English/translation text" />
+                    <Input placeholder="Nhập văn bản tiếng Anh/bản dịch" />
                   </Form.Item>
 
                   {fields.length > 1 && (
@@ -339,7 +339,7 @@ const MatchingTextTextForm: React.FC<MatchingTextTextFormProps> = ({
                   block
                   icon={<PlusOutlined />}
                 >
-                  Add Right Item
+                  Thêm Mục Phải
                 </Button>
               </Form.Item>
             </>
@@ -349,10 +349,10 @@ const MatchingTextTextForm: React.FC<MatchingTextTextFormProps> = ({
 
       {/* Correct Matches */}
       <Card
-        title="Correct Matches"
+        title="Các Cặp Đúng"
         extra={
           <Text type="secondary">
-            Select matching pairs from the left and right columns
+            Chọn các cặp ghép từ cột trái và cột phải
           </Text>
         }
         style={{ marginBottom: '24px' }}
@@ -369,14 +369,14 @@ const MatchingTextTextForm: React.FC<MatchingTextTextFormProps> = ({
                   style={{ display: "flex", marginBottom: 8 }}
                   align="baseline"
                 >
-                  <Text strong>Match {index + 1}:</Text>
+                  <Text strong>Cặp {index + 1}:</Text>
                   <Form.Item
                     {...restField}
                     name={[name, "left"]}
-                    rules={[{ required: true, message: "Select left item" }]}
+                    rules={[{ required: true, message: "Chọn mục bên trái" }]}
                     style={{ width: "200px" }}
                   >
-                    <Select placeholder="Select left item">
+                    <Select placeholder="Chọn mục bên trái">
                       {leftItems.map((item, itemIndex) => (
                         <Option key={`left-option-${item.id}-${itemIndex}`} value={item.id}>
                           {item.id}: {item.text}
@@ -389,14 +389,14 @@ const MatchingTextTextForm: React.FC<MatchingTextTextFormProps> = ({
                       ))}
                     </Select>
                   </Form.Item>
-                  <Text type="secondary">matches with</Text>
+                  <Text type="secondary">ghép với</Text>
                   <Form.Item
                     {...restField}
                     name={[name, "right"]}
-                    rules={[{ required: true, message: "Select right item" }]}
+                    rules={[{ required: true, message: "Chọn mục bên phải" }]}
                     style={{ width: "200px" }}
                   >
-                    <Select placeholder="Select right item">
+                    <Select placeholder="Chọn mục bên phải">
                       {rightItems.map((item, itemIndex) => (
                         <Option key={`right-option-${item.id}-${itemIndex}`} value={item.id}>
                           {item.id}: {item.text}
@@ -421,7 +421,7 @@ const MatchingTextTextForm: React.FC<MatchingTextTextFormProps> = ({
                   block
                   icon={<PlusOutlined />}
                 >
-                  Add Match
+                  Thêm Cặp
                 </Button>
               </Form.Item>
             </>
@@ -431,7 +431,7 @@ const MatchingTextTextForm: React.FC<MatchingTextTextFormProps> = ({
         {/* Match Preview */}
         {form.getFieldValue(['data', 'correctMatches'])?.length > 0 && (
           <div style={{ marginTop: '16px', padding: '12px', backgroundColor: '#e6f7ff', borderRadius: '6px' }}>
-            <Text strong>Match Summary:</Text>
+            <Text strong>Tóm Tắt Các Cặp:</Text>
             <div style={{ marginTop: '8px' }}>
               {form.getFieldValue(['data', 'correctMatches'])?.map((match: any, index: number) => {
                 const leftItem = leftItems.find(item => item.id === match.left);
@@ -457,20 +457,20 @@ const MatchingTextTextForm: React.FC<MatchingTextTextFormProps> = ({
       </Card>
 
       {/* Additional Settings */}
-      <Card title="Additional Settings" style={{ marginBottom: '24px' }}>
+      <Card title="Cài Đặt Thêm" style={{ marginBottom: '24px' }}>
         <Form.Item
-          label="Explanation (Optional)"
+          label="Giải Thích (Tùy Chọn)"
           name={['data', 'explanation']}
-          help="Provide an explanation that will be shown after the student answers"
+          help="Cung cấp giải thích sẽ được hiển thị sau khi học viên trả lời"
         >
           <TextArea
             rows={3}
-            placeholder="Explain the matching logic or provide additional context..."
+            placeholder="Giải thích logic ghép hoặc cung cấp ngữ cảnh thêm..."
           />
         </Form.Item>
 
         <Form.Item
-          label="Active"
+          label="Kích Hoạt"
           name="isActive"
           valuePropName="checked"
           initialValue={true}

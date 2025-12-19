@@ -17,15 +17,17 @@ interface LessonSelectProps {
   placeholder?: string;
   disabled?: boolean;
   style?: React.CSSProperties;
+  onLessonsLoaded?: (lessons: ILessonByCourse[]) => void;
 }
 
 const LessonSelect: React.FC<LessonSelectProps> = ({
   courseId,
   value,
   onChange,
-  placeholder = 'Select a lesson',
+  placeholder = 'Chọn bài học',
   disabled = false,
   style,
+  onLessonsLoaded,
 }) => {
   const [lessons, setLessons] = useState<ILessonByCourse[]>([]);
   const [loading, setLoading] = useState<boolean>(false);
@@ -58,6 +60,11 @@ const LessonSelect: React.FC<LessonSelectProps> = ({
         
         console.log('Processed lessons:', simpleLessons);
         setLessons(simpleLessons);
+        
+        // Notify parent about loaded lessons
+        if (onLessonsLoaded) {
+          onLessonsLoaded(simpleLessons);
+        }
       } else {
         console.log('Unexpected response format:', lessonData);
         setLessons([]);

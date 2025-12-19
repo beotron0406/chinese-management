@@ -23,7 +23,7 @@ const PageHeader: React.FC<PageHeaderProps> = ({
           {backLink && (
             <Link href={backLink}>
               <Button icon={<ArrowLeftOutlined />} size="small">
-                Back
+                Quay lại
               </Button>
             </Link>
           )}
