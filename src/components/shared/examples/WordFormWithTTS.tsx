@@ -151,7 +151,6 @@ const WordFormModal: React.FC<WordFormModalProps> = ({
               onAudioGenerated={handleAudioGenerated}
               buttonText="Tạo giọng nói từ văn bản"
               buttonType="primary"
-              disabled={!chineseText && !form.getFieldValue("simplified")}
             />
 
             {audioUrl && (

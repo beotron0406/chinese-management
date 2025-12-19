@@ -469,11 +469,9 @@ const MatchingAudioTextForm = forwardRef<MatchingAudioTextFormRef, MatchingAudio
                               handleLeftAudioChange(index, file);
                               return false;
                             }}
-                            disabled={!!audioUpload?.uploadedUrl}
                           >
                             <Button
                               icon={<UploadOutlined />}
-                              disabled={!!audioUpload?.uploadedUrl}
                             >
                               {audioUpload?.file ? audioUpload.file.name : 'Chọn Âm Thanh'}
                             </Button>
@@ -482,7 +480,6 @@ const MatchingAudioTextForm = forwardRef<MatchingAudioTextFormRef, MatchingAudio
                             text={form.getFieldValue(['data', 'leftColumn', index, 'transcript']) || ''}
                             buttonText="Tạo Giọng Nói"
                             size="middle"
-                            disabled={!!audioUpload?.uploadedUrl}
                             onAudioGenerated={(audioUrl) => {
                               setLeftAudioUploads(prev => ({
                                 ...prev,

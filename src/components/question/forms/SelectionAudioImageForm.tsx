@@ -647,11 +647,9 @@ const SelectionAudioImageForm = forwardRef<SelectionAudioImageFormRef, Selection
                   handleAudioFileChange(file);
                   return false;
                 }}
-                disabled={!!uploadedAudioUrl}
               >
                 <Button
                   icon={<UploadOutlined />}
-                  disabled={!!uploadedAudioUrl}
                 >
                   {selectedAudioFile ? selectedAudioFile.name : 'Chọn Âm Thanh'}
                 </Button>
@@ -659,7 +657,6 @@ const SelectionAudioImageForm = forwardRef<SelectionAudioImageFormRef, Selection
               <TTSButton
                 text={transcriptText}
                 buttonText="Tạo Giọng Nói"
-                disabled={!!uploadedAudioUrl || !transcriptText}
                 onAudioGenerated={(audioUrl) => {
                   setUploadedAudioUrl(audioUrl);
                   form.setFieldsValue({
@@ -806,11 +803,9 @@ const SelectionAudioImageForm = forwardRef<SelectionAudioImageFormRef, Selection
                         handleAnswerImageChange(option.id, file);
                         return false;
                       }}
-                      disabled={!!answerUpload?.uploadedUrl}
                     >
                       <Button
                         icon={<UploadOutlined />}
-                        disabled={!!answerUpload?.uploadedUrl}
                       >
                         {answerUpload?.file ? answerUpload.file.name : 'Chọn Hình Ảnh'}
                       </Button>
@@ -842,7 +837,7 @@ const SelectionAudioImageForm = forwardRef<SelectionAudioImageFormRef, Selection
 
                 {/* Alt Text */}
                 <div>
-                  <Text strong>Văn Bản Thay Thế (cho khả năng tiếp cận)</Text>
+                  <Text strong>Văn Bản Thay Thế </Text>
                   <Input
                     placeholder="Mô tả nội dung trong hình ảnh"
                     value={option.alt}
@@ -851,7 +846,7 @@ const SelectionAudioImageForm = forwardRef<SelectionAudioImageFormRef, Selection
                   />
                 </div>
 
-                {/* Preview */}
+                {/* Preview
                 {answerUpload?.uploadedUrl && (
                   <div style={{ marginTop: '12px', padding: '8px', backgroundColor: '#fafafa', borderRadius: '4px' }}>
                     <Text strong>Xem Trước: </Text>
@@ -868,7 +863,7 @@ const SelectionAudioImageForm = forwardRef<SelectionAudioImageFormRef, Selection
                       )}
                     </div>
                   </div>
-                )}
+                )} */}
               </Card>
             );
           })}

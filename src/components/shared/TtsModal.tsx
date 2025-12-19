@@ -216,16 +216,10 @@ const TTSModal: React.FC<TTSModalProps> = ({
             value={voice}
             onChange={setVoice}
             style={{ width: "100%", marginTop: 8 }}
+            optionLabelProp="label"
             options={voiceOptions.map((opt) => ({
               value: opt.value,
-              label: (
-                <div>
-                  <div>{opt.label}</div>
-                  <Text type="secondary" style={{ fontSize: 12 }}>
-                    {opt.description}
-                  </Text>
-                </div>
-              ),
+              label: opt.label,
             }))}
           />
         </div>
