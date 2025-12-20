@@ -24,7 +24,7 @@ const { Text } = Typography;
 interface TTSModalProps {
   visible: boolean;
   onClose: () => void;
-  onAudioGenerated?: (audioUrl: string) => void;
+  onAudioGenerated?: (audioUrl: string, audioBlob: Blob) => void;
   initialText?: string;
 }
 
@@ -38,6 +38,7 @@ const TTSModal: React.FC<TTSModalProps> = ({
   const [voice, setVoice] = useState<string>("female");
   const [loading, setLoading] = useState(false);
   const [audioUrl, setAudioUrl] = useState<string | null>(null);
+  const [audioBlob, setAudioBlob] = useState<Blob | null>(null);
   const [audioElement, setAudioElement] = useState<HTMLAudioElement | null>(
     null
   );
@@ -94,12 +95,13 @@ const TTSModal: React.FC<TTSModalProps> = ({
       }
 
       setAudioUrl(url);
+      setAudioBlob(audioBlob);
       message.success("Tạo giọng nói thành công!");
 
-      // Callback with audio URL
-      if (onAudioGenerated) {
-        onAudioGenerated(url);
-      }
+      // Removed auto-callback
+      // if (onAudioGenerated) {
+      //   onAudioGenerated(url);
+      // }
     } catch (error) {
       console.error("TTS generation error:", error);
       message.error("Có lỗi khi tạo giọng nói");
@@ -143,13 +145,24 @@ const TTSModal: React.FC<TTSModalProps> = ({
   const handleClose = () => {
     setText("");
     setVoice("female");
+    if (audioUrl) {
+      URL.revokeObjectURL(audioUrl);
+    }
     setAudioUrl(null);
+    setAudioBlob(null);
     if (audioElement) {
       audioElement.pause();
       setAudioElement(null);
     }
     setIsPlaying(false);
     onClose();
+  };
+
+  const handleUseAudio = () => {
+    if (onAudioGenerated && audioUrl && audioBlob) {
+      onAudioGenerated(audioUrl, audioBlob);
+      handleClose();
+    }
   };
 
   const voiceOptions = [
@@ -188,6 +201,16 @@ const TTSModal: React.FC<TTSModalProps> = ({
         >
           Tạo giọng nói
         </Button>,
+        audioUrl && (
+          <Button
+            key="use"
+            type="primary"
+            className="bg-green-600 hover:bg-green-500"
+            onClick={handleUseAudio}
+          >
+            Sử dụng
+          </Button>
+        ),
       ]}
     >
       <Space direction="vertical" style={{ width: "100%" }} size="large">

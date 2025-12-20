@@ -5,7 +5,7 @@ import TTSModal from "./TtsModal";
 
 interface TTSButtonProps {
   text?: string;
-  onAudioGenerated?: (audioUrl: string) => void;
+  onAudioGenerated?: (audioUrl: string, audioBlob: Blob) => void;
   buttonText?: string;
   buttonType?: "primary" | "default" | "dashed" | "link" | "text";
   size?: "small" | "middle" | "large";
@@ -30,9 +30,9 @@ const TTSButton: React.FC<TTSButtonProps> = ({
     setModalVisible(false);
   };
 
-  const handleAudioGenerated = (audioUrl: string) => {
+  const handleAudioGenerated = (audioUrl: string, audioBlob: Blob) => {
     if (onAudioGenerated) {
-      onAudioGenerated(audioUrl);
+      onAudioGenerated(audioUrl, audioBlob);
     }
   };
 

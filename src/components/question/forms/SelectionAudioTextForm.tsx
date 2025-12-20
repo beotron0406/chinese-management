@@ -228,16 +228,52 @@ const SelectionAudioTextForm = forwardRef<SelectionAudioTextFormRef, SelectionAu
   };
 
   // Handle TTS audio generated
-  const handleTTSAudioGenerated = (audioUrl: string) => {
-    setUploadedAudioUrl(audioUrl);
-    form.setFieldsValue({
-      data: {
-        ...form.getFieldValue('data'),
-        audio: audioUrl,
-        audio_url: audioUrl,
+  const handleTTSAudioGenerated = async (audioUrl: string, audioBlob: Blob) => {
+    try {
+      // 1. Set status to uploading
+      setUploadModalVisible(true);
+      setUploadStatus('uploading');
+      setUploadProgress(0);
+      setUploadError('');
+
+      // 2. Use the passed blob directly
+      
+      // 3. Create a File object
+      const filename = `tts_generated_${Date.now()}.wav`;
+      const file = new File([audioBlob], filename, { type: 'audio/wav' });
+
+      // 4. Upload to S3
+      const result = await uploadAudioByType(
+        file,
+        questionType,
+        (progress: UploadProgress) => {
+          setUploadProgress(Math.round(progress.percentage));
+        }
+      );
+
+      if (result.success && result.url) {
+        setUploadedAudioUrl(result.url);
+        form.setFieldsValue({
+          data: {
+            ...form.getFieldValue('data'),
+            audio: result.url,
+            audio_url: result.url,
+          }
+        });
+        
+        setUploadStatus('success');
+        setUploadProgress(100);
+        message.success('Tạo và tải lên giọng nói thành công!');
+      } else {
+        throw new Error(result.error || 'Upload failed');
       }
-    });
-    message.success('Tạo giọng nói thành công!');
+
+    } catch (error) {
+      console.error('TTS Upload error:', error);
+      setUploadStatus('error');
+      setUploadError(error instanceof Error ? error.message : 'Upload failed');
+      message.error('Lỗi khi tải lên giọng nói');
+    }
   };
 
   // Option management
