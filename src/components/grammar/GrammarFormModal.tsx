@@ -194,7 +194,7 @@ const GrammarFormModal: React.FC<GrammarFormModalProps> = ({
   return (
     <Modal
       title={
-        initialData ? "Chỉnh sửa Grammar Pattern" : "Tạo Grammar Pattern mới"
+        initialData ? "Chỉnh sửa mẫu ngữ pháp" : "Tạo mẫu ngữ pháp mới"
       }
       open={visible}
       onCancel={onCancel}
@@ -220,14 +220,14 @@ const GrammarFormModal: React.FC<GrammarFormModalProps> = ({
         layout="vertical" 
         initialValues={getInitialValues()}
       >
-        <Card title="Thông tin Pattern" size="small">
+        <Card title="Thông tin mẫu" size="small">
           <Form.Item
             name="pattern"
-            label="Pattern (cách nhau bằng dấu cách)"
-            rules={[{ required: true, message: "Vui lòng nhập pattern!" }]}
+            label="Mẫu câu (cách nhau bằng dấu cách)"
+            rules={[{ required: true, message: "Vui lòng nhập mẫu câu!" }]}
           >
             <Input
-              placeholder="例如: 帮忙 & 帮"
+              placeholder="Ví dụ: 帮忙 & 帮"
               onChange={handlePatternChange}
               suffix={
                 <Button
@@ -252,7 +252,7 @@ const GrammarFormModal: React.FC<GrammarFormModalProps> = ({
             name="patternPinyin"
             label={
               <Space>
-                <span>Pattern Pinyin (cách nhau bằng dấu cách)</span>
+                <span>Phiên âm mẫu câu (cách nhau bằng dấu cách)</span>
                 <Button
                   type="link"
                   size="small"
@@ -264,24 +264,24 @@ const GrammarFormModal: React.FC<GrammarFormModalProps> = ({
                       form.setFieldsValue({ patternPinyin: generatedPinyin });
                       message.success("Đã tự động tạo pinyin!");
                     } else {
-                      message.warning("Vui lòng nhập pattern trước!");
+                      message.warning("Vui lòng nhập mẫu câu trước!");
                     }
                   }}
                 >
-                  Auto Generate
+                  Tự động tạo
                 </Button>
               </Space>
             }
           >
-            <Input placeholder="例如: bāngmáng & bāng" />
+            <Input placeholder="Ví dụ: bāngmáng & bāng" />
           </Form.Item>
 
-          <Form.Item name="patternFormula" label="Pattern Formula">
-            <Input placeholder="例如: A + 帮 + B" />
+          <Form.Item name="patternFormula" label="Công thức mẫu câu">
+            <Input placeholder="Ví dụ: A + 帮 + B" />
           </Form.Item>
 
-          <Form.Item name="hskLevel" label="HSK Level">
-            <Select placeholder="Chọn HSK Level" allowClear>
+          <Form.Item name="hskLevel" label="Cấp độ HSK">
+            <Select placeholder="Chọn cấp độ HSK" allowClear>
               {HSK_LEVEL_OPTIONS.map((option) => (
                 <Option key={option.value} value={option.value}>
                   {option.label}
@@ -293,7 +293,7 @@ const GrammarFormModal: React.FC<GrammarFormModalProps> = ({
 
         <Divider />
 
-        <Card title="Thông tin Translation" size="small">
+        <Card title="Thông tin bản dịch" size="small">
           <Form.Item name="language" label="Ngôn ngữ" initialValue="vn">
             <Select>
               <Option value="vn">Tiếng Việt</Option>
@@ -303,12 +303,12 @@ const GrammarFormModal: React.FC<GrammarFormModalProps> = ({
 
           <Form.Item
             name="grammarPoint"
-            label="Grammar Point"
+            label="Điểm ngữ pháp"
             rules={[
-              { required: true, message: "Vui lòng nhập grammar point!" },
+              { required: true, message: "Vui lòng nhập điểm ngữ pháp!" },
             ]}
           >
-            <Input placeholder="例如: động từ ly hợp" />
+            <Input placeholder="Ví dụ: động từ ly hợp" />
           </Form.Item>
 
           <Form.Item
@@ -331,41 +331,28 @@ const GrammarFormModal: React.FC<GrammarFormModalProps> = ({
                     key={key}
                     size="small"
                     className="mb-4"
-                    title={`Ví dụ ${name + 1}`}
+                    title={
+                      <div className="flex items-center justify-between">
+                        <span>{`Ví dụ ${name + 1}`}</span>
+                        {fields.length > 1 && (
+                          <Button
+                            type="text"
+                            danger
+                            size="small"
+                            icon={<MinusCircleOutlined />}
+                            onClick={() => remove(name)}
+                          />
+                        )}
+                      </div>
+                    }
                   >
-                    <Row gutter={16}>
-                      <Col span={8}>
+                    <div className="flex flex-col gap-4">
+                      <div className="flex items-start gap-2">
                         <Form.Item
                           {...restField}
                           name={[name, "chinese"]}
-                          label={
-                            <Space>
-                              <span>Tiếng Trung</span>
-                              <Button
-                                type="link"
-                                size="small"
-                                icon={<SoundOutlined />}
-                                onClick={() => {
-                                  const examples =
-                                    form.getFieldValue("examples");
-                                  const currentExample = examples[name];
-                                  if (currentExample?.chinese) {
-                                    handleExampleChineseChange(
-                                      currentExample.chinese,
-                                      name
-                                    );
-                                    message.success("Đã tự động tạo pinyin!");
-                                  } else {
-                                    message.warning(
-                                      "Vui lòng nhập tiếng Trung trước!"
-                                    );
-                                  }
-                                }}
-                              >
-                                Auto Pinyin
-                              </Button>
-                            </Space>
-                          }
+                          label="Tiếng Trung"
+                          className="flex-1 mb-0"
                         >
                           <Input
                             placeholder="他帮忙做了这件事。"
@@ -374,41 +361,33 @@ const GrammarFormModal: React.FC<GrammarFormModalProps> = ({
                             }
                           />
                         </Form.Item>
-                      </Col>
-                      <Col span={8}>
-                        <Form.Item
-                          {...restField}
-                          name={[name, "pinyin"]}
-                          label="Pinyin (Auto Generated)"
-                        >
-                          <Input
-                            placeholder="Tā bāngmáng zuò le zhè jiàn shì"
-                            className="bg-gray-100"
-                          />
-                        </Form.Item>
-                      </Col>
-                      <Col span={6}>
-                        <Form.Item
-                          {...restField}
-                          name={[name, "translation"]}
-                          label="Dịch nghĩa"
-                        >
-                          <Input placeholder="Anh ấy đã giúp làm việc này." />
-                        </Form.Item>
-                      </Col>
-                      <Col span={2}>
-                        {fields.length > 1 && (
-                          <Form.Item label=" ">
-                            <Button
-                              type="text"
-                              danger
-                              icon={<MinusCircleOutlined />}
-                              onClick={() => remove(name)}
+                      </div>
+                      <Row gutter={16}>
+                        <Col span={12}>
+                          <Form.Item
+                            {...restField}
+                            name={[name, "pinyin"]}
+                            label="Pinyin (Tự động)"
+                            className="mb-0"
+                          >
+                            <Input
+                              placeholder="Tā bāngmáng zuò le zhè jiàn shì"
+                              className="bg-gray-100"
                             />
                           </Form.Item>
-                        )}
-                      </Col>
-                    </Row>
+                        </Col>
+                        <Col span={12}>
+                          <Form.Item
+                            {...restField}
+                            name={[name, "translation"]}
+                            label="Dịch nghĩa"
+                            className="mb-0"
+                          >
+                            <Input placeholder="Anh ấy đã giúp làm việc này." />
+                          </Form.Item>
+                        </Col>
+                      </Row>
+                    </div>
                   </Card>
                 ))}
                 <Form.Item>

@@ -127,7 +127,7 @@ export default function UserDetailModal({
                 : "text-red-500"
           }
         >
-          {score.toFixed(1)}%
+          %
         </span>
       ),
     },
