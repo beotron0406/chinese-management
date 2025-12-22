@@ -244,7 +244,7 @@ const FillTextTextForm: React.FC<FillTextTextFormProps> = ({
       {/* Step 1: Question Setup */}
       <Card title="Bước 1: Thiết Lập Câu Hỏi" className="mb-6">
         <Form.Item
-          label="Hướng Dẫn"
+          label="1. Hướng Dẫn *"
           name={["data", "instruction"]}
           rules={[{ required: true, message: "Vui lòng nhập hướng dẫn" }]}
         >
@@ -358,7 +358,7 @@ const FillTextTextForm: React.FC<FillTextTextFormProps> = ({
       {/* Step 3: Vietnamese Translation */}
       <Card title="Bước 3: Bản Dịch Tiếng Việt" className="mb-6">
         <Form.Item
-          label="Bản Dịch Tiếng Việt"
+          label="2. Bản Dịch Tiếng Việt *"
           name={["data", "vietnamese"]}
           rules={[{ required: true, message: "Vui lòng nhập bản dịch tiếng Việt" }]}
         >
@@ -560,7 +560,7 @@ const FillTextTextForm: React.FC<FillTextTextFormProps> = ({
       {/* Step 6: Explanation */}
       <Card title="Bước 6: Giải Thích" className="mb-6">
         <Form.Item
-          label="Giải Thích"
+          label="3. Giải Thích *"
           name={["data", "explanation"]}
           rules={[{ required: true, message: "Vui lòng nhập giải thích" }]}
         >

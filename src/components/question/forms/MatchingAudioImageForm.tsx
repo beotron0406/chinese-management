@@ -719,7 +719,7 @@ const MatchingAudioImageForm = forwardRef<
         {/* Question Setup */}
         <Card title="Thiết Lập Câu Hỏi" className="mb-6">
           <Form.Item
-            label="Hướng Dẫn Câu Hỏi"
+            label="1. Hướng Dẫn Câu Hỏi *"
             name={["data", "instruction"]}
             rules={[
               { required: true, message: "Vui lòng nhập hướng dẫn câu hỏi" },
@@ -1202,7 +1202,7 @@ const MatchingAudioImageForm = forwardRef<
         {/* Additional Settings */}
         <Card title="Cài Đặt Thêm" className="mb-6">
           <Form.Item
-            label="Giải Thích (Tùy Chọn)"
+            label="2. Giải Thích (Tùy Chọn)"
             name={["data", "explanation"]}
             help="Cung cấp giải thích sẽ được hiển thị sau khi học viên trả lời"
           >
@@ -1213,7 +1213,7 @@ const MatchingAudioImageForm = forwardRef<
           </Form.Item>
 
           <Form.Item
-            label="Kích Hoạt"
+            label="3. Kích Hoạt"
             name="isActive"
             valuePropName="checked"
             initialValue={true}

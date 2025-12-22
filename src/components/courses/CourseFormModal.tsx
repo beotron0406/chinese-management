@@ -127,17 +127,6 @@ const CourseFormModal: React.FC<CourseFormModalProps> = ({
           />
         </Form.Item>
 
-        <Form.Item
-          name="isActive"
-          label="Active Status"
-          valuePropName="checked"
-        >
-          <Switch />
-        </Form.Item>
-        <Text type="secondary">
-          Only active courses are visible to students. Inactive courses are
-          hidden.
-        </Text>
       </Form>
     </Modal>
   );

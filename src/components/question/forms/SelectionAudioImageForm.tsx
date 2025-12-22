@@ -621,7 +621,7 @@ const SelectionAudioImageForm = forwardRef<SelectionAudioImageFormRef, Selection
       {/* Question Setup */}
       <Card title="Thiết Lập Câu Hỏi" className="mb-6">
         <Form.Item
-          label="Hướng Dẫn Câu Hỏi"
+          label="1. Hướng Dẫn Câu Hỏi *"
           name={['data', 'instruction']}
           rules={[{ required: true, message: 'Vui lòng nhập hướng dẫn câu hỏi' }]}
         >
@@ -632,7 +632,7 @@ const SelectionAudioImageForm = forwardRef<SelectionAudioImageFormRef, Selection
       {/* Audio Section */}
       <Card title="File Âm Thanh" className="mb-6">
         <Form.Item
-          label="File Âm Thanh"
+          label="2. File Âm Thanh *"
           name={['data', 'audio']}
           rules={[{ required: true, message: "Vui lòng tải lên file âm thanh" }]}
         >
@@ -730,7 +730,7 @@ const SelectionAudioImageForm = forwardRef<SelectionAudioImageFormRef, Selection
 
         {/* Audio Transcript */}
         <Form.Item
-          label="Bản Ghi Âm Thanh (Tiếng Trung)"
+          label="3. Bản Ghi Âm Thanh (Tiếng Trung)"
           name={['data', 'audio_transcript_chinese']}
           help="Bản ghi tùy chọn của nội dung âm thanh"
         >
@@ -743,7 +743,7 @@ const SelectionAudioImageForm = forwardRef<SelectionAudioImageFormRef, Selection
         </Form.Item>
 
         {audioTranscriptPinyin && (
-          <Form.Item label="Pinyin Tự Động Tạo">
+          <Form.Item label="4. Pinyin Tự Động Tạo">
             <div className="px-3 py-2 bg-gray-100 rounded-md text-sm text-gray-500">
               {audioTranscriptPinyin}
             </div>
@@ -751,7 +751,7 @@ const SelectionAudioImageForm = forwardRef<SelectionAudioImageFormRef, Selection
         )}
 
         <Form.Item
-          label="Bản Dịch Âm Thanh (Tiếng Việt)"
+          label="5. Bản Dịch Âm Thanh (Tiếng Việt)"
           name={['data', 'audio_transcript_translation']}
           help="Bản dịch tiếng Việt tùy chọn của âm thanh"
         >

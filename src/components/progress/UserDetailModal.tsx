@@ -127,7 +127,7 @@ export default function UserDetailModal({
                 : "text-red-500"
           }
         >
-          {score.toFixed(1)}%
+          %
         </span>
       ),
     },
@@ -147,7 +147,6 @@ export default function UserDetailModal({
       onCancel={onClose}
       footer={null}
       width={1000}
-      destroyOnClose
     >
       {loading ? (
         <div className="text-center p-10">

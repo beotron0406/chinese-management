@@ -610,7 +610,7 @@ const SentencesForm = forwardRef<SentencesFormRef, SentencesFormProps>(
         {/* Sentence Information */}
         <Card title="Thông Tin Câu" className="mb-6">
           <Form.Item
-            label="Câu Tiếng Trung"
+            label="1. Câu Tiếng Trung *"
             name={["data", "chinese_sentence_input"]}
             rules={[
               { required: true, message: "Vui lòng nhập câu tiếng Trung" },
@@ -624,7 +624,7 @@ const SentencesForm = forwardRef<SentencesFormRef, SentencesFormProps>(
           </Form.Item>
 
           {/* Segmentation Mode Controls */}
-          <Form.Item label="Chế Độ Phân Đoạn">
+          <Form.Item label="2. Chế Độ Phân Đoạn">
             <Space>
               <Select
                 value={segmentationMode}
@@ -718,7 +718,7 @@ const SentencesForm = forwardRef<SentencesFormRef, SentencesFormProps>(
           )}
 
           <Form.Item
-            label="Giải Thích"
+            label="3. Giải Thích *"
             name={["data", "explaination"]}
             rules={[{ required: true, message: "Vui lòng nhập giải thích" }]}
           >
@@ -726,7 +726,7 @@ const SentencesForm = forwardRef<SentencesFormRef, SentencesFormProps>(
           </Form.Item>
 
           <Form.Item
-            label="Thông Tin Bổ Sung"
+            label="4. Thông Tin Bổ Sung"
             name={["data", "additional_info"]}
           >
             <TextArea rows={3} />
@@ -749,7 +749,7 @@ const SentencesForm = forwardRef<SentencesFormRef, SentencesFormProps>(
           <Row gutter={16}>
             <Col span={12}>
               <Form.Item
-                label="File Hình Ảnh"
+                label="5. File Hình Ảnh *"
                 name={["data", "picture_url"]}
                 rules={[
                   { required: true, message: "Vui lòng tải lên file hình ảnh" },
@@ -803,7 +803,7 @@ const SentencesForm = forwardRef<SentencesFormRef, SentencesFormProps>(
             </Col>
             <Col span={12}>
               <Form.Item
-                label="File Âm Thanh"
+                label="6. File Âm Thanh *"
                 name={["data", "audio_url"]}
                 rules={[
                   { required: true, message: "Vui lòng tải lên file âm thanh" },

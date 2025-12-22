@@ -433,7 +433,7 @@ const SelectionTextImageForm = forwardRef<SelectionTextImageFormRef, SelectionTe
       {/* Question Setup */}
       <Card title="Thiết Lập Câu Hỏi" className="mb-6">
         <Form.Item
-          label="Hướng Dẫn Câu Hỏi"
+          label="1. Hướng Dẫn Câu Hỏi *"
           name={['data', 'instruction']}
           rules={[{ required: true, message: 'Vui lòng nhập hướng dẫn câu hỏi' }]}
         >
@@ -441,7 +441,7 @@ const SelectionTextImageForm = forwardRef<SelectionTextImageFormRef, SelectionTe
         </Form.Item>
 
         <Form.Item
-          label="Văn Bản Câu Hỏi"
+          label="2. Văn Bản Câu Hỏi *"
           required
         >
           <TextContentInput
