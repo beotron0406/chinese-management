@@ -334,7 +334,7 @@ const BoolAudioTextForm = forwardRef<
       {/* Question Setup */}
       <Card title="Thiết Lập Câu Hỏi" className="mb-6">
         <Form.Item
-          label="Hướng Dẫn Câu Hỏi"
+          label="1. Hướng Dẫn Câu Hỏi *"
           name={["data", "instruction"]}
           rules={[
             { required: true, message: "Vui lòng nhập hướng dẫn câu hỏi" },
@@ -350,7 +350,7 @@ const BoolAudioTextForm = forwardRef<
       {/* Audio Section */}
       <Card title="File Âm Thanh" className="mb-6">
         <Form.Item
-          label="File Âm Thanh"
+          label="2. File Âm Thanh *"
           name={["data", "audio"]}
           rules={[
             { required: true, message: "Vui lòng tải lên file âm thanh" },
@@ -455,7 +455,7 @@ const BoolAudioTextForm = forwardRef<
       {/* Audio Content */}
       <Card title="Nội Dung Âm Thanh" className="mb-6">
         <Form.Item
-          label="Bản Ghi (Tiếng Trung)"
+          label="3. Bản Ghi (Tiếng Trung) *"
           name={["data", "transcript"]}
           rules={[
             { required: true, message: "Vui lòng nhập bản ghi tiếng Trung" },
@@ -468,7 +468,7 @@ const BoolAudioTextForm = forwardRef<
           />
         </Form.Item>
 
-        <Form.Item label="Pinyin" name={["data", "pinyin"]}>
+        <Form.Item label="4. Pinyin" name={["data", "pinyin"]}>
           <Space className="w-full">
             <Input
               placeholder="Pinyin sẽ được tự động tạo"
@@ -500,7 +500,7 @@ const BoolAudioTextForm = forwardRef<
         )}
 
         <Form.Item
-          label="Bản Dịch Tiếng Anh"
+          label="5. Bản Dịch Tiếng Anh"
           name={["data", "english"]}
           help="Bản dịch tiếng Anh tùy chọn của nội dung âm thanh"
         >
@@ -511,7 +511,7 @@ const BoolAudioTextForm = forwardRef<
       {/* Answer Section */}
       <Card title="Đáp Án" className="mb-6">
         <Form.Item
-          label="Đáp Án Đúng"
+          label="6. Đáp Án Đúng *"
           name={["data", "correctAnswer"]}
           rules={[{ required: true, message: "Vui lòng chọn đáp án đúng" }]}
         >

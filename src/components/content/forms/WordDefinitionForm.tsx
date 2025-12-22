@@ -370,7 +370,7 @@ const WordDefinitionForm = forwardRef<
         <Row gutter={16}>
           <Col span={12}>
             <Form.Item
-              label="Văn Bản Tiếng Trung"
+              label="1. Văn Bản Tiếng Trung *"
               name={["data", "chinese_text"]}
               rules={[
                 {
@@ -387,7 +387,7 @@ const WordDefinitionForm = forwardRef<
           </Col>
           <Col span={12}>
             <Form.Item
-              label="Pinyin (Tự Động Tạo)"
+              label="2. Pinyin (Tự Động Tạo) *"
               name={["data", "pinyin"]}
               rules={[{ required: true, message: "Pinyin là bắt buộc" }]}
             >
@@ -401,7 +401,7 @@ const WordDefinitionForm = forwardRef<
         </Row>
 
         <Form.Item
-          label="Loại Từ"
+          label="3. Loại Từ *"
           name={["data", "speech"]}
           rules={[{ required: true, message: "Vui lòng nhập loại từ" }]}
         >
@@ -409,14 +409,14 @@ const WordDefinitionForm = forwardRef<
         </Form.Item>
 
         <Form.Item
-          label="Dịch Nghĩa"
+          label="4. Dịch Nghĩa *"
           name={["data", "translation"]}
           rules={[{ required: true, message: "Vui lòng nhập bản dịch" }]}
         >
           <TextArea rows={3} />
         </Form.Item>
 
-        <Form.Item label="Thông Tin Bổ Sung" name={["data", "additional_info"]}>
+        <Form.Item label="5. Thông Tin Bổ Sung" name={["data", "additional_info"]}>
           <TextArea rows={4} />
         </Form.Item>
       </Card>
@@ -425,7 +425,7 @@ const WordDefinitionForm = forwardRef<
         <Row gutter={16}>
           <Col span={12}>
             <Form.Item
-              label="File Hình Ảnh"
+              label="6. File Hình Ảnh *"
               name={["data", "picture_url"]}
               rules={[
                 { required: true, message: "Vui lòng tải lên file hình ảnh" },
@@ -476,7 +476,7 @@ const WordDefinitionForm = forwardRef<
           </Col>
           <Col span={12}>
             <Form.Item
-              label="File Âm Thanh"
+              label="7. File Âm Thanh *"
               name={["data", "audio_url"]}
               rules={[
                 { required: true, message: "Vui lòng tải lên file âm thanh" },

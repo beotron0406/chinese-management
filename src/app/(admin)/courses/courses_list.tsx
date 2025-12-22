@@ -218,9 +218,9 @@ const CourseList = ({ filterActive }: CourseListProps) => {
 
   const CourseCard = ({ course }: { course: Course }) => (
     <Card
-      hoverable
-      className={`course-card h-full cursor-pointer ${course.isActive ? 'border border-gray-300' : 'border border-red-400'}`}
-      onClick={() => handleCourseClick(course)}
+      hoverable={course.isActive}
+      className={`course-card h-full ${course.isActive ? 'cursor-pointer border border-gray-300' : 'cursor-not-allowed border border-red-400 opacity-75'}`}
+      onClick={() => course.isActive && handleCourseClick(course)}
       cover={
         <div
           className={`p-5 text-center ${course.isActive ? 'bg-gradient-to-br from-blue-500/10 to-green-500/15' : 'bg-gradient-to-br from-red-400/10 to-red-300/15'}`}
@@ -245,13 +245,13 @@ const CourseList = ({ filterActive }: CourseListProps) => {
         course.isActive ? (
           <Popconfirm
             key="delete"
-            title="Deactivate this course?"
+            title="Vô hiệu hóa khóa học này?"
             onConfirm={(e) => {
               e?.stopPropagation();
               handleDelete(course.id);
             }}
-            okText="Yes"
-            cancelText="No"
+            okText="Đồng ý"
+            cancelText="Hủy"
           >
             <Button
               type="link"
@@ -259,7 +259,7 @@ const CourseList = ({ filterActive }: CourseListProps) => {
               icon={<DeleteOutlined />}
               onClick={(e) => e.stopPropagation()}
             >
-              Xóa
+              Vô hiệu hóa
             </Button>
           </Popconfirm>
         ) : (
@@ -328,8 +328,8 @@ const CourseList = ({ filterActive }: CourseListProps) => {
                 </Text>
               </Space>
             </div>
-            <div className="mt-2 text-blue-500 text-xs">
-              Nhấn vào để quản lý bài học
+            <div className={`mt-2 text-xs ${course.isActive ? 'text-blue-500' : 'text-red-400'}`}>
+              {course.isActive ? 'Nhấn vào để quản lý bài học' : 'Khóa học đã bị vô hiệu hóa'}
             </div>
           </div>
         }

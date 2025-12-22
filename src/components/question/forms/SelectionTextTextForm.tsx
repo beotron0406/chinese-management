@@ -134,7 +134,7 @@ const SelectionTextTextForm: React.FC<SelectionTextTextFormProps> = ({ form, ini
       {/* Question Setup */}
       <Card title="Thiết Lập Câu Hỏi" className="mb-6">
         <Form.Item
-          label="Hướng Dẫn Câu Hỏi"
+          label="1. Hướng Dẫn Câu Hỏi *"
           name={['data', 'instruction']}
           rules={[{ required: true, message: 'Vui lòng nhập hướng dẫn câu hỏi' }]}
         >
@@ -142,7 +142,7 @@ const SelectionTextTextForm: React.FC<SelectionTextTextFormProps> = ({ form, ini
         </Form.Item>
 
         <Form.Item
-          label="Nội Dung Câu Hỏi"
+          label="2. Nội Dung Câu Hỏi *"
           required
         >
           <TextContentInput

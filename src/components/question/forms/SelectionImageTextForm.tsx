@@ -356,7 +356,7 @@ const SelectionImageTextForm = forwardRef<SelectionImageTextFormRef, SelectionIm
       {/* Question Setup */}
       <Card title="Thiết Lập Câu Hỏi" className="mb-6">
         <Form.Item
-          label="Hướng Dẫn Câu Hỏi"
+          label="1. Hướng Dẫn Câu Hỏi *"
           name={['data', 'instruction']}
           rules={[{ required: true, message: 'Vui lòng nhập hướng dẫn câu hỏi' }]}
         >
@@ -367,7 +367,7 @@ const SelectionImageTextForm = forwardRef<SelectionImageTextFormRef, SelectionIm
       {/* Main Image Section */}
       <Card title="Hình Ảnh Câu Hỏi" className="mb-6">
         <Form.Item
-          label="File Hình Ảnh"
+          label="2. File Hình Ảnh *"
           name={['data', 'image']}
           rules={[{ required: true, message: "Vui lòng tải lên file hình ảnh" }]}
         >
@@ -416,7 +416,7 @@ const SelectionImageTextForm = forwardRef<SelectionImageTextFormRef, SelectionIm
 
         {/* Alt Text for main image */}
         <Form.Item
-          label="Văn Bản Thay Thế "
+          label="3. Văn Bản Thay Thế"
           name={['data', 'alt']}
           help="Mô tả nội dung trong hình ảnh"
         >
