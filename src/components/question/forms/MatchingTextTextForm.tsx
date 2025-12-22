@@ -14,11 +14,11 @@ import {
 import {
   MinusCircleOutlined,
   PlusOutlined,
-  ReloadOutlined,
 } from "@ant-design/icons";
 import { MatchingTextTextQuestionData } from "@/types/questionType";
-import { pinyin } from "pinyin-pro";
 import type { FormInstance } from "antd/es/form";
+import { TextContent } from "@/types/textContent";
+import TextContentInput from "@/components/shared/TextContentInput";
 
 const { TextArea } = Input;
 const { Text } = Typography;
@@ -36,12 +36,28 @@ const MatchingTextTextForm: React.FC<MatchingTextTextFormProps> = ({
   form,
   initialValues,
 }) => {
-  const [leftItems, setLeftItems] = useState<MatchingTextTextQuestionData['leftColumn']>([]);
+  const [leftItems, setLeftItems] = useState<Array<{id: string; content: TextContent}>>([]);;
   const [rightItems, setRightItems] = useState<MatchingTextTextQuestionData['rightColumn']>([]);
 
   // Watch for changes in the columns to update the select options
   const leftValues = Form.useWatch(["data", "leftColumn"], form) || [];
   const rightValues = Form.useWatch(["data", "rightColumn"], form) || [];
+  const correctMatches = Form.useWatch(["data", "correctMatches"], form) || [];
+
+  // Helper functions to extract display text and pinyin from TextContent
+  const getDisplayText = (content: TextContent): string => {
+    if (content?.chinese && content.chinese.length > 0) {
+      return content.chinese.filter(c => c).join('');
+    }
+    return content?.text || '';
+  };
+
+  const getDisplayPinyin = (content: TextContent): string => {
+    if (content?.pinyin && content.pinyin.length > 0) {
+      return content.pinyin.filter(p => p).join(' ');
+    }
+    return '';
+  };
 
   // Initialize form with existing data
   useEffect(() => {
@@ -49,7 +65,16 @@ const MatchingTextTextForm: React.FC<MatchingTextTextFormProps> = ({
       const { data } = initialValues;
       
       if (data.leftColumn) {
-        setLeftItems(data.leftColumn);
+        // Convert old format to new TextContent format
+        const converted = data.leftColumn.map(item => ({
+          id: item.id,
+          content: item.content || (item.text ? (
+            item.pinyin 
+              ? { chinese: [item.text], pinyin: [item.pinyin] }
+              : { text: item.text }
+          ) : { text: '' })
+        }));
+        setLeftItems(converted);
       }
       
       if (data.rightColumn) {
@@ -58,49 +83,31 @@ const MatchingTextTextForm: React.FC<MatchingTextTextFormProps> = ({
     }
   }, [initialValues]);
 
-  // Generate pinyin for Chinese text
-  const generatePinyin = (text: string): string => {
-    if (!text || !text.trim()) return "";
-
-    try {
-      return pinyin(text, { 
-        toneType: "symbol",
-        type: 'array'
-      }).join(' ');
-    } catch (error) {
-      console.warn("Failed to generate pinyin:", error);
-      return "";
-    }
-  };
-
   // Generate ID for right column (A, B, C...)
   const generateRightId = (index: number): string => {
     return String.fromCharCode(65 + index); // 65 is ASCII for 'A'
   };
 
-  // Handle left column item change
-  const handleLeftItemChange = (index: number, value: string) => {
-    if (!value.trim()) return;
-
-    // Generate pinyin
-    const pinyinText = generatePinyin(value);
-
+  // Handle left column item TextContent change
+  const handleLeftItemChange = (index: number, content: TextContent) => {
     // Get current left items
-    const leftItems = [...(form.getFieldValue(["data", "leftColumn"]) || [])];
+    const currentLeftItems = [...(form.getFieldValue(["data", "leftColumn"]) || [])];
 
-    // Update the pinyin
-    if (leftItems[index]) {
-      leftItems[index] = {
-        ...leftItems[index],
-        text: value,
-        pinyin: pinyinText,
+    // Update the item with TextContent
+    if (currentLeftItems[index]) {
+      currentLeftItems[index] = {
+        ...currentLeftItems[index],
+        content: content,
+        // Also keep legacy fields for compatibility
+        text: getDisplayText(content),
+        pinyin: getDisplayPinyin(content),
       };
 
       // Update form
       form.setFieldsValue({
         data: {
           ...form.getFieldValue("data"),
-          leftColumn: leftItems,
+          leftColumn: currentLeftItems,
         },
       });
     }
@@ -109,12 +116,18 @@ const MatchingTextTextForm: React.FC<MatchingTextTextFormProps> = ({
   // Update left and right items when form values change
   useEffect(() => {
     const updatedLeftItems = leftValues
-      .map((item: any, index: number) => ({
-        id: item?.id || `${index + 1}`, // Using numbers starting from 1
-        text: item?.text || "",
-        pinyin: item?.pinyin || "",
-      }))
-      .filter((item: any) => item.text);
+      .map((item: any, index: number) => {
+        const content = item?.content || (item?.text ? (
+          item.pinyin 
+            ? { chinese: [item.text], pinyin: [item.pinyin] }
+            : { text: item.text }
+        ) : { text: '' });
+        return {
+          id: item?.id || `${index + 1}`,
+          content,
+        };
+      })
+      .filter((item: any) => getDisplayText(item.content));
 
     setLeftItems(updatedLeftItems);
   }, [leftValues]);
@@ -122,31 +135,13 @@ const MatchingTextTextForm: React.FC<MatchingTextTextFormProps> = ({
   useEffect(() => {
     const updatedRightItems = rightValues
       .map((item: any, index: number) => ({
-        id: item?.id || generateRightId(index), // Using letters A, B, C...
+        id: item?.id || generateRightId(index),
         text: item?.text || "",
       }))
       .filter((item: any) => item.text);
 
     setRightItems(updatedRightItems);
   }, [rightValues]);
-
-  // Regenerate pinyin for an item
-  const regeneratePinyin = (index: number) => {
-    const leftItems = [...(form.getFieldValue(["data", "leftColumn"]) || [])];
-    const item = leftItems[index];
-
-    if (item && item.text) {
-      const pinyinText = generatePinyin(item.text);
-      leftItems[index] = { ...item, pinyin: pinyinText };
-
-      form.setFieldsValue({
-        data: {
-          ...form.getFieldValue("data"),
-          leftColumn: leftItems,
-        },
-      });
-    }
-  };
 
   return (
     <div>
@@ -158,7 +153,7 @@ const MatchingTextTextForm: React.FC<MatchingTextTextFormProps> = ({
           rules={[{ required: true, message: "Vui lòng nhập hướng dẫn câu hỏi" }]}
         >
           <TextArea
-            placeholder="Nhập hướng dẫn cho học viên (ví dụ: 'Ghép các từ tiếng Trung với nghĩa tiếng Anh của chúng')"
+            placeholder="Nhập hướng dẫn cho học viên (ví dụ: 'Ghép các từ tiếng Trung với nghĩa tiếng Việt của chúng')"
             autoSize={{ minRows: 2, maxRows: 4 }}
           />
         </Form.Item>
@@ -171,99 +166,81 @@ const MatchingTextTextForm: React.FC<MatchingTextTextFormProps> = ({
       >
         <Form.List
           name={["data", "leftColumn"]}
-          initialValue={[{ id: "1", text: "", pinyin: "" }]}
+          initialValue={[{ id: "1", content: { text: '' } }]}
         >
           {(fields, { add, remove }) => (
             <>
-              {fields.map(({ key, name, ...restField }, index) => (
-                <div key={key} className="mb-4">
-                  <Space
-                    className="flex mb-2"
-                    align="baseline"
-                  >
-                    {/* ID (Number) */}
+              {fields.map(({ key, name, ...restField }, index) => {
+                const currentItem = form.getFieldValue(["data", "leftColumn", index]) || {};
+                const textContent: TextContent = currentItem.content || { text: '' };
+                
+                return (
+                  <div key={key} className="mb-4 p-3 border rounded-md bg-gray-50">
+                    <div className="flex justify-between items-start mb-2">
+                      {/* ID (Number) */}
+                      <Form.Item
+                        {...restField}
+                        name={[name, "id"]}
+                        initialValue={`${index + 1}`}
+                        className="w-[60px] mb-0"
+                      >
+                        <Input
+                          disabled
+                          className="text-center font-bold"
+                          placeholder="#"
+                        />
+                      </Form.Item>
+
+                      {fields.length > 1 && (
+                        <Button
+                          danger
+                          size="small"
+                          icon={<MinusCircleOutlined />}
+                          onClick={() => remove(name)}
+                        />
+                      )}
+                    </div>
+
+                    {/* TextContentInput for Chinese Text */}
+                    <div className="mt-2">
+                      <Text strong className="block mb-2">Nội dung văn bản</Text>
+                      <TextContentInput
+                        value={textContent}
+                        onChange={(content) => handleLeftItemChange(index, content)}
+                        placeholder="Nhập chữ Trung hoặc văn bản"
+                      />
+                    </div>
+
+                    {/* Hidden fields for form data structure */}
                     <Form.Item
                       {...restField}
-                      name={[name, "id"]}
-                      initialValue={`${index + 1}`}
-                      className="w-[60px] mr-2"
+                      name={[name, "content"]}
+                      className="hidden"
                     >
-                      <Input
-                        disabled
-                        className="text-center font-bold"
-                        placeholder="#"
-                      />
+                      <Input />
                     </Form.Item>
-
-                    {/* Chinese Text */}
                     <Form.Item
                       {...restField}
                       name={[name, "text"]}
-                      rules={[{ required: true, message: "Thiếu văn bản" }]}
-                      className="w-[300px]"
+                      className="hidden"
                     >
-                      <Input
-                        placeholder="Nhập chữ Trung"
-                        onChange={(e) =>
-                          handleLeftItemChange(index, e.target.value)
-                        }
-                      />
+                      <Input />
                     </Form.Item>
-
-                    {/* Regenerate Pinyin Button */}
-                    <Button
-                      icon={<ReloadOutlined />}
-                      onClick={() => regeneratePinyin(index)}
-                      size="small"
-                      type="default"
+                    <Form.Item
+                      {...restField}
+                      name={[name, "pinyin"]}
+                      className="hidden"
                     >
-                      Tạo Lại Pinyin
-                    </Button>
-
-                    {fields.length > 1 && (
-                      <Button
-                        danger
-                        size="small"
-                        icon={<MinusCircleOutlined />}
-                        onClick={() => remove(name)}
-                      />
-                    )}
-                  </Space>
-
-                  {/* Display Pinyin Tag if exists */}
-                  {form.getFieldValue([
-                    "data",
-                    "leftColumn",
-                    index,
-                    "pinyin",
-                  ]) && (
-                    <div className="ml-[68px] -mt-2 mb-2">
-                      <Tag color="blue">
-                        Pinyin: {form.getFieldValue([
-                          "data",
-                          "leftColumn",
-                          index,
-                          "pinyin",
-                        ])}
-                      </Tag>
-                    </div>
-                  )}
-
-                  {/* Hidden pinyin field */}
-                  <Form.Item
-                    {...restField}
-                    name={[name, "pinyin"]}
-                    className="hidden"
-                  >
-                    <Input />
-                  </Form.Item>
-                </div>
-              ))}
+                      <Input />
+                    </Form.Item>
+                  </div>
+                );
+              })}
               <Form.Item>
                 <Button
                   type="dashed"
                   onClick={() =>
-                    add({ id: `${fields.length + 1}`, text: "", pinyin: "" })
+                    add({ id: `${fields.length + 1}`, content: { text: '' } })
                   }
                   block
                   icon={<PlusOutlined />}
@@ -278,7 +255,7 @@ const MatchingTextTextForm: React.FC<MatchingTextTextFormProps> = ({
 
       {/* Right Column */}
       <Card
-        title="Cột Phải (Tiếng Anh/Bản Dịch)"
+        title="Cột Phải (Tiếng Việt/Bản Dịch)"
         className="mb-6"
       >
         <Form.List
@@ -314,7 +291,7 @@ const MatchingTextTextForm: React.FC<MatchingTextTextFormProps> = ({
                     rules={[{ required: true, message: "Thiếu văn bản" }]}
                     className="w-[300px]"
                   >
-                    <Input placeholder="Nhập văn bản tiếng Anh/bản dịch" />
+                    <Input placeholder="Nhập văn bản tiếng Việt/bản dịch" />
                   </Form.Item>
 
                   {fields.length > 1 && (
@@ -377,16 +354,20 @@ const MatchingTextTextForm: React.FC<MatchingTextTextFormProps> = ({
                     className="w-[200px]"
                   >
                     <Select placeholder="Chọn mục bên trái">
-                      {leftItems.map((item, itemIndex) => (
-                        <Option key={`left-option-${item.id}-${itemIndex}`} value={item.id}>
-                          {item.id}: {item.text}
-                          {item.pinyin && (
-                            <span className="text-gray-500 text-xs">
-                              {' '}({item.pinyin})
-                            </span>
-                          )}
-                        </Option>
-                      ))}
+                      {leftItems.map((item, itemIndex) => {
+                        const displayText = getDisplayText(item.content);
+                        const displayPinyin = getDisplayPinyin(item.content);
+                        return (
+                          <Option key={`left-option-${item.id}-${itemIndex}`} value={item.id}>
+                            {item.id}: {displayText}
+                            {displayPinyin && (
+                              <span className="text-gray-500 text-xs">
+                                {' '}({displayPinyin})
+                              </span>
+                            )}
+                          </Option>
+                        );
+                      })}
                     </Select>
                   </Form.Item>
                   <Text type="secondary">ghép với</Text>
@@ -429,20 +410,22 @@ const MatchingTextTextForm: React.FC<MatchingTextTextFormProps> = ({
         </Form.List>
 
         {/* Match Preview */}
-        {form.getFieldValue(['data', 'correctMatches'])?.length > 0 && (
+        {correctMatches?.length > 0 && (
           <div className="mt-4 p-3 bg-blue-50 rounded-md">
             <Text strong>Tóm Tắt Các Cặp:</Text>
             <div className="mt-2">
-              {form.getFieldValue(['data', 'correctMatches'])?.map((match: any, index: number) => {
+              {correctMatches?.map((match: any, index: number) => {
                 const leftItem = leftItems.find(item => item.id === match.left);
                 const rightItem = rightItems.find(item => item.id === match.right);
                 
                 if (leftItem && rightItem) {
+                  const leftText = getDisplayText(leftItem.content);
+                  const leftPinyin = getDisplayPinyin(leftItem.content);
                   return (
                     <div key={index} className="mb-1">
                       <Text>
-                        {leftItem.id}: {leftItem.text} 
-                        {leftItem.pinyin && <span className="text-gray-500"> ({leftItem.pinyin})</span>}
+                        {leftItem.id}: {leftText} 
+                        {leftPinyin && <span className="text-gray-500"> ({leftPinyin})</span>}
                         {' → '}
                         {rightItem.id}: {rightItem.text}
                       </Text>

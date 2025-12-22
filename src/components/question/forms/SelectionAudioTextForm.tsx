@@ -510,10 +510,23 @@ const SelectionAudioTextForm = forwardRef<SelectionAudioTextFormRef, SelectionAu
         </Form.Item>
 
         {audioTranscriptPinyin && (
-          <Form.Item label="4. Pinyin Tự Động Tạo">
-            <div className="px-3 py-2 bg-gray-100 rounded-md text-sm text-gray-500">
-              {audioTranscriptPinyin}
-            </div>
+          <Form.Item 
+            label="4. Pinyin"
+            name={['data', 'audio_transcript_pinyin']}
+          >
+            <Input
+              value={audioTranscriptPinyin}
+              onChange={(e) => {
+                setAudioTranscriptPinyin(e.target.value);
+                form.setFieldsValue({
+                  data: {
+                    ...form.getFieldValue('data'),
+                    audio_transcript_pinyin: e.target.value
+                  }
+                });
+              }}
+              placeholder="Pinyin sẽ tự động tạo từ Bản Ghi Tiếng Trung"
+            />
           </Form.Item>
         )}
 

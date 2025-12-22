@@ -501,18 +501,53 @@ const WordDefinitionForm = forwardRef<
                   </Upload>
                   <TTSButton
                     text={chineseText}
-                    onAudioGenerated={(audioUrl) => {
-                      setUploadedUrls((prev) => ({ ...prev, audioUrl }));
-                      const currentData = form.getFieldValue("data") || {};
-                      form.setFieldsValue({
-                        data: {
-                          ...currentData,
-                          audio_url: audioUrl,
-                        },
-                      });
-                      message.success("Âm thanh đã được tạo thành công!");
-                    }}
                     buttonText="Tạo Giọng Nói"
+                    onAudioGenerated={async (audioUrl, audioBlob) => {
+                      try {
+                        // 1. Set status to uploading
+                        setUploadModalVisible(true);
+                        setUploadStatus('uploading');
+                        setUploadProgress(0);
+                        setUploadError('');
+
+                        // 2. Use passed blob directly
+                        
+                        // 3. Create a File object
+                        const filename = `tts_generated_${Date.now()}.wav`;
+                        const file = new File([audioBlob], filename, { type: 'audio/wav' });
+
+                        // 4. Upload to S3
+                        const result = await uploadAudioByType(
+                          file,
+                          contentType,
+                          (progress: UploadProgress) => {
+                            setUploadProgress(Math.round(progress.percentage));
+                          }
+                        );
+
+                        if (result.success && result.url) {
+                          setUploadedUrls((prev) => ({ ...prev, audioUrl: result.url }));
+                          const currentData = form.getFieldValue("data") || {};
+                          form.setFieldsValue({
+                            data: {
+                              ...currentData,
+                              audio_url: result.url,
+                            },
+                          });
+                          
+                          setUploadStatus('success');
+                          setUploadProgress(100);
+                          message.success('Tạo và tải lên giọng nói thành công!');
+                        } else {
+                          throw new Error(result.error || 'Upload failed');
+                        }
+                      } catch (error) {
+                        console.error('TTS Upload error:', error);
+                        setUploadStatus('error');
+                        setUploadError(error instanceof Error ? error.message : 'Upload failed');
+                        message.error('Lỗi khi tải lên giọng nói');
+                      }
+                    }}
                   />
                 </div>
                 {uploadedUrls.audioUrl && (
