@@ -127,6 +127,7 @@ export default function CourseAnalyticsCard({}: CourseAnalyticsCardProps) {
             value={selectedCourseId}
             onChange={setSelectedCourseId}
             onCoursesLoaded={handleCoursesLoaded}
+            showOnlyActive={true}
             className="w-[200px]"
           />
         </div>

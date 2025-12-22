@@ -138,26 +138,26 @@ const CourseList = ({ filterActive }: CourseListProps) => {
 
   const handleHardDelete = async (id: number) => {
     Modal.confirm({
-      title: "Xóa vĩnh viễn khóa học",
+      title: "Xóa khóa học",
       icon: <ExclamationCircleOutlined />,
       content: (
         <div>
-          <p>Bạn có chắc chắn muốn xóa vĩnh viễn khóa học này?</p>
+          <p>Bạn có chắc chắn muốn xóa khóa học này?</p>
           <p className="text-red-500 font-bold">
             Hành động này KHÔNG THỂ HOÀN TÁC!
           </p>
         </div>
       ),
-      okText: "Xóa vĩnh viễn",
+      okText: "Xóa",
       cancelText: "Hủy",
       okType: "danger",
       onOk: async () => {
         try {
           await courseService.hardDeleteCourse(id);
-          message.success("Xóa vĩnh viễn khóa học thành công");
+          message.success("Xóa khóa học thành công");
           fetchCourses();
         } catch (error) {
-          message.error("Có lỗi khi xóa vĩnh viễn khóa học");
+          message.error("Có lỗi khi xóa khóa học");
           console.error(error);
         }
       },
@@ -286,7 +286,7 @@ const CourseList = ({ filterActive }: CourseListProps) => {
               handleHardDelete(course.id);
             }}
           >
-            Xóa vĩnh viễn
+            Xóa
           </Button>
         ),
       ].filter(Boolean)}

@@ -252,17 +252,19 @@ export default function LessonItemsPage() {
               className="mb-3 max-w-[200px] max-h-[120px] object-cover"
             />
           )}
-          {Array.isArray(data.chinese_text) &&
-            data.chinese_text.map((text: string, index: number) => (
-              <div key={index} className="mb-2">
-                <Title level={titleLevel} className="!mb-0.5">
-                  {text}
-                </Title>
-                <Text type="secondary" className="text-xs">
-                  {data.pinyin?.[index]}
-                </Text>
-              </div>
-            ))}
+          <div className="flex flex-wrap gap-x-1 items-end">
+            {Array.isArray(data.chinese_text) &&
+              data.chinese_text.map((text: string, index: number) => (
+                <div key={index} className="text-center">
+                  <Title level={titleLevel} className="!mb-0">
+                    {text}
+                  </Title>
+                  <Text type="secondary" className="text-xs">
+                    {data.pinyin?.[index]}
+                  </Text>
+                </div>
+              ))}
+          </div>
           {data.explaination && (
             <Paragraph className="mt-3 italic text-xs !mb-0">
               {data.explaination}
