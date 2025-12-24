@@ -191,15 +191,35 @@ export interface FillTextTextQuestionData {
 // Bool Question Interfaces
 export interface BoolAudioTextQuestionData {
   instruction: string;
+  
+  // Audio source
   audio: string;
   audio_url?: string;
-  /** @deprecated Use `transcriptContent` instead for new data */
-  transcript?: string;
-  /** @deprecated Pinyin is now included in `transcriptContent` */
-  pinyin?: string;
-  /** New unified format supporting simple text or Chinese with pinyin */
+  
+  // Audio transcript (Chinese with pinyin)
   transcriptContent?: TextContent;
-  english?: string;
+  english?: string;  // English translation of audio
+  
+  // Statement to judge (can be Chinese or simple text)
+  statementContent: TextContent;
+  
+  // Answer
+  correctAnswer: boolean;
+  explanation?: string;
+}
+
+export interface BoolImageTextQuestionData {
+  instruction: string;
+  
+  // Image source
+  image: string;
+  image_url?: string;
+  alt?: string;
+  
+  // Statement to judge (can be Chinese or simple text)
+  statementContent: TextContent;
+  
+  // Answer
   correctAnswer: boolean;
   explanation?: string;
 }
@@ -215,7 +235,8 @@ export type QuestionData =
   | MatchingAudioTextQuestionData
   | MatchingAudioImageQuestionData
   | FillTextTextQuestionData
-  | BoolAudioTextQuestionData;
+  | BoolAudioTextQuestionData
+  | BoolImageTextQuestionData;
 
 export interface Question {
   id: number;

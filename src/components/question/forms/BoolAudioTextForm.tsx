@@ -32,7 +32,8 @@ import TTSButton from "@/components/shared/TTSButton";
 import TextContentInput from "@/components/shared/TextContentInput";
 import type { FormInstance } from "antd/es/form";
 import { BoolAudioTextQuestionData } from "@/types/questionType";
-import { TextContent, isChineseContent } from "@/types/textContent";
+import { TextContent } from "@/types/textContent";
+import { pinyin } from "pinyin-pro";
 
 const { TextArea } = Input;
 const { Text } = Typography;
@@ -72,21 +73,9 @@ const BoolAudioTextForm = forwardRef<
   const [transcriptContent, setTranscriptContent] = useState<TextContent>({ text: "" });
   const [transcriptText, setTranscriptText] = useState<string>("");
   const [generatedPinyin, setGeneratedPinyin] = useState<string>("");
-
-  // Helper functions to extract display text and pinyin from TextContent
-  const getDisplayText = (content: TextContent): string => {
-    if (content?.chinese && content.chinese.length > 0) {
-      return content.chinese.filter(c => c).join('');
-    }
-    return content?.text || '';
-  };
-
-  const getDisplayPinyin = (content: TextContent): string => {
-    if (content?.pinyin && content.pinyin.length > 0) {
-      return content.pinyin.filter(p => p).join(' ');
-    }
-    return '';
-  };
+  
+  // Statement content state
+  const [statementContent, setStatementContent] = useState<TextContent>({ text: '' });
 
   // Initialize form with existing data
   useEffect(() => {
@@ -97,42 +86,78 @@ const BoolAudioTextForm = forwardRef<
         setUploadedAudioUrl(data.audio_url || data.audio);
       }
 
-      // Load transcript content
+      // Handle transcriptContent
       if (data.transcriptContent) {
-        setTranscriptContent(data.transcriptContent);
-        setTranscriptText(getDisplayText(data.transcriptContent));
-        setGeneratedPinyin(getDisplayPinyin(data.transcriptContent));
-      } else if (data.transcript) {
-        // Fallback to legacy transcript field
-        const legacyContent: TextContent = data.pinyin 
-          ? { chinese: [data.transcript], pinyin: [data.pinyin] }
-          : { text: data.transcript };
-        setTranscriptContent(legacyContent);
-        setTranscriptText(data.transcript);
-        if (data.pinyin) {
-          setGeneratedPinyin(data.pinyin);
+        if (data.transcriptContent.chinese && data.transcriptContent.chinese.length > 0) {
+          setTranscriptText(data.transcriptContent.chinese.join(''));
+          if (data.transcriptContent.pinyin) {
+            setGeneratedPinyin(data.transcriptContent.pinyin.join(' '));
+          }
+        } else if (data.transcriptContent.text) {
+          setTranscriptText(data.transcriptContent.text);
         }
+      }
+
+      // Handle statementContent
+      if (data.statementContent) {
+        setStatementContent(data.statementContent);
       }
     }
   }, [initialValues]);
 
-  // Handle transcript TextContent change
-  const handleTranscriptContentChange = (content: TextContent) => {
-    setTranscriptContent(content);
-    
-    const displayText = getDisplayText(content);
-    const displayPinyin = getDisplayPinyin(content);
-    
-    setTranscriptText(displayText);
-    setGeneratedPinyin(displayPinyin);
+  // Generate Pinyin from transcript
+  const generatePinyin = (text: string) => {
+    if (!text.trim()) {
+      setGeneratedPinyin("");
+      return "";
+    }
 
-    // Update form with both new format and legacy fields for compatibility
+    try {
+      const pinyinText = pinyin(text, {
+        toneType: "symbol",
+        type: "array",
+      }).join(" ");
+      setGeneratedPinyin(pinyinText);
+
+      // Update the form field
+      form.setFieldsValue({
+        data: {
+          ...form.getFieldValue("data"),
+          pinyin: pinyinText,
+        },
+      });
+
+      return pinyinText;
+    } catch (error) {
+      console.warn("Failed to generate pinyin:", error);
+      return "";
+    }
+  };
+
+  // Handle transcript change and update transcriptContent
+  const handleTranscriptChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const text = e.target.value;
+    setTranscriptText(text);
+    const pinyinResult = generatePinyin(text);
+    
+    // Update form with transcriptContent format
+    const chinese = text.split('');
+    const pinyinArray = pinyinResult.split(' ');
     form.setFieldsValue({
       data: {
         ...form.getFieldValue("data"),
-        transcriptContent: content,
-        transcript: displayText,
-        pinyin: displayPinyin,
+        transcriptContent: { chinese, pinyin: pinyinArray },
+      },
+    });
+  };
+  
+  // Handle statement content change
+  const handleStatementChange = (content: TextContent) => {
+    setStatementContent(content);
+    form.setFieldsValue({
+      data: {
+        ...form.getFieldValue("data"),
+        statementContent: content,
       },
     });
   };
@@ -513,10 +538,28 @@ const BoolAudioTextForm = forwardRef<
         </Form.Item>
       </Card>
 
+      {/* Statement Section */}
+      <Card title="Câu Phát Biểu" className="mb-6">
+        <Form.Item
+          label="6. Câu Phát Biểu Cần Đánh Giá *"
+          help="Nhập câu phát biểu mà học sinh cần xác định đúng hay sai dựa trên nội dung âm thanh"
+          required
+        >
+          <TextContentInput
+            value={statementContent}
+            onChange={handleStatementChange}
+            placeholder="Nhập câu phát biểu..."
+          />
+        </Form.Item>
+        <Form.Item name={["data", "statementContent"]} className="hidden">
+          <Input />
+        </Form.Item>
+      </Card>
+
       {/* Answer Section */}
       <Card title="Đáp Án" className="mb-6">
         <Form.Item
-          label="6. Đáp Án Đúng *"
+          label="7. Đáp Án Đúng *"
           name={["data", "correctAnswer"]}
           rules={[{ required: true, message: "Vui lòng chọn đáp án đúng" }]}
         >

@@ -503,7 +503,7 @@ export default function LessonItemsPage() {
           extra={
             <Space size="small">
               <Tag color="orange" className="text-xs">
-                Câu hỏi đúng/sai
+                Câu hỏi đúng/sai (Audio)
               </Tag>
               <Button
                 size="small"
@@ -523,25 +523,128 @@ export default function LessonItemsPage() {
             {data.instruction}
           </Title>
 
-          {data.audio && (
+          {(data.audio || data.audio_url) && (
             <audio
               controls
-              src={data.audio}
+              src={data.audio_url || data.audio}
               className="w-full mb-3 h-8"
             />
           )}
 
-          <div className="mb-3">
-            <Text strong className="text-sm">
-              {data.transcript}
-            </Text>
-            <br />
-            <Text type="secondary" className="text-xs">
-              {data.pinyin}
-            </Text>
-            <br />
-            <Text className="text-xs">{data.english}</Text>
+          {/* Audio transcript */}
+          <div className="mb-3 p-2 bg-gray-50 rounded">
+            <Text strong className="text-xs block mb-1">Nội dung âm thanh:</Text>
+            {data.transcriptContent ? (
+              <TextContentDisplay content={data.transcriptContent} size="small" />
+            ) : (
+              <>
+                <Text className="text-sm">{data.transcript}</Text>
+                {data.pinyin && (
+                  <>
+                    <br />
+                    <Text type="secondary" className="text-xs">{data.pinyin}</Text>
+                  </>
+                )}
+              </>
+            )}
+            {data.english && (
+              <>
+                <br />
+                <Text className="text-xs" type="secondary">{data.english}</Text>
+              </>
+            )}
           </div>
+
+          {/* Statement to judge */}
+          {data.statementContent && (
+            <div className="mb-3 p-2 bg-blue-50 rounded border border-blue-200">
+              <Text strong className="text-xs block mb-1">Câu phát biểu:</Text>
+              <TextContentDisplay content={data.statementContent} size="small" />
+            </div>
+          )}
+
+          <div>
+            <Text strong className="text-xs">
+              Đáp án đúng:{" "}
+            </Text>
+            {data.correctAnswer ? (
+              <Tag
+                color="green"
+                icon={<CheckCircleOutlined />}
+                className="text-xs"
+              >
+                Đúng
+              </Tag>
+            ) : (
+              <Tag
+                color="red"
+                icon={<CloseCircleOutlined />}
+                className="text-xs"
+              >
+                Sai
+              </Tag>
+            )}
+          </div>
+
+          {data.explanation && (
+            <Paragraph className="mt-3 p-2 bg-gray-100 text-xs !mb-0">
+              <Text strong className="text-xs">
+                Giải thích:{" "}
+              </Text>
+              {data.explanation}
+            </Paragraph>
+          )}
+        </Card>
+      );
+    }
+
+    if (type === "question_bool_image_text") {
+      return (
+        <Card
+          hoverable
+          className="mb-3 text-sm"
+          size="small"
+          extra={
+            <Space size="small">
+              <Tag color="orange" className="text-xs">
+                Câu hỏi đúng/sai (Hình ảnh)
+              </Tag>
+              <Button
+                size="small"
+                icon={<EditOutlined />}
+                onClick={() => handleEditItem(item)}
+              />
+              <Popconfirm
+                title="Xóa nội dung này?"
+                onConfirm={() => handleDeleteItem(item.id, item.itemType)}
+              >
+                <Button size="small" danger icon={<DeleteOutlined />} />
+              </Popconfirm>
+            </Space>
+          }
+        >
+          <Title level={titleLevel} className="!mb-2">
+            {data.instruction}
+          </Title>
+
+          {/* Image */}
+          {(data.image || data.image_url) && (
+            <div className="mb-3">
+              <Image
+                src={data.image_url || data.image}
+                alt={data.alt || "Question image"}
+                className="max-w-[200px] max-h-[150px] object-cover rounded"
+              />
+            </div>
+          )}
+
+          {/* Statement to judge */}
+          {data.statementContent && (
+            <div className="mb-3 p-2 bg-blue-50 rounded border border-blue-200">
+              <Text strong className="text-xs block mb-1">Câu phát biểu:</Text>
+              <TextContentDisplay content={data.statementContent} size="small" />
+            </div>
+          )}
 
           <div>
             <Text strong className="text-xs">

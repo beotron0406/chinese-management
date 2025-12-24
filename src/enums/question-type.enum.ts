@@ -16,5 +16,6 @@ export enum QuestionType {
   FillTextText = "question_fill_text_text", //Question: text Answer: text
 
   // Bool
-  BoolAudioText = "question_bool_audio_text", //Question: audio Answer: text
+  BoolAudioText = "question_bool_audio_text", //Question: audio, Statement: text (true/false)
+  BoolImageText = "question_bool_image_text", //Question: image, Statement: text (true/false)
 }

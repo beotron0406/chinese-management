@@ -24,6 +24,7 @@ export interface LessonItem {
     | QuestionMatchingAudioText
     | QuestionMatchingAudioImage
     | QuestionBoolAudioText
+    | QuestionBoolImageText
     | QuestionFillTextText;
 }
 
@@ -144,16 +145,40 @@ export interface QuestionMatchingAudioImage {
 
 // 🔟 Boolean (audio → true/false)
 export interface QuestionBoolAudioText {
-  audio: string;
-  pinyin: string;
-  english: string;
-  transcript: string;
-  explanation: string;
   instruction: string;
+  audio: string;
+  audio_url?: string;
+  transcriptContent?: {
+    text?: string;
+    chinese?: string[];
+    pinyin?: string[];
+  };
+  english?: string;
+  statementContent: {
+    text?: string;
+    chinese?: string[];
+    pinyin?: string[];
+  };
   correctAnswer: boolean;
+  explanation?: string;
 }
 
-// 11️⃣ Fill-in-the-blank (text → text)
+// 11️⃣ Boolean (image → true/false)
+export interface QuestionBoolImageText {
+  instruction: string;
+  image: string;
+  image_url?: string;
+  alt?: string;
+  statementContent: {
+    text?: string;
+    chinese?: string[];
+    pinyin?: string[];
+  };
+  correctAnswer: boolean;
+  explanation?: string;
+}
+
+// 12️⃣ Fill-in-the-blank (text → text)
 export interface QuestionFillTextText {
   blanks: { index: number; correct: string[] }[];
   pinyin: string[];
