@@ -17,12 +17,13 @@ import {
   DeleteOutlined,
   PlusOutlined,
 } from "@ant-design/icons";
-import { pinyin } from "pinyin-pro";
 import type { FormInstance } from "antd/es/form";
 import { SelectionAudioImageQuestionData } from '@/types/questionType';
 import { uploadImageByType, uploadAudioByType, validateFile, UploadProgress } from '@/utils/s3Upload';
 import UploadModal from '@/components/common/UploadModal';
 import TTSButton from '@/components/shared/TTSButton';
+import TextContentInput from '@/components/shared/TextContentInput';
+import { TextContent } from '@/types/textContent';
 
 const { Text } = Typography;
 const { TextArea } = Input;
@@ -49,10 +50,28 @@ const SelectionAudioImageForm = forwardRef<SelectionAudioImageFormRef, Selection
   initialValues,
   questionType = 'question_selection_audio_image',
 }, ref) => {
-  // Audio transcript state
+  // Audio transcript state (using TextContent)
+  const [transcriptContent, setTranscriptContent] = useState<TextContent>({ text: "" });
   const [transcriptText, setTranscriptText] = useState<string>("");
   const [audioTranscriptChinese, setAudioTranscriptChinese] = useState<string>("");
   const [audioTranscriptPinyin, setAudioTranscriptPinyin] = useState<string>("");
+
+  // Helper functions to extract display text and pinyin from TextContent
+  const getDisplayText = (content: TextContent | undefined): string => {
+    if (!content) return '';
+    if (content.chinese && content.chinese.length > 0) {
+      return content.chinese.filter(c => c).join('');
+    }
+    return content.text || '';
+  };
+
+  const getDisplayPinyin = (content: TextContent | undefined): string => {
+    if (!content) return '';
+    if (content.pinyin && content.pinyin.length > 0) {
+      return content.pinyin.filter(p => p).join(' ');
+    }
+    return '';
+  };
 
   // Audio upload state
   const [selectedAudioFile, setSelectedAudioFile] = useState<File | null>(null);
@@ -79,18 +98,6 @@ const SelectionAudioImageForm = forwardRef<SelectionAudioImageFormRef, Selection
   ]);
   const [correctAnswer, setCorrectAnswer] = useState<string>('1');
 
-  const generatePinyin = (chinese: string): string => {
-    try {
-      return pinyin(chinese, {
-        toneType: 'symbol',
-        type: 'array'
-      }).join(' ');
-    } catch (error) {
-      console.warn('Failed to generate pinyin:', error);
-      return '';
-    }
-  };
-
   const updateFormData = (newOptions: SelectionAudioImageQuestionData['options'], newCorrectAnswer: string) => {
     form.setFieldsValue({
       data: {
@@ -101,19 +108,25 @@ const SelectionAudioImageForm = forwardRef<SelectionAudioImageFormRef, Selection
     });
   };
 
-  // Handle transcript changes
-  const handleTranscriptChange = (value: string) => {
-    setTranscriptText(value);
-    setAudioTranscriptChinese(value);
-    const pinyinResult = generatePinyin(value);
-    setAudioTranscriptPinyin(pinyinResult);
+  // Handle transcript TextContent change
+  const handleTranscriptContentChange = (content: TextContent) => {
+    setTranscriptContent(content);
     
+    const displayText = getDisplayText(content);
+    const displayPinyin = getDisplayPinyin(content);
+    
+    setTranscriptText(displayText);
+    setAudioTranscriptChinese(displayText);
+    setAudioTranscriptPinyin(displayPinyin);
+
+    // Update form with both new format and legacy fields for compatibility
     form.setFieldsValue({
       data: {
         ...form.getFieldValue('data'),
-        audio_transcript_chinese: value,
-        audio_transcript_pinyin: pinyinResult
-      }
+        transcriptContent: content,
+        audio_transcript_chinese: displayText,
+        audio_transcript_pinyin: displayPinyin,
+      },
     });
   };
 
@@ -590,13 +603,24 @@ const SelectionAudioImageForm = forwardRef<SelectionAudioImageFormRef, Selection
         setUploadedAudioUrl(data.audio_url || data.audio);
       }
       
-      if (data.audio_transcript_chinese) {
+      // Load transcript content - handle both new and legacy format
+      const dataAny = data as any;
+      if (dataAny.transcriptContent) {
+        setTranscriptContent(dataAny.transcriptContent);
+        setTranscriptText(getDisplayText(dataAny.transcriptContent));
+        setAudioTranscriptChinese(getDisplayText(dataAny.transcriptContent));
+        setAudioTranscriptPinyin(getDisplayPinyin(dataAny.transcriptContent));
+      } else if (data.audio_transcript_chinese) {
+        // Fallback to legacy format
+        const legacyContent: TextContent = data.audio_transcript_pinyin 
+          ? { chinese: [data.audio_transcript_chinese], pinyin: [data.audio_transcript_pinyin] }
+          : { text: data.audio_transcript_chinese };
+        setTranscriptContent(legacyContent);
         setAudioTranscriptChinese(data.audio_transcript_chinese);
         setTranscriptText(data.audio_transcript_chinese);
-      }
-      
-      if (data.audio_transcript_pinyin) {
-        setAudioTranscriptPinyin(data.audio_transcript_pinyin);
+        if (data.audio_transcript_pinyin) {
+          setAudioTranscriptPinyin(data.audio_transcript_pinyin);
+        }
       }
       
       if (data.options) {
@@ -728,43 +752,42 @@ const SelectionAudioImageForm = forwardRef<SelectionAudioImageFormRef, Selection
           </div>
         </Form.Item>
 
-        {/* Audio Transcript */}
-        <Form.Item
-          label="3. Bản Ghi Âm Thanh (Tiếng Trung)"
-          name={['data', 'audio_transcript_chinese']}
-          help="Bản ghi tùy chọn của nội dung âm thanh"
-        >
-          <TextArea
-            rows={2}
+        {/* Audio Transcript with TextContentInput */}
+        <div className="mb-4">
+          <Text strong className="block mb-2">3. Bản Ghi Âm Thanh (Tiếng Trung)</Text>
+          <TextContentInput
+            value={transcriptContent}
+            onChange={handleTranscriptContentChange}
             placeholder="Nhập bản ghi tiếng Trung của âm thanh"
-            onChange={(e) => handleTranscriptChange(e.target.value)}
-            className="text-base"
           />
-        </Form.Item>
+        </div>
 
-        {audioTranscriptPinyin && (
-          <Form.Item 
-            label="4. Pinyin"
-            name={['data', 'audio_transcript_pinyin']}
-          >
-            <Input
-              value={audioTranscriptPinyin}
-              onChange={(e) => {
-                setAudioTranscriptPinyin(e.target.value);
-                form.setFieldsValue({
-                  data: {
-                    ...form.getFieldValue('data'),
-                    audio_transcript_pinyin: e.target.value
-                  }
-                });
-              }}
-              placeholder="Pinyin sẽ tự động tạo từ Bản Ghi Tiếng Trung"
-            />
-          </Form.Item>
+        {/* Preview Section */}
+        {transcriptText && (
+          <div className="mb-4 p-3 bg-blue-50 rounded-md">
+            <Text strong className="block mb-2">Xem Trước:</Text>
+            <div className="flex flex-col gap-1">
+              <Text className="text-lg">{transcriptText}</Text>
+              {audioTranscriptPinyin && (
+                <Text className="text-blue-500">{audioTranscriptPinyin}</Text>
+              )}
+            </div>
+          </div>
         )}
 
+        {/* Hidden fields for form data structure */}
+        <Form.Item name={['data', 'transcriptContent']} className="hidden">
+          <Input />
+        </Form.Item>
+        <Form.Item name={['data', 'audio_transcript_chinese']} className="hidden">
+          <Input />
+        </Form.Item>
+        <Form.Item name={['data', 'audio_transcript_pinyin']} className="hidden">
+          <Input />
+        </Form.Item>
+
         <Form.Item
-          label="5. Bản Dịch Âm Thanh (Tiếng Việt)"
+          label="4. Bản Dịch Âm Thanh (Tiếng Việt)"
           name={['data', 'audio_transcript_translation']}
           help="Bản dịch tiếng Việt tùy chọn của âm thanh"
         >
@@ -776,9 +799,6 @@ const SelectionAudioImageForm = forwardRef<SelectionAudioImageFormRef, Selection
 
         {/* Hidden form fields */}
         <Form.Item name={['data', 'audio_url']} className="hidden">
-          <Input />
-        </Form.Item>
-        <Form.Item name={['data', 'audio_transcript_pinyin']} className="hidden">
           <Input />
         </Form.Item>
       </Card>

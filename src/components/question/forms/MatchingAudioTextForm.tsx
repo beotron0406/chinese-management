@@ -24,6 +24,8 @@ import { MatchingAudioTextQuestionData } from '@/types/questionType';
 import { uploadAudioByType, validateFile, UploadProgress } from '@/utils/s3Upload';
 import UploadModal from '@/components/common/UploadModal';
 import TTSButton from '@/components/shared/TTSButton';
+import TextContentInput from '@/components/shared/TextContentInput';
+import { TextContent } from '@/types/textContent';
 
 const { Text } = Typography;
 const { TextArea } = Input;
@@ -65,8 +67,35 @@ const MatchingAudioTextForm = forwardRef<MatchingAudioTextFormRef, MatchingAudio
   const [uploadError, setUploadError] = useState<string>('');
 
   // State for watching form values
-  const [leftItems, setLeftItems] = useState<MatchingAudioTextQuestionData['leftColumn']>([]);
-  const [rightItems, setRightItems] = useState<MatchingAudioTextQuestionData['rightColumn']>([]);
+  const [leftItems, setLeftItems] = useState<Array<{
+    id: string;
+    audio?: string;
+    audio_url?: string;
+    transcript?: string;
+    transcriptContent?: TextContent;
+  }>>([]);
+  const [rightItems, setRightItems] = useState<Array<{
+    id: string;
+    text?: string;
+    content?: TextContent;
+  }>>([]);
+
+  // Helper functions to extract display text from TextContent
+  const getDisplayText = (content: TextContent | undefined): string => {
+    if (!content) return '';
+    if (content.chinese && content.chinese.length > 0) {
+      return content.chinese.filter(c => c).join('');
+    }
+    return content.text || '';
+  };
+
+  const getDisplayPinyin = (content: TextContent | undefined): string => {
+    if (!content) return '';
+    if (content.pinyin && content.pinyin.length > 0) {
+      return content.pinyin.filter(p => p).join(' ');
+    }
+    return '';
+  };
 
   // Watch for changes in the columns to update the select options
   const leftValues = Form.useWatch(["data", "leftColumn"], form) || [];
@@ -98,12 +127,16 @@ const MatchingAudioTextForm = forwardRef<MatchingAudioTextFormRef, MatchingAudio
   // Update left and right items when form values change
   useEffect(() => {
     const updatedLeftItems = leftValues
-      .map((item: any, index: number) => ({
-        id: item?.id || `${index + 1}`,
-        audio: item?.audio || '',
-        audio_url: item?.audio_url || item?.audio || '',
-        transcript: item?.transcript || '',
-      }))
+      .map((item: any, index: number) => {
+        const transcriptContent = item?.transcriptContent || (item?.transcript ? { text: item.transcript } : undefined);
+        return {
+          id: item?.id || `${index + 1}`,
+          audio: item?.audio || '',
+          audio_url: item?.audio_url || item?.audio || '',
+          transcript: item?.transcript || getDisplayText(transcriptContent),
+          transcriptContent,
+        };
+      })
       .filter((item: any) => item.transcript || item.audio || item.audio_url);
 
     setLeftItems(updatedLeftItems);
@@ -111,14 +144,54 @@ const MatchingAudioTextForm = forwardRef<MatchingAudioTextFormRef, MatchingAudio
 
   useEffect(() => {
     const updatedRightItems = rightValues
-      .map((item: any, index: number) => ({
-        id: item?.id || String.fromCharCode(65 + index), // A, B, C...
-        text: item?.text || "",
-      }))
-      .filter((item: any) => item.text);
+      .map((item: any, index: number) => {
+        const content = item?.content || (item?.text ? { text: item.text } : undefined);
+        return {
+          id: item?.id || String.fromCharCode(65 + index), // A, B, C...
+          text: item?.text || getDisplayText(content),
+          content,
+        };
+      })
+      .filter((item: any) => item.text || (item.content && getDisplayText(item.content)));
 
     setRightItems(updatedRightItems);
   }, [rightValues]);
+
+  // Handle left column transcript TextContent change
+  const handleLeftTranscriptChange = (index: number, content: TextContent) => {
+    const currentLeftItems = [...(form.getFieldValue(['data', 'leftColumn']) || [])];
+    if (currentLeftItems[index]) {
+      currentLeftItems[index] = {
+        ...currentLeftItems[index],
+        transcriptContent: content,
+        transcript: getDisplayText(content),
+      };
+      form.setFieldsValue({
+        data: {
+          ...form.getFieldValue('data'),
+          leftColumn: currentLeftItems,
+        },
+      });
+    }
+  };
+
+  // Handle right column TextContent change
+  const handleRightItemChange = (index: number, content: TextContent) => {
+    const currentRightItems = [...(form.getFieldValue(['data', 'rightColumn']) || [])];
+    if (currentRightItems[index]) {
+      currentRightItems[index] = {
+        ...currentRightItems[index],
+        content: content,
+        text: getDisplayText(content),
+      };
+      form.setFieldsValue({
+        data: {
+          ...form.getFieldValue('data'),
+          rightColumn: currentRightItems,
+        },
+      });
+    }
+  };
 
   // Audio upload handlers for left column - auto upload
   const handleLeftAudioChange = async (itemIndex: number, file: File | null) => {
@@ -562,14 +635,30 @@ const MatchingAudioTextForm = forwardRef<MatchingAudioTextFormRef, MatchingAudio
                       </div>
                     </Form.Item>
 
-                    {/* Transcript (Optional) */}
+                    {/* Transcript with TextContentInput */}
+                    <div className="mb-4">
+                      <Text strong className="block mb-2">Bản Ghi (Tùy Chọn)</Text>
+                      <TextContentInput
+                        value={form.getFieldValue(['data', 'leftColumn', index, 'transcriptContent']) || { text: '' }}
+                        onChange={(content) => handleLeftTranscriptChange(index, content)}
+                        placeholder="Nhập bản ghi của âm thanh"
+                      />
+                    </div>
+
+                    {/* Hidden fields for form data structure */}
                     <Form.Item
                       {...restField}
-                      label="Bản Ghi (Tùy Chọn)"
                       name={[name, "transcript"]}
-                      help="Bản ghi tùy chọn của nội dung âm thanh"
+                      className="hidden"
                     >
-                      <Input placeholder="Nhập bản ghi của âm thanh" />
+                      <Input />
+                    </Form.Item>
+                    <Form.Item
+                      {...restField}
+                      name={[name, "transcriptContent"]}
+                      className="hidden"
+                    >
+                      <Input />
                     </Form.Item>
 
                     {/* Hidden audio_url field */}
@@ -607,50 +696,69 @@ const MatchingAudioTextForm = forwardRef<MatchingAudioTextFormRef, MatchingAudio
       >
         <Form.List
           name={["data", "rightColumn"]}
-          initialValue={[{ id: "A", text: "" }]}
+          initialValue={[{ id: "A", text: "", content: { text: '' } }]}
         >
           {(fields, { add, remove }) => (
             <>
-              {fields.map(({ key, name, ...restField }, index) => (
-                <Space
-                  key={key}
-                  className="flex mb-2"
-                  align="baseline"
-                >
-                  {/* ID (Letter) */}
-                  <Form.Item
-                    {...restField}
-                    name={[name, "id"]}
-                    initialValue={generateRightId(index)}
-                    className="w-[60px] mr-2"
-                  >
-                    <Input
-                      disabled
-                      className="text-center font-bold"
-                      placeholder="Chữ Cái"
-                    />
-                  </Form.Item>
+              {fields.map(({ key, name, ...restField }, index) => {
+                const currentItem = form.getFieldValue(['data', 'rightColumn', index]) || {};
+                const textContent: TextContent = currentItem.content || { text: '' };
 
-                  {/* Text */}
-                  <Form.Item
-                    {...restField}
-                    name={[name, "text"]}
-                    rules={[{ required: true, message: "Thiếu văn bản" }]}
-                    className="w-[400px]"
-                  >
-                    <Input placeholder="Nhập văn bản/bản dịch" />
-                  </Form.Item>
+                return (
+                  <div key={key} className="mb-4 p-3 border rounded-md bg-gray-50">
+                    <div className="flex justify-between items-start mb-2">
+                      {/* ID (Letter) */}
+                      <Form.Item
+                        {...restField}
+                        name={[name, "id"]}
+                        initialValue={generateRightId(index)}
+                        className="w-[60px] mb-0"
+                      >
+                        <Input
+                          disabled
+                          className="text-center font-bold"
+                          placeholder="Chữ Cái"
+                        />
+                      </Form.Item>
 
-                  {fields.length > 1 && (
-                    <Button
-                      danger
-                      size="small"
-                      icon={<MinusCircleOutlined />}
-                      onClick={() => remove(name)}
-                    />
-                  )}
-                </Space>
-              ))}
+                      {fields.length > 1 && (
+                        <Button
+                          danger
+                          size="small"
+                          icon={<MinusCircleOutlined />}
+                          onClick={() => remove(name)}
+                        />
+                      )}
+                    </div>
+
+                    {/* TextContentInput for right column */}
+                    <div className="mt-2">
+                      <Text strong className="block mb-2">Nội dung văn bản</Text>
+                      <TextContentInput
+                        value={textContent}
+                        onChange={(content) => handleRightItemChange(index, content)}
+                        placeholder="Nhập văn bản/bản dịch hoặc chữ Trung"
+                      />
+                    </div>
+
+                    {/* Hidden fields for form data structure */}
+                    <Form.Item
+                      {...restField}
+                      name={[name, "content"]}
+                      className="hidden"
+                    >
+                      <Input />
+                    </Form.Item>
+                    <Form.Item
+                      {...restField}
+                      name={[name, "text"]}
+                      className="hidden"
+                    >
+                      <Input />
+                    </Form.Item>
+                  </div>
+                );
+              })}
               <Form.Item>
                 <Button
                   type="dashed"
@@ -658,6 +766,7 @@ const MatchingAudioTextForm = forwardRef<MatchingAudioTextFormRef, MatchingAudio
                     add({
                       id: generateRightId(fields.length),
                       text: "",
+                      content: { text: '' },
                     })
                   }
                   block
@@ -701,11 +810,20 @@ const MatchingAudioTextForm = forwardRef<MatchingAudioTextFormRef, MatchingAudio
                     className="w-[200px]"
                   >
                     <Select placeholder="Chọn mục âm thanh">
-                      {leftItems.map((item, itemIndex) => (
-                        <Option key={`left-option-${item.id}-${itemIndex}`} value={item.id}>
-                          {item.id}: {item.transcript || 'File âm thanh'}
-                        </Option>
-                      ))}
+                      {leftItems.map((item, itemIndex) => {
+                        const displayText = item.transcript || getDisplayText(item.transcriptContent) || 'File âm thanh';
+                        const displayPinyin = getDisplayPinyin(item.transcriptContent);
+                        return (
+                          <Option key={`left-option-${item.id}-${itemIndex}`} value={item.id}>
+                            {item.id}: {displayText}
+                            {displayPinyin && (
+                              <span className="text-gray-500 text-xs">
+                                {' '}({displayPinyin})
+                              </span>
+                            )}
+                          </Option>
+                        );
+                      })}
                     </Select>
                   </Form.Item>
                   <Text type="secondary">ghép với</Text>
@@ -716,11 +834,20 @@ const MatchingAudioTextForm = forwardRef<MatchingAudioTextFormRef, MatchingAudio
                     className="w-[200px]"
                   >
                     <Select placeholder="Chọn mục văn bản">
-                      {rightItems.map((item, itemIndex) => (
-                        <Option key={`right-option-${item.id}-${itemIndex}`} value={item.id}>
-                          {item.id}: {item.text}
-                        </Option>
-                      ))}
+                      {rightItems.map((item, itemIndex) => {
+                        const displayText = item.text || getDisplayText(item.content);
+                        const displayPinyin = getDisplayPinyin(item.content);
+                        return (
+                          <Option key={`right-option-${item.id}-${itemIndex}`} value={item.id}>
+                            {item.id}: {displayText}
+                            {displayPinyin && (
+                              <span className="text-gray-500 text-xs">
+                                {' '}({displayPinyin})
+                              </span>
+                            )}
+                          </Option>
+                        );
+                      })}
                     </Select>
                   </Form.Item>
                   {fields.length > 1 && (
@@ -757,12 +884,18 @@ const MatchingAudioTextForm = forwardRef<MatchingAudioTextFormRef, MatchingAudio
                 const rightItem = rightItems.find(item => item.id === match.right);
                 
                 if (leftItem && rightItem) {
+                  const leftText = leftItem.transcript || getDisplayText(leftItem.transcriptContent) || 'File âm thanh';
+                  const leftPinyin = getDisplayPinyin(leftItem.transcriptContent);
+                  const rightText = rightItem.text || getDisplayText(rightItem.content);
+                  const rightPinyin = getDisplayPinyin(rightItem.content);
                   return (
                     <div key={index} className="mb-1">
                       <Text>
-                        {leftItem.id}: {leftItem.transcript || 'File âm thanh'} 
+                        {leftItem.id}: {leftText}
+                        {leftPinyin && <span className="text-gray-500"> ({leftPinyin})</span>}
                         {' → '}
-                        {rightItem.id}: {rightItem.text}
+                        {rightItem.id}: {rightText}
+                        {rightPinyin && <span className="text-gray-500"> ({rightPinyin})</span>}
                       </Text>
                     </div>
                   );

@@ -19,11 +19,12 @@ import {
   PlusOutlined,
   MinusCircleOutlined,
 } from "@ant-design/icons";
-import { pinyin } from "pinyin-pro";
 import type { FormInstance } from "antd/es/form";
 import { MatchingTextImageQuestionData } from '@/types/questionType';
 import { uploadImageByType, validateFile, UploadProgress } from '@/utils/s3Upload';
 import UploadModal from '@/components/common/UploadModal';
+import TextContentInput from '@/components/shared/TextContentInput';
+import { TextContent } from '@/types/textContent';
 
 const { Text } = Typography;
 const { TextArea } = Input;
@@ -65,25 +66,34 @@ const MatchingTextImageForm = forwardRef<MatchingTextImageFormRef, MatchingTextI
   const [uploadError, setUploadError] = useState<string>('');
 
   // State for watching form values
-  const [leftItems, setLeftItems] = useState<MatchingTextImageQuestionData['leftColumn']>([]);
+  const [leftItems, setLeftItems] = useState<Array<{
+    id: string;
+    text?: string;
+    pinyin?: string;
+    content?: TextContent;
+  }>>([]);
   const [rightItems, setRightItems] = useState<MatchingTextImageQuestionData['rightColumn']>([]);
+
+  // Helper functions to extract display text and pinyin from TextContent
+  const getDisplayText = (content: TextContent | undefined): string => {
+    if (!content) return '';
+    if (content.chinese && content.chinese.length > 0) {
+      return content.chinese.filter(c => c).join('');
+    }
+    return content.text || '';
+  };
+
+  const getDisplayPinyin = (content: TextContent | undefined): string => {
+    if (!content) return '';
+    if (content.pinyin && content.pinyin.length > 0) {
+      return content.pinyin.filter(p => p).join(' ');
+    }
+    return '';
+  };
 
   // Watch for changes in the columns to update the select options
   const leftValues = Form.useWatch(["data", "leftColumn"], form) || [];
   const rightValues = Form.useWatch(["data", "rightColumn"], form) || [];
-
-  // Generate pinyin for Chinese text
-  const generatePinyin = (chinese: string): string => {
-    try {
-      return pinyin(chinese, {
-        toneType: 'symbol',
-        type: 'array'
-      }).join(' ');
-    } catch (error) {
-      console.warn('Failed to generate pinyin:', error);
-      return '';
-    }
-  };
 
   // Initialize form with existing data
   useEffect(() => {
@@ -91,7 +101,16 @@ const MatchingTextImageForm = forwardRef<MatchingTextImageFormRef, MatchingTextI
       const { data } = initialValues;
       
       if (data.leftColumn) {
-        setLeftItems(data.leftColumn);
+        // Convert to new format with content
+        const converted = data.leftColumn.map(item => ({
+          ...item,
+          content: item.content || (item.text ? (
+            item.pinyin 
+              ? { chinese: [item.text], pinyin: [item.pinyin] }
+              : { text: item.text }
+          ) : { text: '' })
+        }));
+        setLeftItems(converted);
       }
       
       if (data.rightColumn) {
@@ -111,12 +130,20 @@ const MatchingTextImageForm = forwardRef<MatchingTextImageFormRef, MatchingTextI
   // Update left and right items when form values change
   useEffect(() => {
     const updatedLeftItems = leftValues
-      .map((item: any, index: number) => ({
-        id: item?.id || `${index + 1}`,
-        text: item?.text || '',
-        pinyin: item?.pinyin || '',
-      }))
-      .filter((item: any) => item.text);
+      .map((item: any, index: number) => {
+        const content = item?.content || (item?.text ? (
+          item.pinyin 
+            ? { chinese: [item.text], pinyin: [item.pinyin] }
+            : { text: item.text }
+        ) : { text: '' });
+        return {
+          id: item?.id || `${index + 1}`,
+          text: item?.text || getDisplayText(content),
+          pinyin: item?.pinyin || getDisplayPinyin(content),
+          content,
+        };
+      })
+      .filter((item: any) => item.text || (item.content && getDisplayText(item.content)));
 
     setLeftItems(updatedLeftItems);
   }, [leftValues]);
@@ -133,22 +160,21 @@ const MatchingTextImageForm = forwardRef<MatchingTextImageFormRef, MatchingTextI
     setRightItems(updatedRightItems);
   }, [rightValues]);
 
-  // Handle text changes with automatic pinyin generation
-  const handleLeftTextChange = (itemIndex: number, value: string) => {
-    const leftItems = form.getFieldValue(['data', 'leftColumn']) || [];
-    const pinyinResult = generatePinyin(value);
-    
-    if (leftItems[itemIndex]) {
-      leftItems[itemIndex] = {
-        ...leftItems[itemIndex],
-        text: value,
-        pinyin: pinyinResult,
+  // Handle left column TextContent change
+  const handleLeftItemChange = (index: number, content: TextContent) => {
+    const currentLeftItems = [...(form.getFieldValue(['data', 'leftColumn']) || [])];
+    if (currentLeftItems[index]) {
+      currentLeftItems[index] = {
+        ...currentLeftItems[index],
+        content: content,
+        text: getDisplayText(content),
+        pinyin: getDisplayPinyin(content),
       };
       form.setFieldsValue({
         data: {
           ...form.getFieldValue('data'),
-          leftColumn: leftItems,
-        }
+          leftColumn: currentLeftItems,
+        },
       });
     }
   };
@@ -460,91 +486,80 @@ const MatchingTextImageForm = forwardRef<MatchingTextImageFormRef, MatchingTextI
       >
         <Form.List
           name={["data", "leftColumn"]}
-          initialValue={[{ id: "1", text: "", pinyin: "" }]}
+          initialValue={[{ id: "1", text: "", pinyin: "", content: { text: '' } }]}
         >
           {(fields, { add, remove }) => (
             <>
-              {fields.map(({ key, name, ...restField }, index) => (
-                <Card
-                  key={key}
-                  size="small"
-                  className="mb-4"
-                  title={`Mục Văn Bản ${index + 1}`}
-                  extra={
-                    fields.length > 1 && (
-                      <Button
-                        danger
-                        size="small"
-                        icon={<MinusCircleOutlined />}
-                        onClick={() => remove(name)}
-                      />
-                    )
-                  }
-                >
-                  {/* ID (Number) */}
-                  <Form.Item
-                    {...restField}
-                    label="ID"
-                    name={[name, "id"]}
-                    initialValue={`${index + 1}`}
-                    className="w-[100px]"
-                  >
-                    <Input
-                      disabled
-                      className="text-center font-bold"
-                    />
-                  </Form.Item>
+              {fields.map(({ key, name, ...restField }, index) => {
+                const currentItem = form.getFieldValue(['data', 'leftColumn', index]) || {};
+                const textContent: TextContent = currentItem.content || { text: '' };
 
-                  {/* Chinese Text */}
-                  <Form.Item
-                    {...restField}
-                    label="Chữ Trung"
-                    name={[name, "text"]}
-                    rules={[{ required: true, message: "Vui lòng nhập chữ Trung" }]}
-                  >
-                    <Input
-                      placeholder="Nhập chữ Trung"
-                      onChange={(e) => handleLeftTextChange(index, e.target.value)}
-                      className="text-base"
-                    />
-                  </Form.Item>
+                return (
+                  <div key={key} className="mb-4 p-3 border rounded-md bg-gray-50">
+                    <div className="flex justify-between items-start mb-2">
+                      {/* ID (Number) */}
+                      <Form.Item
+                        {...restField}
+                        name={[name, "id"]}
+                        initialValue={`${index + 1}`}
+                        className="w-[60px] mb-0"
+                      >
+                        <Input
+                          disabled
+                          className="text-center font-bold"
+                        />
+                      </Form.Item>
 
-                  {/* Auto-generated Pinyin */}
-                  <Form.Item
-                    {...restField}
-                    label="Pinyin (Tự động tạo)"
-                    name={[name, "pinyin"]}
-                  >
-                    <Input
-                      placeholder="Pinyin sẽ được tự động tạo"
-                      disabled
-                      className="bg-gray-100 text-gray-500"
-                    />
-                  </Form.Item>
-
-                  {/* Preview
-                  {form.getFieldValue(['data', 'leftColumn', index, 'text']) && (
-                    <div style={{ marginTop: '12px', padding: '8px', backgroundColor: '#fafafa', borderRadius: '4px' }}>
-                      <Text strong>Xem Trước: </Text>
-                      <div style={{ marginTop: '4px' }}>
-                        <div style={{ fontSize: '16px', marginBottom: '4px' }}>
-                          {form.getFieldValue(['data', 'leftColumn', index, 'text'])}
-                        </div>
-                        {form.getFieldValue(['data', 'leftColumn', index, 'pinyin']) && (
-                          <div style={{ fontSize: '14px', color: '#666' }}>
-                            {form.getFieldValue(['data', 'leftColumn', index, 'pinyin'])}
-                          </div>
-                        )}
-                      </div>
+                      {fields.length > 1 && (
+                        <Button
+                          danger
+                          size="small"
+                          icon={<MinusCircleOutlined />}
+                          onClick={() => remove(name)}
+                        />
+                      )}
                     </div>
-                  )} */}
-                </Card>
-              ))}
+
+                    {/* TextContentInput for Chinese text */}
+                    <div className="mt-2">
+                      <Text strong className="block mb-2">Nội dung văn bản</Text>
+                      <TextContentInput
+                        value={textContent}
+                        onChange={(content) => handleLeftItemChange(index, content)}
+                        placeholder="Nhập chữ Trung hoặc văn bản"
+                      />
+                    </div>
+
+                    {/* Hidden fields for form data structure */}
+                    <Form.Item
+                      {...restField}
+                      name={[name, "content"]}
+                      className="hidden"
+                    >
+                      <Input />
+                    </Form.Item>
+                    <Form.Item
+                      {...restField}
+                      name={[name, "text"]}
+                      className="hidden"
+                    >
+                      <Input />
+                    </Form.Item>
+                    <Form.Item
+                      {...restField}
+                      name={[name, "pinyin"]}
+                      className="hidden"
+                    >
+                      <Input />
+                    </Form.Item>
+                  </div>
+                );
+              })}
               <Form.Item>
                 <Button
                   type="dashed"
                   onClick={() =>
-                    add({ id: `${fields.length + 1}`, text: "", pinyin: "" })
+                    add({ id: `${fields.length + 1}`, text: "", pinyin: "", content: { text: '' } })
                   }
                   block
                   icon={<PlusOutlined />}
@@ -717,11 +732,20 @@ const MatchingTextImageForm = forwardRef<MatchingTextImageFormRef, MatchingTextI
                     className="w-[200px]"
                   >
                     <Select placeholder="Chọn mục văn bản">
-                      {leftItems.map((item, itemIndex) => (
-                        <Option key={`left-option-${item.id}-${itemIndex}`} value={item.id}>
-                          {item.id}: {item.text}
-                        </Option>
-                      ))}
+                      {leftItems.map((item, itemIndex) => {
+                        const displayText = item.text || getDisplayText(item.content);
+                        const displayPinyin = item.pinyin || getDisplayPinyin(item.content);
+                        return (
+                          <Option key={`left-option-${item.id}-${itemIndex}`} value={item.id}>
+                            {item.id}: {displayText}
+                            {displayPinyin && (
+                              <span className="text-gray-500 text-xs">
+                                {' '}({displayPinyin})
+                              </span>
+                            )}
+                          </Option>
+                        );
+                      })}
                     </Select>
                   </Form.Item>
                   <Text type="secondary">ghép với</Text>
@@ -773,10 +797,13 @@ const MatchingTextImageForm = forwardRef<MatchingTextImageFormRef, MatchingTextI
                 const rightItem = rightItems.find(item => item.id === match.right);
                 
                 if (leftItem && rightItem) {
+                  const leftText = leftItem.text || getDisplayText(leftItem.content);
+                  const leftPinyin = leftItem.pinyin || getDisplayPinyin(leftItem.content);
                   return (
                     <div key={index} className="mb-1">
                       <Text>
-                        {leftItem.id}: {leftItem.text} 
+                        {leftItem.id}: {leftText}
+                        {leftPinyin && <span className="text-gray-500"> ({leftPinyin})</span>}
                         {' → '}
                         {rightItem.id}: {rightItem.alt || 'Hình ảnh'}
                       </Text>

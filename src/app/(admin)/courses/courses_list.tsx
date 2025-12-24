@@ -219,14 +219,31 @@ const CourseList = ({ filterActive }: CourseListProps) => {
   const CourseCard = ({ course }: { course: Course }) => (
     <Card
       hoverable={course.isActive}
-      className={`course-card h-full ${course.isActive ? 'cursor-pointer border border-gray-300' : 'cursor-not-allowed border border-red-400 opacity-75'}`}
+      className={`course-card h-full flex flex-col ${
+        course.isActive
+          ? "cursor-pointer border border-gray-300"
+          : "cursor-not-allowed border border-red-400 opacity-75"
+      }`}
+      styles={{
+        body: {
+          display: "flex",
+          flexDirection: "column",
+          flex: 1,
+        },
+      }}
       onClick={() => course.isActive && handleCourseClick(course)}
       cover={
         <div
-          className={`p-5 text-center ${course.isActive ? 'bg-gradient-to-br from-blue-500/10 to-green-500/15' : 'bg-gradient-to-br from-red-400/10 to-red-300/15'}`}
+          className={`p-5 text-center ${
+            course.isActive
+              ? "bg-gradient-to-br from-blue-500/10 to-green-500/15"
+              : "bg-gradient-to-br from-red-400/10 to-red-300/15"
+          }`}
         >
           <BookOutlined
-            className={`text-3xl ${course.isActive ? 'text-blue-500' : 'text-red-400'}`}
+            className={`text-3xl ${
+              course.isActive ? "text-blue-500" : "text-red-400"
+            }`}
           />
         </div>
       }
@@ -291,49 +308,61 @@ const CourseList = ({ filterActive }: CourseListProps) => {
         ),
       ].filter(Boolean)}
     >
-      <Card.Meta
-        title={
-          <div>
-            <Text strong className="text-base">
-              {course.title}
-            </Text>
-            <div className="float-right">
-              <Tag color={course.isActive ? "green" : "red"}>
-                {course.isActive ? (
-                  <CheckCircleOutlined />
-                ) : (
-                  <CloseCircleOutlined />
-                )}
-                {course.isActive ? " Hoạt động" : " Không hoạt động"}
-              </Tag>
+      {/* 👇 Nội dung chiếm toàn bộ chiều cao còn lại */}
+      <div className="flex-1">
+        <Card.Meta
+          title={
+            <div>
+              <Text strong className="text-base">
+                {course.title}
+              </Text>
+              <div className="float-right">
+                <Tag color={course.isActive ? "green" : "red"}>
+                  {course.isActive ? (
+                    <CheckCircleOutlined />
+                  ) : (
+                    <CloseCircleOutlined />
+                  )}
+                  {course.isActive ? " Hoạt động" : " Không hoạt động"}
+                </Tag>
+              </div>
             </div>
-          </div>
-        }
-        description={
-          <div>
-            <div className="mb-2">
-              <Tag color="blue">HSK {course.hskLevel}</Tag>
-              <Tag color="purple">Order: {course.orderIndex}</Tag>
+          }
+          description={
+            <div>
+              <div className="mb-2">
+                <Tag color="blue">HSK {course.hskLevel}</Tag>
+                <Tag color="purple">Order: {course.orderIndex}</Tag>
+              </div>
+
+              <Text type="secondary" className="text-sm">
+                {course.description && course.description.length > 80
+                  ? `${course.description.substring(0, 80)}...`
+                  : course.description || "Chưa có mô tả"}
+              </Text>
+
+              <div className="mt-2">
+                <Space>
+                  <Text type="secondary" className="text-xs">
+                    <CalendarOutlined />{" "}
+                    {new Date(course.createdAt).toLocaleDateString()}
+                  </Text>
+                </Space>
+              </div>
+
+              <div
+                className={`mt-2 text-xs ${
+                  course.isActive ? "text-blue-500" : "text-red-400"
+                }`}
+              >
+                {course.isActive
+                  ? "Nhấn vào để quản lý bài học"
+                  : "Khóa học đã bị vô hiệu hóa"}
+              </div>
             </div>
-            <Text type="secondary" className="text-sm">
-              {course.description && course.description.length > 80
-                ? `${course.description.substring(0, 80)}...`
-                : course.description || "Chưa có mô tả"}
-            </Text>
-            <div className="mt-2">
-              <Space>
-                <Text type="secondary" className="text-xs">
-                  <CalendarOutlined />{" "}
-                  {new Date(course.createdAt).toLocaleDateString()}
-                </Text>
-              </Space>
-            </div>
-            <div className={`mt-2 text-xs ${course.isActive ? 'text-blue-500' : 'text-red-400'}`}>
-              {course.isActive ? 'Nhấn vào để quản lý bài học' : 'Khóa học đã bị vô hiệu hóa'}
-            </div>
-          </div>
-        }
-      />
+          }
+        />
+      </div>
     </Card>
   );
 

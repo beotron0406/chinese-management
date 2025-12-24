@@ -21,7 +21,6 @@ import {
   UploadOutlined,
   DeleteOutlined,
   SoundOutlined,
-  ReloadOutlined,
 } from "@ant-design/icons";
 import {
   uploadAudioByType,
@@ -30,9 +29,10 @@ import {
 } from "@/utils/s3Upload";
 import UploadModal from "@/components/common/UploadModal";
 import TTSButton from "@/components/shared/TTSButton";
+import TextContentInput from "@/components/shared/TextContentInput";
 import type { FormInstance } from "antd/es/form";
 import { BoolAudioTextQuestionData } from "@/types/questionType";
-import { pinyin } from "pinyin-pro";
+import { TextContent, isChineseContent } from "@/types/textContent";
 
 const { TextArea } = Input;
 const { Text } = Typography;
@@ -68,9 +68,25 @@ const BoolAudioTextForm = forwardRef<
   );
   const [uploadError, setUploadError] = useState<string>("");
 
-  // Transcript and Pinyin state
+  // Transcript and Pinyin state (using TextContent)
+  const [transcriptContent, setTranscriptContent] = useState<TextContent>({ text: "" });
   const [transcriptText, setTranscriptText] = useState<string>("");
   const [generatedPinyin, setGeneratedPinyin] = useState<string>("");
+
+  // Helper functions to extract display text and pinyin from TextContent
+  const getDisplayText = (content: TextContent): string => {
+    if (content?.chinese && content.chinese.length > 0) {
+      return content.chinese.filter(c => c).join('');
+    }
+    return content?.text || '';
+  };
+
+  const getDisplayPinyin = (content: TextContent): string => {
+    if (content?.pinyin && content.pinyin.length > 0) {
+      return content.pinyin.filter(p => p).join(' ');
+    }
+    return '';
+  };
 
   // Initialize form with existing data
   useEffect(() => {
@@ -81,50 +97,44 @@ const BoolAudioTextForm = forwardRef<
         setUploadedAudioUrl(data.audio_url || data.audio);
       }
 
-      if (data.transcript) {
+      // Load transcript content
+      if (data.transcriptContent) {
+        setTranscriptContent(data.transcriptContent);
+        setTranscriptText(getDisplayText(data.transcriptContent));
+        setGeneratedPinyin(getDisplayPinyin(data.transcriptContent));
+      } else if (data.transcript) {
+        // Fallback to legacy transcript field
+        const legacyContent: TextContent = data.pinyin 
+          ? { chinese: [data.transcript], pinyin: [data.pinyin] }
+          : { text: data.transcript };
+        setTranscriptContent(legacyContent);
         setTranscriptText(data.transcript);
-      }
-
-      if (data.pinyin) {
-        setGeneratedPinyin(data.pinyin);
+        if (data.pinyin) {
+          setGeneratedPinyin(data.pinyin);
+        }
       }
     }
   }, [initialValues]);
 
-  // Generate Pinyin from transcript
-  const generatePinyin = (text: string) => {
-    if (!text.trim()) {
-      setGeneratedPinyin("");
-      return "";
-    }
+  // Handle transcript TextContent change
+  const handleTranscriptContentChange = (content: TextContent) => {
+    setTranscriptContent(content);
+    
+    const displayText = getDisplayText(content);
+    const displayPinyin = getDisplayPinyin(content);
+    
+    setTranscriptText(displayText);
+    setGeneratedPinyin(displayPinyin);
 
-    try {
-      const pinyinText = pinyin(text, {
-        toneType: "symbol",
-        type: "array",
-      }).join(" ");
-      setGeneratedPinyin(pinyinText);
-
-      // Update the form field
-      form.setFieldsValue({
-        data: {
-          ...form.getFieldValue("data"),
-          pinyin: pinyinText,
-        },
-      });
-
-      return pinyinText;
-    } catch (error) {
-      console.warn("Failed to generate pinyin:", error);
-      return "";
-    }
-  };
-
-  // Handle transcript change
-  const handleTranscriptChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const text = e.target.value;
-    setTranscriptText(text);
-    generatePinyin(text);
+    // Update form with both new format and legacy fields for compatibility
+    form.setFieldsValue({
+      data: {
+        ...form.getFieldValue("data"),
+        transcriptContent: content,
+        transcript: displayText,
+        pinyin: displayPinyin,
+      },
+    });
   };
 
   // Audio file selection handler - auto upload
@@ -454,47 +464,42 @@ const BoolAudioTextForm = forwardRef<
 
       {/* Audio Content */}
       <Card title="Nội Dung Âm Thanh" className="mb-6">
+        {/* TextContentInput for Transcript */}
+        <div className="mb-4">
+          <Text strong className="block mb-2">3. Bản Ghi (Tiếng Trung) *</Text>
+          <TextContentInput
+            value={transcriptContent}
+            onChange={handleTranscriptContentChange}
+            placeholder="Nhập bản ghi tiếng Trung của âm thanh"
+          />
+        </div>
+
+        {/* Hidden fields for form data structure */}
         <Form.Item
-          label="3. Bản Ghi (Tiếng Trung) *"
           name={["data", "transcript"]}
+          className="hidden"
           rules={[
             { required: true, message: "Vui lòng nhập bản ghi tiếng Trung" },
           ]}
         >
-          <Input
-            placeholder="Nhập bản ghi tiếng Trung của âm thanh"
-            onChange={handleTranscriptChange}
-            className="text-base"
-          />
+          <Input />
+        </Form.Item>
+        <Form.Item name={["data", "transcriptContent"]} className="hidden">
+          <Input />
+        </Form.Item>
+        <Form.Item name={["data", "pinyin"]} className="hidden">
+          <Input />
         </Form.Item>
 
-        <Form.Item label="4. Pinyin" name={["data", "pinyin"]}>
-          <Space className="w-full">
-            <Input
-              placeholder="Pinyin sẽ được tự động tạo"
-              value={generatedPinyin}
-              onChange={(e) => setGeneratedPinyin(e.target.value)}
-              className="w-[400px]"
-            />
-            {transcriptText && (
-              <Button
-                icon={<ReloadOutlined />}
-                onClick={() => generatePinyin(transcriptText)}
-              >
-                Tạo Lại Pinyin
-              </Button>
-            )}
-          </Space>
-        </Form.Item>
-
-        {/* Pinyin Preview */}
-        {generatedPinyin && (
-          <div className="mb-4">
-            <div className="my-2">
-              <Text strong>Pinyin Đã Tạo:</Text>
-            </div>
-            <div className="p-3 bg-gray-100 rounded-md text-base text-blue-500">
-              {generatedPinyin}
+        {/* Preview Section */}
+        {transcriptText && (
+          <div className="mb-4 p-3 bg-blue-50 rounded-md">
+            <Text strong className="block mb-2">Xem Trước:</Text>
+            <div className="flex flex-col gap-1">
+              <Text className="text-lg">{transcriptText}</Text>
+              {generatedPinyin && (
+                <Text className="text-blue-500">{generatedPinyin}</Text>
+              )}
             </div>
           </div>
         )}

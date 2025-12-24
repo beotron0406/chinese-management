@@ -6,7 +6,6 @@ import type { FormInstance } from 'antd/es/form';
 import { SelectionTextTextQuestionData, TextOption } from '@/types/questionType';
 import { TextContent } from '@/types/textContent';
 import TextContentInput from '@/components/shared/TextContentInput';
-import { TextContentInline } from '@/components/shared/TextContentDisplay';
 import { getDisplayText } from '@/utils/textContentUtils';
 
 const { Text } = Typography;
