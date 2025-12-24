@@ -30,8 +30,10 @@ import {
 } from "@/utils/s3Upload";
 import UploadModal from "@/components/common/UploadModal";
 import TTSButton from "@/components/shared/TTSButton";
+import TextContentInput from "@/components/shared/TextContentInput";
 import type { FormInstance } from "antd/es/form";
 import { BoolAudioTextQuestionData } from "@/types/questionType";
+import { TextContent } from "@/types/textContent";
 import { pinyin } from "pinyin-pro";
 
 const { TextArea } = Input;
@@ -71,6 +73,9 @@ const BoolAudioTextForm = forwardRef<
   // Transcript and Pinyin state
   const [transcriptText, setTranscriptText] = useState<string>("");
   const [generatedPinyin, setGeneratedPinyin] = useState<string>("");
+  
+  // Statement content state
+  const [statementContent, setStatementContent] = useState<TextContent>({ text: '' });
 
   // Initialize form with existing data
   useEffect(() => {
@@ -81,12 +86,21 @@ const BoolAudioTextForm = forwardRef<
         setUploadedAudioUrl(data.audio_url || data.audio);
       }
 
-      if (data.transcript) {
-        setTranscriptText(data.transcript);
+      // Handle transcriptContent
+      if (data.transcriptContent) {
+        if (data.transcriptContent.chinese && data.transcriptContent.chinese.length > 0) {
+          setTranscriptText(data.transcriptContent.chinese.join(''));
+          if (data.transcriptContent.pinyin) {
+            setGeneratedPinyin(data.transcriptContent.pinyin.join(' '));
+          }
+        } else if (data.transcriptContent.text) {
+          setTranscriptText(data.transcriptContent.text);
+        }
       }
 
-      if (data.pinyin) {
-        setGeneratedPinyin(data.pinyin);
+      // Handle statementContent
+      if (data.statementContent) {
+        setStatementContent(data.statementContent);
       }
     }
   }, [initialValues]);
@@ -120,11 +134,32 @@ const BoolAudioTextForm = forwardRef<
     }
   };
 
-  // Handle transcript change
+  // Handle transcript change and update transcriptContent
   const handleTranscriptChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const text = e.target.value;
     setTranscriptText(text);
-    generatePinyin(text);
+    const pinyinResult = generatePinyin(text);
+    
+    // Update form with transcriptContent format
+    const chinese = text.split('');
+    const pinyinArray = pinyinResult.split(' ');
+    form.setFieldsValue({
+      data: {
+        ...form.getFieldValue("data"),
+        transcriptContent: { chinese, pinyin: pinyinArray },
+      },
+    });
+  };
+  
+  // Handle statement content change
+  const handleStatementChange = (content: TextContent) => {
+    setStatementContent(content);
+    form.setFieldsValue({
+      data: {
+        ...form.getFieldValue("data"),
+        statementContent: content,
+      },
+    });
   };
 
   // Audio file selection handler - auto upload
@@ -508,10 +543,28 @@ const BoolAudioTextForm = forwardRef<
         </Form.Item>
       </Card>
 
+      {/* Statement Section */}
+      <Card title="Câu Phát Biểu" className="mb-6">
+        <Form.Item
+          label="6. Câu Phát Biểu Cần Đánh Giá *"
+          help="Nhập câu phát biểu mà học sinh cần xác định đúng hay sai dựa trên nội dung âm thanh"
+          required
+        >
+          <TextContentInput
+            value={statementContent}
+            onChange={handleStatementChange}
+            placeholder="Nhập câu phát biểu..."
+          />
+        </Form.Item>
+        <Form.Item name={["data", "statementContent"]} className="hidden">
+          <Input />
+        </Form.Item>
+      </Card>
+
       {/* Answer Section */}
       <Card title="Đáp Án" className="mb-6">
         <Form.Item
-          label="6. Đáp Án Đúng *"
+          label="7. Đáp Án Đúng *"
           name={["data", "correctAnswer"]}
           rules={[{ required: true, message: "Vui lòng chọn đáp án đúng" }]}
         >

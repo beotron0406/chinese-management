@@ -28,6 +28,9 @@ import FillTextTextForm from "@/components/question/forms/FillTextTextForm";
 import BoolAudioTextForm, {
   BoolAudioTextFormRef,
 } from "@/components/question/forms/BoolAudioTextForm";
+import BoolImageTextForm, {
+  BoolImageTextFormRef,
+} from "@/components/question/forms/BoolImageTextForm";
 
 // Import content form components
 import SentencesForm from "@/components/content/forms/SentencesForm";
@@ -107,8 +110,11 @@ const QUESTION_ANSWER_TYPES = {
     answer: [{ value: "text", label: "Văn Bản" }],
   },
   bool: {
-    // Bool only has audio->text format
-    question: [{ value: "audio", label: "Âm Thanh" }],
+    // Bool has audio->text and image->text formats
+    question: [
+      { value: "audio", label: "Âm Thanh" },
+      { value: "image", label: "Hình Ảnh" },
+    ],
     answer: [{ value: "text", label: "Văn Bản" }],
   },
 };
@@ -154,6 +160,7 @@ const ItemModal: React.FC<ItemModalProps> = ({
   const selectionAudioImageFormRef = useRef<SelectionAudioImageFormRef>(null);
   const matchingAudioTextFormRef = useRef<MatchingAudioTextFormRef>(null);
   const boolAudioTextFormRef = useRef<BoolAudioTextFormRef>(null);
+  const boolImageTextFormRef = useRef<BoolImageTextFormRef>(null);
   useEffect(() => {
     if (selectedQuestionType === "image" && selectedAnswerType === "image") {
       setSelectedAnswerType(undefined);
@@ -369,6 +376,15 @@ const ItemModal: React.FC<ItemModalProps> = ({
         boolAudioTextFormRef.current
       ) {
         const uploadSuccess = await boolAudioTextFormRef.current.uploadFiles();
+        if (!uploadSuccess) {
+          setLoading(false);
+          return;
+        }
+      } else if (
+        finalType === QuestionType.BoolImageText &&
+        boolImageTextFormRef.current
+      ) {
+        const uploadSuccess = await boolImageTextFormRef.current.uploadFiles();
         if (!uploadSuccess) {
           setLoading(false);
           return;
@@ -798,6 +814,18 @@ const ItemModal: React.FC<ItemModalProps> = ({
           {finalType === QuestionType.BoolAudioText && (
             <BoolAudioTextForm
               ref={boolAudioTextFormRef}
+              form={form}
+              initialValues={{
+                data: editItem?.data,
+                isActive: editItem?.isActive,
+              }}
+              questionType={finalType}
+            />
+          )}
+
+          {finalType === QuestionType.BoolImageText && (
+            <BoolImageTextForm
+              ref={boolImageTextFormRef}
               form={form}
               initialValues={{
                 data: editItem?.data,
