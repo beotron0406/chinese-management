@@ -866,7 +866,7 @@ const ItemModal: React.FC<ItemModalProps> = ({
       styles={{ body: { padding: 0, height: '85vh', overflow: 'hidden' } }}
       centered
     >
-      <div className="flex h-full" style={{ height: '80vh' }}>
+      <div className="flex h-full" style={{ height: '100%' }}>
         {/* Left Sidebar: Steps Navigation & Info */}
         <div className="w-[280px] bg-gray-50 border-r border-gray-200 flex flex-col flex-shrink-0">
            <div className="p-6 overflow-y-auto flex-1 custom-scrollbar">
@@ -929,7 +929,7 @@ const ItemModal: React.FC<ItemModalProps> = ({
         </div>
 
         {/* Middle Column: Selection & Form Area */}
-        <div className="flex-1 flex flex-col bg-white overflow-hidden relative">
+        <div className="flex-1 flex flex-col bg-white overflow-hidden">
           <div className="flex-1 overflow-y-auto p-8 custom-scrollbar">
             <div className="max-w-3xl mx-auto">
                 {/* Step Content Rendering */}
@@ -942,7 +942,7 @@ const ItemModal: React.FC<ItemModalProps> = ({
                     (selectedCategory === 'content' && currentStep === 2) || 
                     (selectedCategory === 'question' && currentStep === 3)
                 )) && (
-                    <div className="animation-fade-in pb-20">
+                    <div className="animation-fade-in">
                         {renderForm()}
                     </div>
                 )}
@@ -950,7 +950,7 @@ const ItemModal: React.FC<ItemModalProps> = ({
           </div>
 
           {/* Action Bar (Fixed at bottom of middle column) */}
-          <div className="flex-shrink-0 p-4 border-t border-gray-100 bg-white/80 backdrop-blur-sm absolute bottom-0 left-0 right-0 z-10 flex justify-between items-center">
+          <div className="flex-shrink-0 p-4 border-t border-gray-200 bg-white flex justify-between items-center">
              <div>
                 {currentStep > 0 && (
                     <Button onClick={handleBack} size="large">
