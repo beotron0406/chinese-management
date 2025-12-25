@@ -1,10 +1,5 @@
 "use client";
-import React, {
-  useState,
-  useEffect,
-  forwardRef,
-  useImperativeHandle,
-} from "react";
+import React, { useState, useEffect, forwardRef, useImperativeHandle } from "react";
 import {
   Form,
   Input,
@@ -12,7 +7,6 @@ import {
   Radio,
   Upload,
   message,
-  Card,
   Space,
   Typography,
   Switch,
@@ -21,20 +15,18 @@ import {
   UploadOutlined,
   DeleteOutlined,
   PictureOutlined,
+  QuestionCircleOutlined,
+  CheckCircleOutlined,
 } from "@ant-design/icons";
-import {
-  uploadImageByType,
-  validateFile,
-  UploadProgress,
-} from "@/utils/s3Upload";
+import { uploadImageByType, validateFile, UploadProgress } from "@/utils/s3Upload";
 import UploadModal from "@/components/common/UploadModal";
 import TextContentInput from "@/components/shared/TextContentInput";
 import type { FormInstance } from "antd/es/form";
 import { BoolImageTextQuestionData } from "@/types/questionType";
 import { TextContent } from "@/types/textContent";
+import { SectionContainer, SectionHeader, FormField } from "@/components/shared/FormStyles";
 
 const { TextArea } = Input;
-const { Text } = Typography;
 
 interface BoolImageTextFormProps {
   form: FormInstance;
@@ -49,393 +41,208 @@ export interface BoolImageTextFormRef {
   uploadFiles: () => Promise<boolean>;
 }
 
-const BoolImageTextForm = forwardRef<
-  BoolImageTextFormRef,
-  BoolImageTextFormProps
->(({ form, initialValues, questionType = "question_bool_image_text" }, ref) => {
-  // Image upload state
-  const [selectedImageFile, setSelectedImageFile] = useState<File | null>(null);
-  const [uploadModalVisible, setUploadModalVisible] = useState(false);
-  const [uploadStatus, setUploadStatus] = useState<
-    "uploading" | "success" | "error" | "idle"
-  >("idle");
-  const [uploadProgress, setUploadProgress] = useState(0);
-  const [uploadedImageUrl, setUploadedImageUrl] = useState<string | undefined>(
-    undefined
-  );
-  const [uploadError, setUploadError] = useState<string>("");
-  const [imageAlt, setImageAlt] = useState<string>("");
+const BoolImageTextForm = forwardRef<BoolImageTextFormRef, BoolImageTextFormProps>(
+  ({ form, initialValues, questionType = "question_bool_image_text" }, ref) => {
+    const [selectedImageFile, setSelectedImageFile] = useState<File | null>(null);
+    const [uploadModalVisible, setUploadModalVisible] = useState(false);
+    const [uploadStatus, setUploadStatus] = useState<"uploading" | "success" | "error" | "idle">("idle");
+    const [uploadProgress, setUploadProgress] = useState(0);
+    const [uploadedImageUrl, setUploadedImageUrl] = useState<string | undefined>(undefined);
+    const [uploadError, setUploadError] = useState<string>("");
+    const [imageAlt, setImageAlt] = useState<string>("");
+    const [statementContent, setStatementContent] = useState<TextContent>({ text: "" });
 
-  // Statement content state
-  const [statementContent, setStatementContent] = useState<TextContent>({ text: '' });
-
-  // Initialize form with existing data
-  useEffect(() => {
-    if (initialValues?.data) {
-      const { data } = initialValues;
-
-      if (data.image || data.image_url) {
-        setUploadedImageUrl(data.image_url || data.image);
+    useEffect(() => {
+      if (initialValues?.data) {
+        const { data } = initialValues;
+        if (data.image || data.image_url) setUploadedImageUrl(data.image_url || data.image);
+        if (data.alt) setImageAlt(data.alt);
+        if (data.statementContent) setStatementContent(data.statementContent);
       }
+    }, [initialValues]);
 
-      if (data.alt) {
-        setImageAlt(data.alt);
-      }
-
-      // Handle statementContent
-      if (data.statementContent) {
-        setStatementContent(data.statementContent);
-      }
-    }
-  }, [initialValues]);
-
-  // Image file selection handler - auto upload
-  const handleImageFileChange = async (file: File | null) => {
-    if (!file) {
-      setSelectedImageFile(null);
-      return false;
-    }
-
-    const imageValidation = validateFile(file, "image", 10);
-    if (!imageValidation.isValid) {
-      message.error(imageValidation.error);
-      return false;
-    }
-
-    setSelectedImageFile(file);
-
-    // Auto upload
-    setUploadModalVisible(true);
-    setUploadStatus("uploading");
-    setUploadProgress(0);
-    setUploadError("");
-
-    try {
-      const result = await uploadImageByType(
-        file,
-        questionType,
-        (progress: UploadProgress) => {
-          setUploadProgress(Math.round(progress.percentage));
-        }
-      );
-
-      if (result.success && result.url) {
-        setUploadedImageUrl(result.url);
-        form.setFieldsValue({
-          data: {
-            ...form.getFieldValue("data"),
-            image: result.url,
-            image_url: result.url,
-            alt: imageAlt,
-          },
-        });
-        setUploadStatus("success");
-        setUploadProgress(100);
-        setSelectedImageFile(null);
-        message.success("Tải hình ảnh lên thành công!");
-      } else {
-        throw new Error(
-          result.error || "Tải lên thất bại - không có URL trả về"
-        );
-      }
-    } catch (error) {
-      console.error("Upload error:", error);
-      setUploadStatus("error");
-      setUploadError(
-        error instanceof Error ? error.message : "Tải lên thất bại"
-      );
-      message.error("Tải lên thất bại. Vui lòng thử lại.");
-    }
-
-    return false;
-  };
-
-  // Remove image handler
-  const handleRemoveImage = () => {
-    setSelectedImageFile(null);
-    setUploadedImageUrl(undefined);
-    form.setFieldsValue({
-      data: {
-        ...form.getFieldValue("data"),
-        image: "",
-        image_url: "",
-      },
-    });
-  };
-
-  // Handle alt text change
-  const handleAltTextChange = (value: string) => {
-    setImageAlt(value);
-    form.setFieldsValue({
-      data: {
-        ...form.getFieldValue("data"),
-        alt: value,
-      },
-    });
-  };
-
-  // Handle statement content change
-  const handleStatementChange = (content: TextContent) => {
-    setStatementContent(content);
-    form.setFieldsValue({
-      data: {
-        ...form.getFieldValue("data"),
-        statementContent: content,
-      },
-    });
-  };
-
-  // Expose upload method to parent
-  const handleUploadAllFiles = async (
-    showModal: boolean = true
-  ): Promise<boolean> => {
-    // Check if we need to upload
-    if (uploadedImageUrl) {
-      return true;
-    }
-
-    if (!selectedImageFile) {
-      message.warning("Vui lòng chọn file hình ảnh để tải lên");
-      return false;
-    }
-
-    const imageValidation = validateFile(selectedImageFile, "image", 10);
-    if (!imageValidation.isValid) {
-      message.error(imageValidation.error);
-      return false;
-    }
-
-    if (showModal) {
+    const handleImageFileChange = async (file: File | null) => {
+      if (!file) return false;
+      const imageValidation = validateFile(file, "image", 10);
+      if (!imageValidation.isValid) { message.error(imageValidation.error); return false; }
+      setSelectedImageFile(file);
       setUploadModalVisible(true);
-    }
-    setUploadStatus("uploading");
-    setUploadProgress(0);
-    setUploadError("");
+      setUploadStatus("uploading");
+      setUploadProgress(0);
+      setUploadError("");
 
-    try {
-      const result = await uploadImageByType(
-        selectedImageFile,
-        questionType,
-        (progress: UploadProgress) => {
+      try {
+        const result = await uploadImageByType(file, questionType, (progress: UploadProgress) => {
           setUploadProgress(Math.round(progress.percentage));
-        }
-      );
-
-      if (result.success && result.url) {
-        setUploadedImageUrl(result.url);
-        form.setFieldsValue({
-          data: {
-            ...form.getFieldValue("data"),
-            image: result.url,
-            image_url: result.url,
-            alt: imageAlt,
-          },
         });
-        setUploadStatus("success");
-        setUploadProgress(100);
-        setSelectedImageFile(null);
-
-        if (showModal) {
+        if (result.success && result.url) {
+          setUploadedImageUrl(result.url);
+          form.setFieldsValue({ data: { ...form.getFieldValue("data"), image: result.url, image_url: result.url, alt: imageAlt } });
+          setUploadStatus("success");
+          setUploadProgress(100);
+          setSelectedImageFile(null);
           message.success("Tải hình ảnh lên thành công!");
+        } else {
+          throw new Error(result.error || "Tải lên thất bại");
         }
-        return true;
-      } else {
-        throw new Error(
-          result.error || "Tải lên thất bại - không có URL trả về"
-        );
+      } catch (error) {
+        console.error("Upload error:", error);
+        setUploadStatus("error");
+        setUploadError(error instanceof Error ? error.message : "Tải lên thất bại");
+        message.error("Tải lên thất bại.");
       }
-    } catch (error) {
-      console.error("Upload error:", error);
-      setUploadStatus("error");
-      setUploadError(
-        error instanceof Error ? error.message : "Tải lên thất bại"
-      );
-      message.error("Tải lên thất bại. Vui lòng thử lại.");
       return false;
-    }
-  };
+    };
 
-  // Expose upload method to parent
-  useImperativeHandle(ref, () => ({
-    uploadFiles: () => handleUploadAllFiles(false),
-  }));
+    const handleRemoveImage = () => {
+      setSelectedImageFile(null);
+      setUploadedImageUrl(undefined);
+      form.setFieldsValue({ data: { ...form.getFieldValue("data"), image: "", image_url: "" } });
+    };
 
-  return (
-    <div>
-      {/* Question Setup */}
-      <Card title="Thiết Lập Câu Hỏi" className="mb-6">
-        <Form.Item
-          label="1. Hướng Dẫn Câu Hỏi *"
-          name={["data", "instruction"]}
-          rules={[
-            { required: true, message: "Vui lòng nhập hướng dẫn câu hỏi" },
-          ]}
-        >
-          <TextArea
-            placeholder="Nhập hướng dẫn cho học sinh (ví dụ: 'Nhìn hình ảnh và xác định câu phát biểu đúng hay sai')"
-            autoSize={{ minRows: 2, maxRows: 4 }}
-          />
-        </Form.Item>
-      </Card>
+    const handleAltTextChange = (value: string) => {
+      setImageAlt(value);
+      form.setFieldsValue({ data: { ...form.getFieldValue("data"), alt: value } });
+    };
 
-      {/* Image Section */}
-      <Card title="Hình Ảnh" className="mb-6">
-        <Form.Item
-          label="2. File Hình Ảnh *"
-          name={["data", "image"]}
-          rules={[
-            { required: true, message: "Vui lòng tải lên file hình ảnh" },
-          ]}
-        >
-          <div>
-            <Upload
-              accept="image/*"
-              maxCount={1}
-              showUploadList={false}
-              beforeUpload={(file) => {
-                handleImageFileChange(file);
-                return false;
-              }}
-              disabled={!!uploadedImageUrl}
-            >
-              <Button
-                icon={<UploadOutlined />}
-                disabled={!!uploadedImageUrl}
-              >
-                {selectedImageFile ? selectedImageFile.name : "Chọn Hình Ảnh"}
-              </Button>
-            </Upload>
-            {uploadedImageUrl && (
-              <div className="mt-2">
-                <div className="flex items-center gap-2">
-                  <PictureOutlined className="text-green-500" />
-                  <span className="text-green-500">Đã tải lên hình ảnh</span>
-                  <Button
-                    size="small"
-                    icon={<DeleteOutlined />}
-                    onClick={handleRemoveImage}
-                    type="text"
-                    danger
-                  />
-                </div>
-                <div className="mt-2">
-                  <img
-                    src={uploadedImageUrl}
-                    alt={imageAlt || "Question image"}
-                    className="max-w-[300px] max-h-[300px] object-cover rounded"
-                  />
-                </div>
+    const handleStatementChange = (content: TextContent) => {
+      setStatementContent(content);
+      form.setFieldsValue({ data: { ...form.getFieldValue("data"), statementContent: content } });
+    };
+
+    const handleUploadAllFiles = async (showModal: boolean = true): Promise<boolean> => {
+      if (uploadedImageUrl) return true;
+      if (!selectedImageFile) { message.warning("Vui lòng chọn file hình ảnh"); return false; }
+      const imageValidation = validateFile(selectedImageFile, "image", 10);
+      if (!imageValidation.isValid) { message.error(imageValidation.error); return false; }
+      if (showModal) setUploadModalVisible(true);
+      setUploadStatus("uploading");
+      setUploadProgress(0);
+      setUploadError("");
+
+      try {
+        const result = await uploadImageByType(selectedImageFile, questionType, (progress: UploadProgress) => {
+          setUploadProgress(Math.round(progress.percentage));
+        });
+        if (result.success && result.url) {
+          setUploadedImageUrl(result.url);
+          form.setFieldsValue({ data: { ...form.getFieldValue("data"), image: result.url, image_url: result.url, alt: imageAlt } });
+          setUploadStatus("success");
+          setUploadProgress(100);
+          setSelectedImageFile(null);
+          if (showModal) message.success("Tải hình ảnh lên thành công!");
+          return true;
+        } else {
+          throw new Error(result.error || "Tải lên thất bại");
+        }
+      } catch (error) {
+        console.error("Upload error:", error);
+        setUploadStatus("error");
+        setUploadError(error instanceof Error ? error.message : "Tải lên thất bại");
+        message.error("Tải lên thất bại.");
+        return false;
+      }
+    };
+
+    useImperativeHandle(ref, () => ({ uploadFiles: () => handleUploadAllFiles(false) }));
+
+    return (
+      <div className="max-w-2xl mx-auto">
+        {/* Section 1: Question Setup */}
+        <SectionContainer>
+          <SectionHeader step={1} title="Thiết Lập Câu Hỏi" description="Nhập hướng dẫn cho học sinh" icon={<QuestionCircleOutlined />} />
+          <FormField label="Hướng dẫn câu hỏi" required>
+            <Form.Item name={["data", "instruction"]} rules={[{ required: true, message: "Bắt buộc" }]} className="mb-0">
+              <TextArea rows={2} className="rounded-lg" placeholder="VD: Nhìn hình ảnh và xác định câu phát biểu đúng hay sai" />
+            </Form.Item>
+          </FormField>
+        </SectionContainer>
+
+        {/* Section 2: Image */}
+        <SectionContainer>
+          <SectionHeader step={2} title="Hình Ảnh" description="Tải lên hình ảnh cho câu hỏi" icon={<PictureOutlined />} />
+          <FormField label="File hình ảnh" required>
+            <Form.Item name={["data", "image"]} rules={[{ required: true, message: "Bắt buộc" }]} className="mb-0">
+              <div className="p-4 border border-dashed border-gray-300 rounded-xl bg-gray-50/50">
+                <Upload accept="image/*" maxCount={1} showUploadList={false} beforeUpload={(file) => { handleImageFileChange(file); return false; }} disabled={!!uploadedImageUrl}>
+                  <Button icon={<UploadOutlined />} size="large" className="rounded-lg" disabled={!!uploadedImageUrl}>
+                    {selectedImageFile ? selectedImageFile.name : "Chọn Hình Ảnh"}
+                  </Button>
+                </Upload>
+                {uploadedImageUrl && (
+                  <div className="mt-4">
+                    <div className="flex items-center gap-2 text-green-600 mb-2">
+                      <PictureOutlined />
+                      <span className="text-sm font-medium">Đã tải lên</span>
+                      <Button size="small" icon={<DeleteOutlined />} onClick={handleRemoveImage} type="text" danger>Xóa</Button>
+                    </div>
+                    <img src={uploadedImageUrl} alt={imageAlt || "Question image"} className="max-w-[300px] max-h-[300px] object-cover rounded-lg border" />
+                  </div>
+                )}
               </div>
-            )}
-          </div>
-        </Form.Item>
+            </Form.Item>
+          </FormField>
 
-        {/* Alt Text */}
-        <Form.Item
-          label="3. Văn Bản Thay Thế"
-          name={["data", "alt"]}
-          help="Mô tả nội dung trong hình ảnh"
-        >
-          <Input
-            placeholder="Mô tả nội dung trong hình ảnh"
-            value={imageAlt}
-            onChange={(e) => handleAltTextChange(e.target.value)}
-          />
-        </Form.Item>
+          <FormField label="Văn bản thay thế" hint="Mô tả nội dung trong hình ảnh">
+            <Form.Item name={["data", "alt"]} className="mb-0">
+              <Input size="large" className="rounded-lg" placeholder="Mô tả nội dung trong hình ảnh" value={imageAlt} onChange={(e) => handleAltTextChange(e.target.value)} />
+            </Form.Item>
+          </FormField>
+          <Form.Item name={["data", "image_url"]} className="hidden"><Input /></Form.Item>
+        </SectionContainer>
 
-        {/* Hidden image_url field */}
-        <Form.Item name={["data", "image_url"]} className="hidden">
-          <Input />
-        </Form.Item>
-      </Card>
+        {/* Section 3: Statement */}
+        <SectionContainer>
+          <SectionHeader step={3} title="Câu Phát Biểu" description="Nhập câu cần đánh giá đúng/sai" icon={<CheckCircleOutlined />} />
+          <FormField label="Câu phát biểu" required hint="Học sinh cần xác định câu này đúng hay sai dựa trên hình ảnh">
+            <TextContentInput value={statementContent} onChange={handleStatementChange} placeholder="Nhập câu phát biểu..." />
+          </FormField>
+          <Form.Item name={["data", "statementContent"]} className="hidden"><Input /></Form.Item>
+        </SectionContainer>
 
-      {/* Statement Section */}
-      <Card title="Câu Phát Biểu" className="mb-6">
-        <Form.Item
-          label="4. Câu Phát Biểu Cần Đánh Giá *"
-          help="Nhập câu phát biểu mà học sinh cần xác định đúng hay sai dựa trên hình ảnh"
-          required
-        >
-          <TextContentInput
-            value={statementContent}
-            onChange={handleStatementChange}
-            placeholder="Nhập câu phát biểu..."
-          />
-        </Form.Item>
-        <Form.Item name={["data", "statementContent"]} className="hidden">
-          <Input />
-        </Form.Item>
-      </Card>
+        {/* Section 4: Answer */}
+        <SectionContainer>
+          <SectionHeader step={4} title="Đáp Án" description="Chọn đáp án đúng" icon={<CheckCircleOutlined />} />
+          <FormField label="Đáp án đúng" required>
+            <Form.Item name={["data", "correctAnswer"]} rules={[{ required: true, message: "Bắt buộc" }]} className="mb-0">
+              <Radio.Group>
+                <Space direction="vertical">
+                  <Radio value={true}>Đúng</Radio>
+                  <Radio value={false}>Sai</Radio>
+                </Space>
+              </Radio.Group>
+            </Form.Item>
+          </FormField>
+        </SectionContainer>
 
-      {/* Answer Section */}
-      <Card title="Đáp Án" className="mb-6">
-        <Form.Item
-          label="5. Đáp Án Đúng *"
-          name={["data", "correctAnswer"]}
-          rules={[{ required: true, message: "Vui lòng chọn đáp án đúng" }]}
-        >
-          <Radio.Group>
-            <Space direction="vertical">
-              <Radio value={true}>Đúng</Radio>
-              <Radio value={false}>Sai</Radio>
-            </Space>
-          </Radio.Group>
-        </Form.Item>
+        {/* Section 5: Additional */}
+        <SectionContainer>
+          <SectionHeader step={5} title="Cài Đặt Bổ Sung" description="Giải thích và trạng thái" icon={<CheckCircleOutlined />} />
+          <FormField label="Giải thích" hint="Hiển thị sau khi học sinh trả lời">
+            <Form.Item name={["data", "explanation"]} className="mb-0">
+              <TextArea rows={3} className="rounded-lg" placeholder="Giải thích tại sao câu phát biểu đúng hoặc sai..." />
+            </Form.Item>
+          </FormField>
+          <FormField label="Kích hoạt">
+            <Form.Item name="isActive" valuePropName="checked" initialValue={true} className="mb-0">
+              <Switch />
+            </Form.Item>
+          </FormField>
+        </SectionContainer>
 
-        {/* Answer Preview */}
-        {form.getFieldValue(["data", "correctAnswer"]) !== undefined && (
-          <div className="mt-3 p-2 bg-green-50 rounded">
-            <Text strong>Đáp Án Đã Chọn: </Text>
-            <span
-              className={`text-base ${
-                form.getFieldValue(["data", "correctAnswer"])
-                  ? "text-green-500"
-                  : "text-red-500"
-              }`}
-            >
-              {form.getFieldValue(["data", "correctAnswer"]) ? "Đúng" : "Sai"}
-            </span>
-          </div>
-        )}
-      </Card>
-
-      {/* Additional Settings */}
-      <Card title="Cài Đặt Bổ Sung" className="mb-6">
-        <Form.Item
-          label="Giải Thích (Tùy Chọn)"
-          name={["data", "explanation"]}
-          help="Cung cấp giải thích sẽ được hiển thị sau khi học sinh trả lời"
-        >
-          <TextArea
-            placeholder="Giải thích tại sao câu phát biểu đúng hoặc sai..."
-            autoSize={{ minRows: 2, maxRows: 4 }}
-          />
-        </Form.Item>
-
-        <Form.Item
-          label="Kích Hoạt"
-          name="isActive"
-          valuePropName="checked"
-          initialValue={true}
-        >
-          <Switch />
-        </Form.Item>
-      </Card>
-
-      <UploadModal
-        visible={uploadModalVisible}
-        onCancel={() => setUploadModalVisible(false)}
-        uploadStatus={uploadStatus}
-        uploadProgress={uploadProgress}
-        uploadedUrls={{ imageUrl: uploadedImageUrl }}
-        errorMessage={uploadError}
-        fileNames={{
-          imageName: selectedImageFile?.name,
-        }}
-      />
-    </div>
-  );
-});
+        <UploadModal
+          visible={uploadModalVisible}
+          onCancel={() => setUploadModalVisible(false)}
+          uploadStatus={uploadStatus}
+          uploadProgress={uploadProgress}
+          uploadedUrls={{ imageUrl: uploadedImageUrl }}
+          errorMessage={uploadError}
+          fileNames={{ imageName: selectedImageFile?.name }}
+        />
+      </div>
+    );
+  }
+);
 
 BoolImageTextForm.displayName = "BoolImageTextForm";
 

@@ -10,6 +10,7 @@ import {
   Card,
   Typography,
   Input,
+  Tag,
 } from "antd";
 import { PlusOutlined } from "@ant-design/icons";
 import { QuestionType } from "@/enums/question-type.enum";
@@ -41,6 +42,7 @@ import SelectionImageTextForm from "../question/forms/SelectionImageTextForm";
 import MatchingTextImageForm from "../question/forms/MatchingTextImageForm";
 import MatchingAudioImageForm from "../question/forms/MatchingAudioImageForm";
 import { lessonApi } from "@/services/lessonApi";
+import LivePreview from "./LivePreview";
 
 const { Option } = Select;
 const { Title, Text } = Typography;
@@ -155,6 +157,9 @@ const ItemModal: React.FC<ItemModalProps> = ({
 
   // Final selected type
   const [finalType, setFinalType] = useState<string | undefined>(undefined);
+  
+  // Preview type for hover effects
+  const [previewType, setPreviewType] = useState<string | undefined>(undefined);
 
   // Refs for forms that need file upload
   const selectionAudioImageFormRef = useRef<SelectionAudioImageFormRef>(null);
@@ -253,7 +258,6 @@ const ItemModal: React.FC<ItemModalProps> = ({
     setFinalType(contentType);
 
     // Calculate the correct step index for form display
-    const steps = getSteps();
     setCurrentStep(2);
   };
 
@@ -445,28 +449,51 @@ const ItemModal: React.FC<ItemModalProps> = ({
 
   // Render step 0: Category selection
   const renderCategorySelection = () => (
-    <div className="py-5 max-h-[60vh] overflow-y-auto">
-      <Title level={4} className="mb-5 text-center">
+    <div className="py-2">
+      <Title level={4} className="mb-6 px-2">
         Chọn Loại Danh Mục
       </Title>
 
-      <div className="grid grid-cols-[repeat(auto-fit,minmax(280px,1fr))] gap-4 mt-5">
+      <div className="space-y-3">
         {ITEM_CATEGORIES.map((category) => (
-          <Card
+          <div
             key={category.value}
-            hoverable
             onClick={() =>
               handleCategorySelect(category.value as "content" | "question")
             }
-            className={`cursor-pointer text-center ${selectedCategory === category.value ? 'border-2 border-blue-500' : 'border border-gray-300'}`}
+            className={`
+              relative flex items-center p-4 rounded-xl cursor-pointer transition-all duration-200 border
+              ${selectedCategory === category.value 
+                ? 'border-blue-500 bg-blue-50 ring-1 ring-blue-500 shadow-sm' 
+                : 'border-gray-200 bg-white hover:border-blue-300 hover:shadow-sm hover:bg-gray-50'
+              }
+            `}
           >
-            <div className="p-5">
-              <PlusOutlined className="text-2xl text-blue-500 mb-2.5" />
-              <div className="font-bold text-base">
-                {category.label}
-              </div>
+            {/* Icon Column */}
+            <div className={`
+              w-12 h-12 rounded-full flex items-center justify-center text-xl mr-5 flex-shrink-0
+              ${selectedCategory === category.value ? 'bg-blue-100 text-blue-600' : 'bg-gray-100 text-gray-500'}
+            `}>
+               {category.value === 'content' ? '📚' : '❓'}
             </div>
-          </Card>
+
+            {/* Content Column */}
+            <div className="flex-1">
+               <h3 className={`font-bold text-base mb-1 ${selectedCategory === category.value ? 'text-blue-700' : 'text-gray-800'}`}>
+                 {category.label}
+               </h3>
+               <p className="text-gray-500 text-sm m-0">
+                 {category.value === 'content' 
+                    ? 'Tạo nội dung bài học, định nghĩa từ vựng, ví dụ, v.v.' 
+                    : 'Tạo các bài kiểm tra, câu hỏi trắc nghiệm, điền từ, v.v.'}
+               </p>
+            </div>
+
+            {/* Action Column */}
+            <div className="text-gray-400">
+               →
+            </div>
+          </div>
         ))}
       </div>
     </div>
@@ -476,52 +503,74 @@ const ItemModal: React.FC<ItemModalProps> = ({
   const renderTypeSelection = () => {
     if (selectedCategory === "content") {
       return (
-        <div className="py-5">
-          <Title level={4} className="mb-5 text-center">
+        <div className="py-2">
+          <Title level={4} className="mb-6 px-2">
             Chọn Loại Nội Dung
           </Title>
 
-          <div className="grid grid-cols-[repeat(auto-fit,minmax(280px,1fr))] gap-4">
+          <div className="space-y-3">
             {CONTENT_TYPES.map((type) => (
-              <Card
+              <div
                 key={type.value}
-                hoverable
                 onClick={() => handleContentTypeSelect(type.value)}
-                className={`cursor-pointer text-center ${selectedContentType === type.value ? 'border-2 border-green-500' : 'border border-gray-300'}`}
+                onMouseEnter={() => setPreviewType(type.value)}
+                onMouseLeave={() => setPreviewType(undefined)}
+                className={`
+                  relative flex items-center p-4 rounded-xl cursor-pointer transition-all duration-200 border
+                  ${selectedContentType === type.value 
+                    ? 'border-green-500 bg-green-50 ring-1 ring-green-500 shadow-sm' 
+                    : 'border-gray-200 bg-white hover:border-green-300 hover:shadow-sm hover:bg-gray-50'
+                  }
+                `}
               >
-                <div className="p-5">
-                  <PlusOutlined className="text-xl text-green-500 mb-2" />
-                  <div className="font-bold text-sm">
-                    {type.label}
-                  </div>
+                <div className={`
+                  w-10 h-10 rounded-lg flex items-center justify-center text-lg mr-4 flex-shrink-0
+                  ${selectedContentType === type.value ? 'bg-green-100 text-green-600' : 'bg-gray-100 text-gray-500'}
+                `}>
+                   📝
                 </div>
-              </Card>
+                <div className="flex-1">
+                   <div className="font-bold text-base text-gray-800">{type.label}</div>
+                   <div className="text-xs text-gray-500 mt-1">
+                      {type.value === ContentType.CONTENT_WORD_DEFINITION ? 'Hiển thị từ vựng, pinyin và định nghĩa.' : 'Hiển thị đoạn văn hoặc câu giao tiếp.'}
+                   </div>
+                </div>
+              </div>
             ))}
           </div>
         </div>
       );
     } else if (selectedCategory === "question") {
       return (
-        <div className="py-5">
-          <Title level={4} className="mb-5 text-center">
+        <div className="py-2">
+          <Title level={4} className="mb-6 px-2">
             Chọn Danh Mục Câu Hỏi
           </Title>
 
-          <div className="grid grid-cols-[repeat(auto-fit,minmax(280px,1fr))] gap-4">
+          <div className="space-y-3">
             {QUESTION_CATEGORIES.map((category) => (
-              <Card
+              <div
                 key={category.value}
-                hoverable
                 onClick={() => handleQuestionCategorySelect(category.value)}
-                className={`cursor-pointer text-center ${selectedQuestionCategory === category.value ? 'border-2 border-blue-500' : 'border border-gray-300'}`}
+                className={`
+                  relative flex items-center p-4 rounded-xl cursor-pointer transition-all duration-200 border
+                  ${selectedQuestionCategory === category.value 
+                    ? 'border-blue-500 bg-blue-50 ring-1 ring-blue-500 shadow-sm' 
+                    : 'border-gray-200 bg-white hover:border-blue-300 hover:shadow-sm hover:bg-gray-50'
+                  }
+                `}
               >
-                <div className="p-5">
-                  <PlusOutlined className="text-xl text-blue-500 mb-2" />
-                  <div className="font-bold text-sm">
-                    {category.label}
-                  </div>
+                <div className={`
+                  w-10 h-10 rounded-lg flex items-center justify-center text-lg mr-4 flex-shrink-0
+                  ${selectedQuestionCategory === category.value ? 'bg-blue-100 text-blue-600' : 'bg-gray-100 text-gray-500'}
+                `}>
+                   ❓
                 </div>
-              </Card>
+                <div className="flex-1">
+                   <div className="font-bold text-base text-gray-800">{category.label}</div>
+                </div>
+                 <div className="text-gray-400">→</div>
+              </div>
             ))}
           </div>
         </div>
@@ -538,149 +587,97 @@ const ItemModal: React.FC<ItemModalProps> = ({
       QUESTION_ANSWER_TYPES[
         selectedQuestionCategory as keyof typeof QUESTION_ANSWER_TYPES
       ];
-
-    // Filter answer types based on selected question type
-    const getAvailableAnswerTypes = () => {
-      if (selectedQuestionType === "image") {
-        // If question type is image, exclude image from answer types
-        return categoryConfig.answer.filter((type) => type.value !== "image");
-      }
-      return categoryConfig.answer;
+    
+    // Helper to generate type string for preview
+    const getPreviewTypeString = (qType?: string, aType?: string) => {
+        if (!qType || !aType) return undefined;
+        return generateQuestionType(selectedQuestionCategory!, qType, aType);
     };
 
-    const availableAnswerTypes = getAvailableAnswerTypes();
-
-    // REMOVED THE useEffect FROM HERE - IT'S NOW AT TOP LEVEL
-
     return (
-      <div className="py-5">
-        <Title level={4} className="mb-5 text-center">
-          Chọn Loại Câu Hỏi Và Câu Trả Lời
+      <div className="py-2">
+        <Title level={4} className="mb-6 px-2">
+          Cấu Hình Câu Hỏi
         </Title>
 
-        {/* Question Type Selection */}
-        <div className="mb-10">
-          <Text strong className="text-base block mb-4 text-center">
-            Loại Câu Hỏi:
-          </Text>
+        <div className="flex gap-8">
+            {/* Left Col: Question Type */}
+            <div className="flex-1">
+                <Text className="text-xs uppercase font-bold text-gray-500 mb-3 block px-1">Input (Câu hỏi)</Text>
+                 <div className="space-y-2">
+                    {categoryConfig.question.map((type) => (
+                      <div
+                        key={type.value}
+                        onClick={() => setSelectedQuestionType(type.value)}
+                        className={`
+                          p-3 rounded-lg border cursor-pointer transition-all flex items-center
+                          ${selectedQuestionType === type.value 
+                             ? 'border-blue-500 bg-blue-50 text-blue-700 font-medium shadow-sm' 
+                             : 'border-gray-200 hover:bg-gray-50'
+                          }
+                        `}
+                      >
+                         <span className="mr-2 opacity-70">
+                            {type.value === 'text' ? 'A' : type.value === 'audio' ? '🔊' : '🖼️'}
+                         </span>
+                         {type.label}
+                      </div>
+                    ))}
+                 </div>
+            </div>
 
-          <div className="grid grid-cols-[repeat(auto-fit,minmax(200px,1fr))] gap-4 mb-2.5">
-            {categoryConfig.question.map((type) => (
-              <Card
-                key={type.value}
-                hoverable
-                onClick={() => setSelectedQuestionType(type.value)}
-                className={`cursor-pointer text-center ${selectedQuestionType === type.value ? 'border-2 border-blue-500' : 'border border-gray-300'}`}
-              >
-                <div className="p-4">
-                  <PlusOutlined className="text-lg text-blue-500 mb-2" />
-                  <div className="font-bold text-sm">
-                    {type.label}
-                  </div>
-                </div>
-              </Card>
-            ))}
-          </div>
+            {/* Right Col: Answer Type */}
+            <div className="flex-1">
+                <Text className="text-xs uppercase font-bold text-gray-500 mb-3 block px-1">Output (Trả lời)</Text>
+                 <div className="space-y-2">
+                    {categoryConfig.answer.map((type) => {
+                       const isDisabled = selectedQuestionType === "image" && type.value === "image";
+                       return (
+                          <div
+                            key={type.value}
+                            onClick={() => !isDisabled && setSelectedAnswerType(type.value)}
+                            onMouseEnter={() => setPreviewType(getPreviewTypeString(selectedQuestionType, type.value))}
+                            onMouseLeave={() => setPreviewType(undefined)}
+                            className={`
+                              p-3 rounded-lg border flex items-center transition-all
+                              ${isDisabled ? 'opacity-50 cursor-not-allowed bg-gray-100' : 'cursor-pointer hover:bg-gray-50'}
+                              ${selectedAnswerType === type.value 
+                                 ? 'border-green-500 bg-green-50 text-green-700 font-medium shadow-sm' 
+                                 : 'border-gray-200'
+                              }
+                            `}
+                          >
+                             <span className="mr-2 opacity-70">
+                                {type.value === 'text' ? 'A' : type.value === 'image' ? '🖼️' : '🔊'}
+                             </span>
+                             {type.label}
+                          </div>
+                       )
+                    })}
+                 </div>
+            </div>
         </div>
 
-        {/* Answer Type Selection */}
-        <div className="mb-10">
-          <Text strong className="text-base block mb-4 text-center">
-            Loại câu trả lời:
-          </Text>
-
-          {selectedQuestionType === "image" && (
-            <div className="mb-4 p-2.5 bg-orange-50 border border-orange-300 rounded-md text-center">
-              <Text className="text-[13px] text-orange-600">
-                ⚠️ Trả lời bằng hình ảnh không khả dụng khi loại câu hỏi cũng là
-                Hình Ảnh
-              </Text>
+        {/* Validation Messages */}
+         {selectedQuestionType === "image" && (
+            <div className="mt-4 p-3 bg-orange-50 text-orange-600 text-sm rounded border border-orange-100 flex items-center">
+                ⚠️ Không thể dùng hình ảnh làm đáp án cho câu hỏi hình ảnh.
             </div>
-          )}
-
-          <div className="grid grid-cols-[repeat(auto-fit,minmax(200px,1fr))] gap-4 mb-2.5">
-            {categoryConfig.answer.map((type) => {
-              const isDisabled =
-                selectedQuestionType === "image" && type.value === "image";
-              const isAvailable = availableAnswerTypes.some(
-                (availableType) => availableType.value === type.value
-              );
-
-              if (!isAvailable) return null; // Hide completely instead of disable
-
-              return (
-                <Card
-                  key={type.value}
-                  hoverable={!isDisabled}
-                  onClick={() =>
-                    !isDisabled && setSelectedAnswerType(type.value)
-                  }
-                  className={`text-center ${isDisabled ? 'cursor-not-allowed opacity-50 bg-gray-100' : 'cursor-pointer bg-white'} ${selectedAnswerType === type.value ? 'border-2 border-green-500' : 'border border-gray-300'}`}
+         )}
+         
+         {/* Action */}
+         {selectedQuestionType && selectedAnswerType && (
+            <div className="mt-8 flex justify-end">
+                <Button 
+                    type="primary" 
+                    size="large"
+                    onClick={() => handleQuestionTypeSelect(selectedQuestionType, selectedAnswerType)}
+                    className="bg-blue-600 shadow-md hover:shadow-lg"
                 >
-                  <div className="p-4">
-                    <PlusOutlined className={`text-lg mb-2 ${isDisabled ? 'text-gray-400' : 'text-green-500'}`} />
-                    <div className={`font-bold text-sm ${isDisabled ? 'text-gray-400' : ''}`}>
-                      {type.label}
-                      {isDisabled && " (Unavailable)"}
-                    </div>
-                  </div>
-                </Card>
-              );
-            })}
-          </div>
-
-          {/* Show message if no answer types available */}
-          {availableAnswerTypes.length === 0 && (
-            <div className="p-5 text-center bg-red-50 border border-red-200 rounded-md">
-              <Text className="text-red-600">
-                Không có loại trả lời khả dụng cho loại câu hỏi đã chọn.
-              </Text>
+                    Tiếp tục: {categoryConfig.question.find(q => q.value === selectedQuestionType)?.label} → {categoryConfig.answer.find(a => a.value === selectedAnswerType)?.label}
+                </Button>
             </div>
-          )}
-        </div>
-
-        {/* Continue Button */}
-        {selectedQuestionType && selectedAnswerType && (
-          <div className="text-center mt-8">
-            <Button
-              type="primary"
-              size="large"
-              onClick={() =>
-                handleQuestionTypeSelect(
-                  selectedQuestionType,
-                  selectedAnswerType
-                )
-              }
-              className="h-[45px] text-base px-8"
-            >
-              Tiếp Tục với{" "}
-              {
-                categoryConfig.question.find(
-                  (q) => q.value === selectedQuestionType
-                )?.label
-              }{" "}
-              →{" "}
-              {
-                categoryConfig.answer.find(
-                  (a) => a.value === selectedAnswerType
-                )?.label
-              }
-            </Button>
-          </div>
-        )}
-
-        {/* Show available combinations info */}
-        {selectedQuestionType &&
-          !selectedAnswerType &&
-          availableAnswerTypes.length > 0 && (
-            <div className="mt-5 text-center p-4 bg-blue-50 rounded-lg border border-blue-200">
-              <Text className="text-sm text-blue-600">
-                Loại trả lời khả dụng cho{" "}
-                <strong>{selectedQuestionType}</strong>:{" "}
-                {availableAnswerTypes.map((type) => type.label).join(", ")}
-              </Text>
-            </div>
-          )}
+         )}
       </div>
     );
   };
@@ -847,123 +844,182 @@ const ItemModal: React.FC<ItemModalProps> = ({
     );
   };
 
-  // Determine steps for the stepper
-  const getSteps = () => {
-    const steps = [{ title: "Danh Mục", description: "Chọn danh mục " }];
-
-    if (selectedCategory === "content") {
-      steps.push({ title: "Loại", description: "Chọn loại nội dung" });
-      steps.push({
-        title: "Cấu Hình",
-        description: "Điền thông tin chi tiết",
-      });
-    } else if (selectedCategory === "question") {
-      steps.push({
-        title: "Danh Mục Câu Hỏi",
-        description: "Chọn danh mục câu hỏi",
-      });
-
-      const categoryConfig = selectedQuestionCategory
-        ? QUESTION_ANSWER_TYPES[
-            selectedQuestionCategory as keyof typeof QUESTION_ANSWER_TYPES
-          ]
-        : null;
-
-      if (
-        categoryConfig &&
-        (categoryConfig.question.length > 1 || categoryConfig.answer.length > 1)
-      ) {
-        steps.push({
-          title: "Loại Câu Hỏi & Trả Lời",
-          description: "Chọn loại câu hỏi & trả lời",
-        });
-      }
-
-      steps.push({
-        title: "Cấu Hình",
-        description: "Điền thông tin chi tiết",
-      });
-    } else {
-      // When no category is selected, show minimal steps
-      steps.push({ title: "Loại", description: "Chọn loại mục" });
-      steps.push({
-        title: "Cấu Hình",
-        description: "Điền thông tin chi tiết",
-      });
-    }
-
-    return steps;
+  // Helper for step description
+  const getStepStatus = (index: number) => {
+    if (currentStep === index) return "process";
+    if (currentStep > index) return "finish";
+    return "wait";
   };
-
-  const steps = getSteps();
 
   return (
     <Modal
       title={
-        <div>
-          {mode === "edit" ? "Chỉnh Sửa Mục" : "Tạo Mục Mới"}
-          {finalType && (
-            <div className="text-sm text-gray-500 mt-1">
-              Loại: {finalType}
-            </div>
-          )}
+        <div className="flex items-center text-xl font-bold py-2">
+          {mode === "edit" ? "Chỉnh sửa mục bài học" : "Tạo mục bài học mới"}
         </div>
       }
       open={visible}
       onCancel={handleCancel}
-      width={900}
-      className="top-5"
-      footer={[
-        <Button key="cancel" onClick={handleCancel}>
-          Hủy
-        </Button>,
-        currentStep > 0 && (
-          <Button key="back" onClick={handleBack}>
-            Quay Lại
-          </Button>
-        ),
-        currentStep === steps.length - 1 && (
-          <Button
-            key="submit"
-            type="primary"
-            loading={loading}
-            onClick={handleSubmit}
-          >
-            {mode === "edit" ? "Cập Nhật" : "Tạo"} Mục
-          </Button>
-        ),
-      ].filter(Boolean)}
+      width={1400}
+      footer={null}
+      style={{ top: 20 }}
+      styles={{ body: { padding: 0, height: '85vh', overflow: 'hidden' } }}
+      centered
     >
-      {mode === "create" && (
-        <Steps current={currentStep} className="mb-6">
-          {steps.map((item) => (
-            <Steps.Step
-              key={item.title}
-              title={item.title}
-              description={item.description}
-            />
-          ))}
-        </Steps>
-      )}
+      <div className="flex h-full" style={{ height: '100%' }}>
+        {/* Left Sidebar: Steps Navigation & Info */}
+        <div className="w-[280px] bg-gray-50 border-r border-gray-200 flex flex-col flex-shrink-0">
+           <div className="p-6 overflow-y-auto flex-1 custom-scrollbar">
+              <Steps
+                direction="vertical"
+                current={currentStep}
+                className="custom-vertical-steps"
+                size="small"
+                items={[
+                  {
+                    title: "Danh Mục",
+                    description: "Chọn loại chính",
+                  },
+                  {
+                    title: "Chi Tiết",
+                    description: "Chọn loại cụ thể",
+                  },
+                  {
+                    title: "Cấu Hình",
+                    description: "Loại câu hỏi/trả lời",
+                    disabled: selectedCategory === "content", // Skip for content
+                  },
+                  {
+                    title: "Nội Dung",
+                    description: "Nhập dữ liệu",
+                  },
+                ]}
+              />
+              
+              <div className="mt-8 pt-6 border-t border-gray-200">
+                <Text type="secondary" className="text-[10px] uppercase font-bold tracking-wider mb-3 block">Tổng Quan</Text>
+                
+                <div className="bg-white p-3 rounded border border-gray-200 shadow-sm space-y-3">
+                    <div>
+                        <div className="text-xs text-gray-400 mb-1">Danh mục</div>
+                        <div className="font-medium text-sm text-gray-800">
+                            {selectedCategory ? ITEM_CATEGORIES.find(c => c.value === selectedCategory)?.label : <span className="text-gray-400 italic">Chưa chọn</span>}
+                        </div>
+                    </div>
 
-      {currentStep === 0 && renderCategorySelection()}
-      {currentStep === 1 && renderTypeSelection()}
-      {currentStep === 2 &&
-        selectedCategory === "question" &&
-        selectedQuestionCategory &&
-        (() => {
-          const categoryConfig =
-            QUESTION_ANSWER_TYPES[
-              selectedQuestionCategory as keyof typeof QUESTION_ANSWER_TYPES
-            ];
-          return (
-            categoryConfig &&
-            (categoryConfig.question.length > 1 ||
-              categoryConfig.answer.length > 1)
-          );
-        })() &&
-        renderQuestionAnswerTypeSelection()}
-      {currentStep === steps.length - 1 && renderForm()}
+                    {(selectedContentType || selectedQuestionCategory) && (
+                         <div>
+                            <div className="text-xs text-gray-400 mb-1">Loại</div>
+                            <div className="font-medium text-sm text-gray-800">
+                                {selectedContentType && CONTENT_TYPES.find(c => c.value === selectedContentType)?.label}
+                                {selectedQuestionCategory && QUESTION_CATEGORIES.find(c => c.value === selectedQuestionCategory)?.label}
+                            </div>
+                        </div>
+                    )}
+
+                    {finalType && (
+                        <div className="pt-2 border-t border-gray-100">
+                            <div className="text-xs text-gray-400 mb-1">Mã loại</div>
+                            <Tag className="m-0 text-[10px] max-w-full truncate">{finalType}</Tag>
+                        </div>
+                    )}
+                </div>
+              </div>
+           </div>
+        </div>
+
+        {/* Middle Column: Selection & Form Area */}
+        <div className="flex-1 flex flex-col bg-white overflow-hidden">
+          <div className="flex-1 overflow-y-auto p-8 custom-scrollbar">
+            <div className="max-w-3xl mx-auto">
+                {/* Step Content Rendering */}
+                {currentStep === 0 && renderCategorySelection()}
+                {currentStep === 1 && renderTypeSelection()}
+                {currentStep === 2 && selectedCategory === "question" && renderQuestionAnswerTypeSelection()}
+                
+                {/* Form Rendering */}
+                {(finalType && (
+                    (selectedCategory === 'content' && currentStep === 2) || 
+                    (selectedCategory === 'question' && currentStep === 3)
+                )) && (
+                    <div className="animation-fade-in">
+                        {renderForm()}
+                    </div>
+                )}
+            </div>
+          </div>
+
+          {/* Action Bar (Fixed at bottom of middle column) */}
+          <div className="flex-shrink-0 p-4 border-t border-gray-200 bg-white flex justify-between items-center">
+             <div>
+                {currentStep > 0 && (
+                    <Button onClick={handleBack} size="large">
+                        Quay lại
+                    </Button>
+                )}
+             </div>
+             <div className='flex gap-2'>
+                <Button size="large" onClick={handleCancel}>
+                    Hủy
+                </Button>
+                {(finalType && (
+                    (selectedCategory === 'content' && currentStep === 2) || 
+                    (selectedCategory === 'question' && currentStep === 3)
+                )) && (
+                     <Button
+                        type="primary"
+                        size="large"
+                        loading={loading}
+                        onClick={handleSubmit}
+                        className="bg-blue-600 shadow-blue-200 shadow-lg hover:shadow-xl transition-all"
+                    >
+                        {mode === 'edit' ? 'Cập Nhật Item' : 'Hoàn Tất & Tạo Item'}
+                    </Button>
+                )}
+             </div>
+          </div>
+        </div>
+
+        {/* Right Sidebar: Live Preview - HIDDEN FOR NOW
+        <div className="w-[420px] bg-gray-50 border-l border-gray-200 flex flex-col flex-shrink-0 z-20 shadow-[-5px_0_15px_-5px_translateX(0)]">
+          <div className="p-4 border-b border-gray-200 bg-white flex justify-between items-center">
+            <div>
+                <Text strong className="text-base block">Live Preview</Text>
+                <Text type="secondary" className="text-xs">Mô phỏng hiển thị trên Mobile</Text>
+            </div>
+          </div>
+          
+          <div className="flex-1 p-6 overflow-y-auto custom-scrollbar flex items-center justify-center bg-gray-100/50">
+             <div className="w-[320px] h-[600px] bg-white rounded-[2.5rem] shadow-2xl border-[8px] border-gray-800 overflow-hidden relative">
+                <div className="absolute top-0 left-0 right-0 h-7 bg-gray-800 z-20 flex justify-between px-6 items-center">
+                     <div className="w-16 h-4 bg-black rounded-b-xl absolute left-1/2 transform -translate-x-1/2 top-0"></div>
+                </div>
+                 <div className="h-7 bg-gray-800 w-full"></div>
+                 <div className="h-6 bg-white flex justify-between px-5 items-center border-b border-gray-50">
+                     <div className="text-[10px] font-bold text-gray-800">9:41</div>
+                     <div className="flex gap-1">
+                        <div className="w-3 h-3 bg-gray-800 rounded-full opacity-20"></div>
+                        <div className="w-3 h-3 bg-gray-800 rounded-full opacity-20"></div>
+                     </div>
+                 </div>
+                <div className="h-[calc(100%-60px)] overflow-y-auto bg-gray-50 scrollbar-hide">
+                   {((selectedCategory === 'content' && currentStep === 2) || 
+                     (selectedCategory === 'question' && currentStep === 3)) && !previewType ? (
+                       <div className="h-full flex flex-col items-center justify-center text-gray-400 p-8 text-center">
+                          <div className="mb-4 text-4xl opacity-10">✍️</div>
+                          <p className="text-sm font-medium opacity-60">Chế độ nhập liệu</p>
+                          <p className="text-xs mt-2 opacity-40">Tập trung hoàn thiện nội dung bên trái</p>
+                       </div>
+                   ) : (
+                       <LivePreview form={form} type={previewType || finalType} />
+                   )}
+                </div>
+                <div className="absolute bottom-2 left-1/2 transform -translate-x-1/2 w-1/3 h-1.5 bg-gray-900/20 rounded-full"></div>
+             </div>
+          </div>
+        </div>
+        */}
+      </div>
     </Modal>
   );
 };

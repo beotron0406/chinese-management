@@ -8,23 +8,24 @@ import {
   Select,
   Button,
   Space,
-  Row,
-  Col,
   message,
-  Card,
-  Divider,
+  Typography,
 } from "antd";
 import {
   PlusOutlined,
   MinusCircleOutlined,
   SoundOutlined,
+  BookOutlined,
+  TranslationOutlined,
+  FileTextOutlined,
 } from "@ant-design/icons";
 import { pinyin } from "pinyin-pro";
 import { GrammarFormValues, GrammarPattern } from "@/types/grammarTypes";
-import { HSK_LEVEL_OPTIONS, HSKLevel } from "@/enums/hsk-level.enum";
+import { HSK_LEVEL_OPTIONS } from "@/enums/hsk-level.enum";
 
 const { TextArea } = Input;
 const { Option } = Select;
+const { Text, Title } = Typography;
 
 interface GrammarFormModalProps {
   visible: boolean;
@@ -34,6 +35,56 @@ interface GrammarFormModalProps {
   loading?: boolean;
 }
 
+// Section Container with border
+const SectionContainer: React.FC<{
+  children: React.ReactNode;
+  className?: string;
+}> = ({ children, className = '' }) => (
+  <div className={`p-6 border border-gray-200 rounded-2xl bg-white mb-6 ${className}`}>
+    {children}
+  </div>
+);
+
+// Section Header Component
+const SectionHeader: React.FC<{
+  step: number;
+  title: string;
+  description: string;
+  icon: React.ReactNode;
+}> = ({ step, title, description, icon }) => (
+  <div className="flex items-center gap-4 mb-5">
+    <div className="w-16 h-16 rounded-xl bg-gradient-to-br from-slate-400 to-blue-500 text-white flex items-center justify-center flex-shrink-0 shadow-md text-2xl">
+      {icon}
+    </div>
+    <div className="flex-1">
+      <div className="flex items-center gap-2">
+        <span className="text-[10px] font-bold text-white bg-blue-500 px-2 py-0.5 rounded-full uppercase tracking-wider">
+          Bước {step}
+        </span>
+      </div>
+      <h3 className="text-base font-bold text-gray-900 m-0 mt-1">{title}</h3>
+      <p className="text-xs text-gray-500 m-0">{description}</p>
+    </div>
+  </div>
+);
+
+// Form Field Wrapper for consistent styling
+const FormField: React.FC<{
+  label: string;
+  required?: boolean;
+  hint?: string;
+  children: React.ReactNode;
+}> = ({ label, required, hint, children }) => (
+  <div className="mb-5">
+    <label className="block text-sm font-medium text-gray-700 mb-2">
+      {label}
+      {required && <span className="text-red-500 ml-1">*</span>}
+    </label>
+    {children}
+    {hint && <p className="text-xs text-gray-400 mt-1">{hint}</p>}
+  </div>
+);
+
 const GrammarFormModal: React.FC<GrammarFormModalProps> = ({
   visible,
   onCancel,
@@ -42,8 +93,6 @@ const GrammarFormModal: React.FC<GrammarFormModalProps> = ({
   loading = false,
 }) => {
   const [form] = Form.useForm();
-  const [patternInputs, setPatternInputs] = useState<string[]>([""]);
-  const [pinyinInputs, setPinyinInputs] = useState<string[]>([""]);
 
   // Generate pinyin function
   const generatePinyin = (chinese: string): string => {
@@ -73,7 +122,6 @@ const GrammarFormModal: React.FC<GrammarFormModalProps> = ({
 
   // Auto generate pinyin for examples
   const handleExampleChineseChange = (value: string, fieldName: number) => {
-    // Update the chinese field
     const currentExamples = form.getFieldValue("examples") || [];
     const updatedExamples = [...currentExamples];
     if (!updatedExamples[fieldName]) {
@@ -81,7 +129,6 @@ const GrammarFormModal: React.FC<GrammarFormModalProps> = ({
     }
     updatedExamples[fieldName].chinese = value;
 
-    // Auto generate pinyin
     if (value.trim()) {
       const generatedPinyin = generatePinyin(value);
       updatedExamples[fieldName].pinyin = generatedPinyin;
@@ -120,26 +167,14 @@ const GrammarFormModal: React.FC<GrammarFormModalProps> = ({
   // Reset form when modal opens/closes or data changes
   useEffect(() => {
     if (visible) {
-      if (initialData) {
-        // Edit mode
-        const translation = initialData.translations?.[0];
-        setPatternInputs(initialData.pattern || [""]);
-        setPinyinInputs(initialData.patternPinyin || [""]);
-      } else {
-        // Create mode
-        setPatternInputs([""]);
-        setPinyinInputs([""]);
-      }
+      form.setFieldsValue(getInitialValues());
     }
   }, [visible, initialData]);
 
   const handleSubmit = async () => {
-
     try {
       const values = await form.validateFields();
 
-
-      // Convert pattern and pinyin strings to arrays
       const patternArray = values.pattern
         ? values.pattern.split(/\s+/).filter((p: string) => p.trim())
         : [];
@@ -147,12 +182,11 @@ const GrammarFormModal: React.FC<GrammarFormModalProps> = ({
         ? values.patternPinyin.split(/\s+/).filter((p: string) => p.trim())
         : [];
 
-      // Convert examples to proper format - FIX: Kiểm tra empty examples
       const examples =
         values.examples
-          ?.filter((ex: any) => ex.chinese && ex.translation) // Filter empty examples first
+          ?.filter((ex: any) => ex.chinese && ex.translation)
           ?.map((ex: any) => ({
-            chinese: ex.chinese, // Giữ nguyên string, không split thành array ở đây
+            chinese: ex.chinese,
             pinyin: ex.pinyin || "",
             translation: ex.translation,
           })) || [];
@@ -172,238 +206,241 @@ const GrammarFormModal: React.FC<GrammarFormModalProps> = ({
 
       await onSubmit(formData);
       form.resetFields();
-      setPatternInputs([""]);
-      setPinyinInputs([""]);
     } catch (error) {
-      console.error("❌ Form validation failed:", error);
+      console.error("Form validation failed:", error);
       message.error("Vui lòng kiểm tra lại thông tin form!");
-    }
-  };
-
-  const addPatternInput = () => {
-    setPatternInputs([...patternInputs, ""]);
-  };
-
-  const removePatternInput = (index: number) => {
-    if (patternInputs.length > 1) {
-      const newInputs = patternInputs.filter((_, i) => i !== index);
-      setPatternInputs(newInputs);
     }
   };
 
   return (
     <Modal
       title={
-        initialData ? "Chỉnh sửa mẫu ngữ pháp" : "Tạo mẫu ngữ pháp mới"
+        <div className="flex items-center gap-3 py-2">
+          <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center">
+            <BookOutlined className="text-white text-sm" />
+          </div>
+          <div>
+            <h2 className="text-lg font-bold m-0 text-gray-900">
+              {initialData ? "Chỉnh Sửa Mẫu Ngữ Pháp" : "Tạo Mẫu Ngữ Pháp Mới"}
+            </h2>
+            <p className="text-xs text-gray-500 m-0">
+              Điền thông tin theo từng bước bên dưới
+            </p>
+          </div>
+        </div>
       }
       open={visible}
       onCancel={onCancel}
-      footer={[
-        <Button key="cancel" onClick={onCancel}>
-          Hủy
-        </Button>,
-        <Button
-          key="submit"
-          type="primary"
-          loading={loading}
-          onClick={handleSubmit}
-        >
-          {initialData ? "Cập nhật" : "Tạo mới"}
-        </Button>,
-      ]}
-      width={800}
+      footer={null}
+      width={700}
       destroyOnClose
-      key={initialData ? `edit-${initialData.id}` : 'create'}
+      centered
+      styles={{ body: { maxHeight: "75vh", overflowY: "auto", padding: "24px" } }}
     >
-      <Form 
-        form={form} 
-        layout="vertical" 
+      <Form
+        form={form}
+        layout="vertical"
         initialValues={getInitialValues()}
+        requiredMark={false}
       >
-        <Card title="Thông tin mẫu" size="small">
-          <Form.Item
-            name="pattern"
-            label="Mẫu câu (cách nhau bằng dấu cách)"
-            rules={[{ required: true, message: "Vui lòng nhập mẫu câu!" }]}
-          >
-            <Input
-              placeholder="Ví dụ: 帮忙 & 帮"
-              onChange={handlePatternChange}
-              suffix={
-                <Button
-                  type="text"
-                  icon={<SoundOutlined />}
-                  size="small"
-                  onClick={() => {
-                    const patternValue = form.getFieldValue("pattern");
-                    if (patternValue) {
-                      const generatedPinyin = generatePinyin(patternValue);
-                      form.setFieldsValue({ patternPinyin: generatedPinyin });
-                      message.success("Đã tự động tạo pinyin!");
-                    }
-                  }}
-                  title="Tự động tạo pinyin"
-                />
-              }
-            />
+        {/* Section 1: Pattern Info */}
+        <SectionContainer>
+          <SectionHeader
+            step={1}
+            title="Thông Tin Mẫu Câu"
+            description="Nhập cấu trúc ngữ pháp tiếng Trung"
+            icon={<BookOutlined />}
+          />
+
+          <FormField label="Mẫu câu tiếng Trung" required hint="Các từ cách nhau bằng dấu cách. VD: 帮忙 帮">
+            <Form.Item
+              name="pattern"
+              rules={[{ required: true, message: "Vui lòng nhập mẫu câu!" }]}
+              className="mb-0"
+            >
+              <Input
+                placeholder="Ví dụ: 帮忙 帮"
+                onChange={handlePatternChange}
+                size="large"
+                className="rounded-lg"
+              />
+            </Form.Item>
+          </FormField>
+
+          <FormField label="Phiên âm Pinyin" hint="Tự động tạo từ mẫu câu, có thể chỉnh sửa">
+            <Form.Item name="patternPinyin" className="mb-0">
+              <Input
+                placeholder="bāng máng bāng"
+                size="large"
+                className="rounded-lg bg-gray-50"
+                suffix={
+                  <Button
+                    type="text"
+                    size="small"
+                    icon={<SoundOutlined />}
+                    onClick={() => {
+                      const patternValue = form.getFieldValue("pattern");
+                      if (patternValue) {
+                        const gen = generatePinyin(patternValue);
+                        form.setFieldsValue({ patternPinyin: gen });
+                        message.success("Đã tạo lại pinyin!");
+                      }
+                    }}
+                  />
+                }
+              />
+            </Form.Item>
+          </FormField>
+
+          <div className="flex gap-4">
+            <div className="flex-1">
+              <FormField label="Công thức mẫu" hint="VD: A + 帮 + B">
+                <Form.Item name="patternFormula" className="mb-0">
+                  <Input placeholder="A + 帮 + B" size="large" className="rounded-lg" />
+                </Form.Item>
+              </FormField>
+            </div>
+            <div className="w-32">
+              <FormField label="Cấp HSK">
+                <Form.Item name="hskLevel" className="mb-0">
+                  <Select placeholder="HSK" size="large" allowClear className="w-full">
+                    {HSK_LEVEL_OPTIONS.map((opt) => (
+                      <Option key={opt.value} value={opt.value}>
+                        {opt.label}
+                      </Option>
+                    ))}
+                  </Select>
+                </Form.Item>
+              </FormField>
+            </div>
+          </div>
+        </SectionContainer>
+
+        {/* Section 2: Translation */}
+        <SectionContainer>
+          <SectionHeader
+            step={2}
+            title="Giải Thích & Dịch Nghĩa"
+            description="Thêm thông tin giải thích bằng tiếng Việt"
+            icon={<TranslationOutlined />}
+          />
+
+          <Form.Item name="language" hidden initialValue="vn">
+            <Input />
           </Form.Item>
 
-          <Form.Item
-            name="patternPinyin"
-            label={
-              <Space>
-                <span>Phiên âm mẫu câu (cách nhau bằng dấu cách)</span>
-                <Button
-                  type="link"
-                  size="small"
-                  icon={<SoundOutlined />}
-                  onClick={() => {
-                    const patternValue = form.getFieldValue("pattern");
-                    if (patternValue) {
-                      const generatedPinyin = generatePinyin(patternValue);
-                      form.setFieldsValue({ patternPinyin: generatedPinyin });
-                      message.success("Đã tự động tạo pinyin!");
-                    } else {
-                      message.warning("Vui lòng nhập mẫu câu trước!");
-                    }
-                  }}
-                >
-                  Tự động tạo
-                </Button>
-              </Space>
-            }
-          >
-            <Input placeholder="Ví dụ: bāngmáng & bāng" />
-          </Form.Item>
+          <FormField label="Điểm ngữ pháp" required hint="Mô tả ngắn gọn điểm ngữ pháp này">
+            <Form.Item
+              name="grammarPoint"
+              rules={[{ required: true, message: "Bắt buộc!" }]}
+              className="mb-0"
+            >
+              <Input placeholder="Ví dụ: Động từ ly hợp" size="large" className="rounded-lg" />
+            </Form.Item>
+          </FormField>
 
-          <Form.Item name="patternFormula" label="Công thức mẫu câu">
-            <Input placeholder="Ví dụ: A + 帮 + B" />
-          </Form.Item>
+          <FormField label="Giải thích chi tiết" required>
+            <Form.Item
+              name="explanation"
+              rules={[{ required: true, message: "Bắt buộc!" }]}
+              className="mb-0"
+            >
+              <TextArea
+                rows={4}
+                placeholder="Nhập giải thích chi tiết về cách sử dụng mẫu ngữ pháp này..."
+                className="rounded-lg"
+              />
+            </Form.Item>
+          </FormField>
+        </SectionContainer>
 
-          <Form.Item name="hskLevel" label="Cấp độ HSK">
-            <Select placeholder="Chọn cấp độ HSK" allowClear>
-              {HSK_LEVEL_OPTIONS.map((option) => (
-                <Option key={option.value} value={option.value}>
-                  {option.label}
-                </Option>
-              ))}
-            </Select>
-          </Form.Item>
-        </Card>
+        {/* Section 3: Examples */}
+        <SectionContainer>
+          <SectionHeader
+            step={3}
+            title="Ví Dụ Minh Họa"
+            description="Thêm các câu ví dụ sử dụng mẫu ngữ pháp"
+            icon={<FileTextOutlined />}
+          />
 
-        <Divider />
-
-        <Card title="Thông tin bản dịch" size="small">
-          <Form.Item name="language" label="Ngôn ngữ" initialValue="vn">
-            <Select>
-              <Option value="vn">Tiếng Việt</Option>
-              <Option value="en">English</Option>
-            </Select>
-          </Form.Item>
-
-          <Form.Item
-            name="grammarPoint"
-            label="Điểm ngữ pháp"
-            rules={[
-              { required: true, message: "Vui lòng nhập điểm ngữ pháp!" },
-            ]}
-          >
-            <Input placeholder="Ví dụ: động từ ly hợp" />
-          </Form.Item>
-
-          <Form.Item
-            name="explanation"
-            label="Giải thích"
-            rules={[{ required: true, message: "Vui lòng nhập giải thích!" }]}
-          >
-            <TextArea rows={4} placeholder="Nhập giải thích chi tiết..." />
-          </Form.Item>
-        </Card>
-
-        <Divider />
-
-        <Card title="Ví dụ" size="small">
           <Form.List name="examples" initialValue={[{}]}>
             {(fields, { add, remove }) => (
               <>
-                {fields.map(({ key, name, ...restField }) => (
-                  <Card
+                {fields.map(({ key, name, ...restField }, index) => (
+                  <div
                     key={key}
-                    size="small"
-                    className="mb-4"
-                    title={
-                      <div className="flex items-center justify-between">
-                        <span>{`Ví dụ ${name + 1}`}</span>
-                        {fields.length > 1 && (
-                          <Button
-                            type="text"
-                            danger
-                            size="small"
-                            icon={<MinusCircleOutlined />}
-                            onClick={() => remove(name)}
-                          />
-                        )}
-                      </div>
-                    }
+                    className="p-4 mb-4 border border-gray-200 rounded-xl bg-gray-50/50 relative"
                   >
-                    <div className="flex flex-col gap-4">
-                      <div className="flex items-start gap-2">
-                        <Form.Item
-                          {...restField}
-                          name={[name, "chinese"]}
-                          label="Tiếng Trung"
-                          className="flex-1 mb-0"
-                        >
-                          <Input
-                            placeholder="他帮忙做了这件事。"
-                            onChange={(e) =>
-                              handleExampleChineseChange(e.target.value, name)
-                            }
-                          />
-                        </Form.Item>
-                      </div>
-                      <Row gutter={16}>
-                        <Col span={12}>
-                          <Form.Item
-                            {...restField}
-                            name={[name, "pinyin"]}
-                            label="Pinyin (Tự động)"
-                            className="mb-0"
-                          >
-                            <Input
-                              placeholder="Tā bāngmáng zuò le zhè jiàn shì"
-                              className="bg-gray-100"
-                            />
-                          </Form.Item>
-                        </Col>
-                        <Col span={12}>
-                          <Form.Item
-                            {...restField}
-                            name={[name, "translation"]}
-                            label="Dịch nghĩa"
-                            className="mb-0"
-                          >
-                            <Input placeholder="Anh ấy đã giúp làm việc này." />
-                          </Form.Item>
-                        </Col>
-                      </Row>
+                    <div className="flex justify-between items-center mb-3">
+                      <span className="text-xs font-bold text-gray-500 uppercase">
+                        Ví dụ {index + 1}
+                      </span>
+                      {fields.length > 1 && (
+                        <Button
+                          type="text"
+                          danger
+                          size="small"
+                          icon={<MinusCircleOutlined />}
+                          onClick={() => remove(name)}
+                        />
+                      )}
                     </div>
-                  </Card>
+
+                    <div className="space-y-3">
+                      <Form.Item {...restField} name={[name, "chinese"]} className="mb-0">
+                        <Input
+                          placeholder="Câu tiếng Trung: 他帮忙做了这件事。"
+                          onChange={(e) => handleExampleChineseChange(e.target.value, name)}
+                          className="rounded-lg"
+                        />
+                      </Form.Item>
+
+                      <Form.Item {...restField} name={[name, "pinyin"]} className="mb-0">
+                        <Input
+                          placeholder="Pinyin (tự động)"
+                          className="rounded-lg bg-white/50 text-gray-500"
+                        />
+                      </Form.Item>
+
+                      <Form.Item {...restField} name={[name, "translation"]} className="mb-0">
+                        <Input
+                          placeholder="Dịch nghĩa tiếng Việt"
+                          className="rounded-lg"
+                        />
+                      </Form.Item>
+                    </div>
+                  </div>
                 ))}
-                <Form.Item>
-                  <Button
-                    type="dashed"
-                    onClick={() => add()}
-                    block
-                    icon={<PlusOutlined />}
-                  >
-                    Thêm ví dụ
-                  </Button>
-                </Form.Item>
+
+                <Button
+                  type="dashed"
+                  onClick={() => add()}
+                  block
+                  icon={<PlusOutlined />}
+                  className="rounded-lg h-10"
+                >
+                  Thêm ví dụ khác
+                </Button>
               </>
             )}
           </Form.List>
-        </Card>
+        </SectionContainer>
+
+        {/* Action Buttons */}
+        <div className="flex justify-end gap-3 pt-6 border-t border-gray-100">
+          <Button size="large" onClick={onCancel} className="rounded-lg px-6">
+            Hủy bỏ
+          </Button>
+          <Button
+            type="primary"
+            size="large"
+            loading={loading}
+            onClick={handleSubmit}
+            className="rounded-lg px-8 bg-blue-600 hover:bg-blue-700 shadow-md"
+          >
+            {initialData ? "Cập Nhật" : "Tạo Mới"}
+          </Button>
+        </div>
       </Form>
     </Modal>
   );

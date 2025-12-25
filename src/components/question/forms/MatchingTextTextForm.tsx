@@ -4,21 +4,24 @@ import {
   Form,
   Input,
   Button,
-  Card,
   Space,
   Select,
   Typography,
-  Tag,
   Switch,
 } from "antd";
 import {
   MinusCircleOutlined,
   PlusOutlined,
+  QuestionCircleOutlined,
+  BarsOutlined,
+  LinkOutlined,
+  CheckCircleOutlined,
 } from "@ant-design/icons";
 import { MatchingTextTextQuestionData } from "@/types/questionType";
 import type { FormInstance } from "antd/es/form";
 import { TextContent } from "@/types/textContent";
 import TextContentInput from "@/components/shared/TextContentInput";
+import { SectionContainer, SectionHeader, FormField } from "@/components/shared/FormStyles";
 
 const { TextArea } = Input;
 const { Text } = Typography;
@@ -32,403 +35,198 @@ interface MatchingTextTextFormProps {
   };
 }
 
-const MatchingTextTextForm: React.FC<MatchingTextTextFormProps> = ({
-  form,
-  initialValues,
-}) => {
-  const [leftItems, setLeftItems] = useState<Array<{id: string; content: TextContent}>>([]);;
-  const [rightItems, setRightItems] = useState<MatchingTextTextQuestionData['rightColumn']>([]);
+const MatchingTextTextForm: React.FC<MatchingTextTextFormProps> = ({ form, initialValues }) => {
+  const [leftItems, setLeftItems] = useState<Array<{ id: string; content: TextContent }>>([]);
+  const [rightItems, setRightItems] = useState<MatchingTextTextQuestionData["rightColumn"]>([]);
 
-  // Watch for changes in the columns to update the select options
   const leftValues = Form.useWatch(["data", "leftColumn"], form) || [];
   const rightValues = Form.useWatch(["data", "rightColumn"], form) || [];
   const correctMatches = Form.useWatch(["data", "correctMatches"], form) || [];
 
-  // Helper functions to extract display text and pinyin from TextContent
   const getDisplayText = (content: TextContent): string => {
-    if (content?.chinese && content.chinese.length > 0) {
-      return content.chinese.filter(c => c).join('');
-    }
-    return content?.text || '';
+    if (content?.chinese && content.chinese.length > 0) return content.chinese.filter((c) => c).join("");
+    return content?.text || "";
   };
 
   const getDisplayPinyin = (content: TextContent): string => {
-    if (content?.pinyin && content.pinyin.length > 0) {
-      return content.pinyin.filter(p => p).join(' ');
-    }
-    return '';
+    if (content?.pinyin && content.pinyin.length > 0) return content.pinyin.filter((p) => p).join(" ");
+    return "";
   };
 
-  // Initialize form with existing data
   useEffect(() => {
     if (initialValues?.data) {
       const { data } = initialValues;
-      
       if (data.leftColumn) {
-        // Convert old format to new TextContent format
-        const converted = data.leftColumn.map(item => ({
+        const converted = data.leftColumn.map((item) => ({
           id: item.id,
-          content: item.content || (item.text ? (
-            item.pinyin 
-              ? { chinese: [item.text], pinyin: [item.pinyin] }
-              : { text: item.text }
-          ) : { text: '' })
+          content: item.content || (item.text ? (item.pinyin ? { chinese: [item.text], pinyin: [item.pinyin] } : { text: item.text }) : { text: "" }),
         }));
         setLeftItems(converted);
       }
-      
-      if (data.rightColumn) {
-        setRightItems(data.rightColumn);
-      }
+      if (data.rightColumn) setRightItems(data.rightColumn);
     }
   }, [initialValues]);
 
-  // Generate ID for right column (A, B, C...)
-  const generateRightId = (index: number): string => {
-    return String.fromCharCode(65 + index); // 65 is ASCII for 'A'
-  };
+  const generateRightId = (index: number): string => String.fromCharCode(65 + index);
 
-  // Handle left column item TextContent change
   const handleLeftItemChange = (index: number, content: TextContent) => {
-    // Get current left items
     const currentLeftItems = [...(form.getFieldValue(["data", "leftColumn"]) || [])];
-
-    // Update the item with TextContent
     if (currentLeftItems[index]) {
       currentLeftItems[index] = {
         ...currentLeftItems[index],
-        content: content,
-        // Also keep legacy fields for compatibility
+        content,
         text: getDisplayText(content),
         pinyin: getDisplayPinyin(content),
       };
-
-      // Update form
-      form.setFieldsValue({
-        data: {
-          ...form.getFieldValue("data"),
-          leftColumn: currentLeftItems,
-        },
-      });
+      form.setFieldsValue({ data: { ...form.getFieldValue("data"), leftColumn: currentLeftItems } });
     }
   };
 
-  // Update left and right items when form values change
   useEffect(() => {
     const updatedLeftItems = leftValues
       .map((item: any, index: number) => {
-        const content = item?.content || (item?.text ? (
-          item.pinyin 
-            ? { chinese: [item.text], pinyin: [item.pinyin] }
-            : { text: item.text }
-        ) : { text: '' });
-        return {
-          id: item?.id || `${index + 1}`,
-          content,
-        };
+        const content = item?.content || (item?.text ? (item.pinyin ? { chinese: [item.text], pinyin: [item.pinyin] } : { text: item.text }) : { text: "" });
+        return { id: item?.id || `${index + 1}`, content };
       })
       .filter((item: any) => getDisplayText(item.content));
-
     setLeftItems(updatedLeftItems);
   }, [leftValues]);
 
   useEffect(() => {
     const updatedRightItems = rightValues
-      .map((item: any, index: number) => ({
-        id: item?.id || generateRightId(index),
-        text: item?.text || "",
-      }))
+      .map((item: any, index: number) => ({ id: item?.id || generateRightId(index), text: item?.text || "" }))
       .filter((item: any) => item.text);
-
     setRightItems(updatedRightItems);
   }, [rightValues]);
 
   return (
-    <div>
-      {/* Question Setup */}
-      <Card title="Thiết Lập Câu Hỏi" className="mb-6">
-        <Form.Item
-          label="1. Hướng Dẫn Câu Hỏi *"
-          name={["data", "instruction"]}
-          rules={[{ required: true, message: "Vui lòng nhập hướng dẫn câu hỏi" }]}
-        >
-          <TextArea
-            placeholder="Nhập hướng dẫn cho học viên (ví dụ: 'Ghép các từ tiếng Trung với nghĩa tiếng Việt của chúng')"
-            autoSize={{ minRows: 2, maxRows: 4 }}
-          />
-        </Form.Item>
-      </Card>
+    <div className="max-w-2xl mx-auto">
+      {/* Section 1: Question Setup */}
+      <SectionContainer>
+        <SectionHeader step={1} title="Thiết Lập Câu Hỏi" description="Nhập hướng dẫn cho học viên" icon={<QuestionCircleOutlined />} />
+        <FormField label="Hướng dẫn câu hỏi" required>
+          <Form.Item name={["data", "instruction"]} rules={[{ required: true, message: "Bắt buộc" }]} className="mb-0">
+            <TextArea rows={2} className="rounded-lg" placeholder="VD: Ghép các từ tiếng Trung với nghĩa tiếng Việt" />
+          </Form.Item>
+        </FormField>
+      </SectionContainer>
 
-      {/* Left Column */}
-      <Card
-        title="Cột Trái (Tiếng Trung)"
-        className="mb-6"
-      >
-        <Form.List
-          name={["data", "leftColumn"]}
-          initialValue={[{ id: "1", content: { text: '' } }]}
-        >
+      {/* Section 2: Left Column */}
+      <SectionContainer>
+        <SectionHeader step={2} title="Cột Trái (Tiếng Trung)" description="Thêm các mục cần ghép" icon={<BarsOutlined />} />
+        <Form.List name={["data", "leftColumn"]} initialValue={[{ id: "1", content: { text: "" } }]}>
           {(fields, { add, remove }) => (
             <>
-              {fields.map(({ key, name, ...restField }, index) => {
-                const currentItem = form.getFieldValue(["data", "leftColumn", index]) || {};
-                const textContent: TextContent = currentItem.content || { text: '' };
-                
-                return (
-                  <div key={key} className="mb-4 p-3 border rounded-md bg-gray-50">
-                    <div className="flex justify-between items-start mb-2">
-                      {/* ID (Number) */}
-                      <Form.Item
-                        {...restField}
-                        name={[name, "id"]}
-                        initialValue={`${index + 1}`}
-                        className="w-[60px] mb-0"
-                      >
-                        <Input
-                          disabled
-                          className="text-center font-bold"
-                          placeholder="#"
-                        />
-                      </Form.Item>
+              <div className="space-y-4">
+                {fields.map(({ key, name, ...restField }, index) => {
+                  const currentItem = form.getFieldValue(["data", "leftColumn", index]) || {};
+                  const textContent: TextContent = currentItem.content || { text: "" };
 
-                      {fields.length > 1 && (
-                        <Button
-                          danger
-                          size="small"
-                          icon={<MinusCircleOutlined />}
-                          onClick={() => remove(name)}
-                        />
-                      )}
-                    </div>
-
-                    {/* TextContentInput for Chinese Text */}
-                    <div className="mt-2">
-                      <Text strong className="block mb-2">Nội dung văn bản</Text>
-                      <TextContentInput
-                        value={textContent}
-                        onChange={(content) => handleLeftItemChange(index, content)}
-                        placeholder="Nhập chữ Trung hoặc văn bản"
-                      />
-                    </div>
-
-                    {/* Hidden fields for form data structure */}
-                    <Form.Item
-                      {...restField}
-                      name={[name, "content"]}
-                      className="hidden"
-                    >
-                      <Input />
-                    </Form.Item>
-                    <Form.Item
-                      {...restField}
-                      name={[name, "text"]}
-                      className="hidden"
-                    >
-                      <Input />
-                    </Form.Item>
-                    <Form.Item
-                      {...restField}
-                      name={[name, "pinyin"]}
-                      className="hidden"
-                    >
-                      <Input />
-                    </Form.Item>
-                  </div>
-                );
-              })}
-              <Form.Item>
-                <Button
-                  type="dashed"
-                  onClick={() =>
-                    add({ id: `${fields.length + 1}`, content: { text: '' } })
-                  }
-                  block
-                  icon={<PlusOutlined />}
-                >
-                  Thêm Mục Trái
-                </Button>
-              </Form.Item>
-            </>
-          )}
-        </Form.List>
-      </Card>
-
-      {/* Right Column */}
-      <Card
-        title="Cột Phải (Tiếng Việt/Bản Dịch)"
-        className="mb-6"
-      >
-        <Form.List
-          name={["data", "rightColumn"]}
-          initialValue={[{ id: "A", text: "" }]}
-        >
-          {(fields, { add, remove }) => (
-            <>
-              {fields.map(({ key, name, ...restField }, index) => (
-                <Space
-                  key={key}
-                  className="flex mb-2"
-                  align="baseline"
-                >
-                  {/* ID (Letter) */}
-                  <Form.Item
-                    {...restField}
-                    name={[name, "id"]}
-                    initialValue={generateRightId(index)}
-                    className="w-[60px] mr-2"
-                  >
-                    <Input
-                      disabled
-                      className="text-center font-bold"
-                      placeholder="Chữ Cái"
-                    />
-                  </Form.Item>
-
-                  {/* English Text */}
-                  <Form.Item
-                    {...restField}
-                    name={[name, "text"]}
-                    rules={[{ required: true, message: "Thiếu văn bản" }]}
-                    className="w-[300px]"
-                  >
-                    <Input placeholder="Nhập văn bản tiếng Việt/bản dịch" />
-                  </Form.Item>
-
-                  {fields.length > 1 && (
-                    <Button
-                      danger
-                      size="small"
-                      icon={<MinusCircleOutlined />}
-                      onClick={() => remove(name)}
-                    />
-                  )}
-                </Space>
-              ))}
-              <Form.Item>
-                <Button
-                  type="dashed"
-                  onClick={() =>
-                    add({
-                      id: generateRightId(fields.length),
-                      text: "",
-                    })
-                  }
-                  block
-                  icon={<PlusOutlined />}
-                >
-                  Thêm Mục Phải
-                </Button>
-              </Form.Item>
-            </>
-          )}
-        </Form.List>
-      </Card>
-
-      {/* Correct Matches */}
-      <Card
-        title="Các Cặp Đúng"
-        extra={
-          <Text type="secondary">
-            Chọn các cặp ghép từ cột trái và cột phải
-          </Text>
-        }
-        className="mb-6"
-      >
-        <Form.List
-          name={["data", "correctMatches"]}
-          initialValue={[{ left: "", right: "" }]}
-        >
-          {(fields, { add, remove }) => (
-            <>
-              {fields.map(({ key, name, ...restField }, index) => (
-                <Space
-                  key={key}
-                  className="flex mb-2"
-                  align="baseline"
-                >
-                  <Text strong>Cặp {index + 1}:</Text>
-                  <Form.Item
-                    {...restField}
-                    name={[name, "left"]}
-                    rules={[{ required: true, message: "Chọn mục bên trái" }]}
-                    className="w-[200px]"
-                  >
-                    <Select placeholder="Chọn mục bên trái">
-                      {leftItems.map((item, itemIndex) => {
-                        const displayText = getDisplayText(item.content);
-                        const displayPinyin = getDisplayPinyin(item.content);
-                        return (
-                          <Option key={`left-option-${item.id}-${itemIndex}`} value={item.id}>
-                            {item.id}: {displayText}
-                            {displayPinyin && (
-                              <span className="text-gray-500 text-xs">
-                                {' '}({displayPinyin})
-                              </span>
-                            )}
-                          </Option>
-                        );
-                      })}
-                    </Select>
-                  </Form.Item>
-                  <Text type="secondary">ghép với</Text>
-                  <Form.Item
-                    {...restField}
-                    name={[name, "right"]}
-                    rules={[{ required: true, message: "Chọn mục bên phải" }]}
-                    className="w-[200px]"
-                  >
-                    <Select placeholder="Chọn mục bên phải">
-                      {rightItems.map((item, itemIndex) => (
-                        <Option key={`right-option-${item.id}-${itemIndex}`} value={item.id}>
-                          {item.id}: {item.text}
-                        </Option>
-                      ))}
-                    </Select>
-                  </Form.Item>
-                  {fields.length > 1 && (
-                    <Button
-                      danger
-                      size="small"
-                      icon={<MinusCircleOutlined />}
-                      onClick={() => remove(name)}
-                    />
-                  )}
-                </Space>
-              ))}
-              <Form.Item>
-                <Button
-                  type="dashed"
-                  onClick={() => add({ left: "", right: "" })}
-                  block
-                  icon={<PlusOutlined />}
-                >
-                  Thêm Cặp
-                </Button>
-              </Form.Item>
-            </>
-          )}
-        </Form.List>
-
-        {/* Match Preview */}
-        {correctMatches?.length > 0 && (
-          <div className="mt-4 p-3 bg-blue-50 rounded-md">
-            <Text strong>Tóm Tắt Các Cặp:</Text>
-            <div className="mt-2">
-              {correctMatches?.map((match: any, index: number) => {
-                const leftItem = leftItems.find(item => item.id === match.left);
-                const rightItem = rightItems.find(item => item.id === match.right);
-                
-                if (leftItem && rightItem) {
-                  const leftText = getDisplayText(leftItem.content);
-                  const leftPinyin = getDisplayPinyin(leftItem.content);
                   return (
-                    <div key={index} className="mb-1">
-                      <Text>
-                        {leftItem.id}: {leftText} 
-                        {leftPinyin && <span className="text-gray-500"> ({leftPinyin})</span>}
-                        {' → '}
-                        {rightItem.id}: {rightItem.text}
-                      </Text>
+                    <div key={key} className="p-4 border-2 border-gray-200 rounded-xl bg-white">
+                      <div className="flex justify-between items-center mb-3">
+                        <div className="flex items-center gap-2">
+                          <span className="w-8 h-8 rounded-lg bg-blue-100 text-blue-600 font-bold flex items-center justify-center">{index + 1}</span>
+                          <span className="text-sm font-medium text-gray-600">Mục trái {index + 1}</span>
+                        </div>
+                        {fields.length > 1 && (
+                          <Button danger size="small" icon={<MinusCircleOutlined />} onClick={() => remove(name)} className="rounded-lg" />
+                        )}
+                      </div>
+                      <TextContentInput value={textContent} onChange={(content) => handleLeftItemChange(index, content)} placeholder="Nhập chữ Trung hoặc văn bản" />
+                      <Form.Item {...restField} name={[name, "id"]} initialValue={`${index + 1}`} className="hidden"><Input /></Form.Item>
+                      <Form.Item {...restField} name={[name, "content"]} className="hidden"><Input /></Form.Item>
+                      <Form.Item {...restField} name={[name, "text"]} className="hidden"><Input /></Form.Item>
+                      <Form.Item {...restField} name={[name, "pinyin"]} className="hidden"><Input /></Form.Item>
+                    </div>
+                  );
+                })}
+              </div>
+              <Button type="dashed" onClick={() => add({ id: `${fields.length + 1}`, content: { text: "" } })} block icon={<PlusOutlined />} className="mt-4 h-10 rounded-lg">
+                Thêm Mục Trái
+              </Button>
+            </>
+          )}
+        </Form.List>
+      </SectionContainer>
+
+      {/* Section 3: Right Column */}
+      <SectionContainer>
+        <SectionHeader step={3} title="Cột Phải (Tiếng Việt)" description="Thêm các mục đích" icon={<BarsOutlined />} />
+        <Form.List name={["data", "rightColumn"]} initialValue={[{ id: "A", text: "" }]}>
+          {(fields, { add, remove }) => (
+            <>
+              <div className="space-y-3">
+                {fields.map(({ key, name, ...restField }, index) => (
+                  <div key={key} className="flex items-center gap-3">
+                    <span className="w-8 h-8 rounded-lg bg-green-100 text-green-600 font-bold flex items-center justify-center flex-shrink-0">{generateRightId(index)}</span>
+                    <Form.Item {...restField} name={[name, "text"]} rules={[{ required: true, message: "Bắt buộc" }]} className="mb-0 flex-1">
+                      <Input size="large" className="rounded-lg" placeholder="Nhập văn bản tiếng Việt/bản dịch" />
+                    </Form.Item>
+                    {fields.length > 1 && <Button danger size="small" icon={<MinusCircleOutlined />} onClick={() => remove(name)} className="rounded-lg" />}
+                    <Form.Item {...restField} name={[name, "id"]} initialValue={generateRightId(index)} className="hidden"><Input /></Form.Item>
+                  </div>
+                ))}
+              </div>
+              <Button type="dashed" onClick={() => add({ id: generateRightId(fields.length), text: "" })} block icon={<PlusOutlined />} className="mt-4 h-10 rounded-lg">
+                Thêm Mục Phải
+              </Button>
+            </>
+          )}
+        </Form.List>
+      </SectionContainer>
+
+      {/* Section 4: Correct Matches */}
+      <SectionContainer>
+        <SectionHeader step={4} title="Các Cặp Đúng" description="Chọn các cặp ghép đúng" icon={<LinkOutlined />} />
+        <Form.List name={["data", "correctMatches"]} initialValue={[{ left: "", right: "" }]}>
+          {(fields, { add, remove }) => (
+            <>
+              <div className="space-y-3">
+                {fields.map(({ key, name, ...restField }, index) => (
+                  <div key={key} className="flex items-center gap-3 p-3 bg-gray-50 rounded-xl">
+                    <Text strong className="text-gray-600 w-16">Cặp {index + 1}:</Text>
+                    <Form.Item {...restField} name={[name, "left"]} rules={[{ required: true, message: "Chọn" }]} className="mb-0 flex-1">
+                      <Select placeholder="Chọn mục trái" size="large" className="rounded-lg">
+                        {leftItems.map((item, itemIndex) => (
+                          <Option key={`left-option-${item.id}-${itemIndex}`} value={item.id}>
+                            {item.id}: {getDisplayText(item.content)} {getDisplayPinyin(item.content) && <span className="text-gray-400 text-xs">({getDisplayPinyin(item.content)})</span>}
+                          </Option>
+                        ))}
+                      </Select>
+                    </Form.Item>
+                    <span className="text-gray-400">→</span>
+                    <Form.Item {...restField} name={[name, "right"]} rules={[{ required: true, message: "Chọn" }]} className="mb-0 flex-1">
+                      <Select placeholder="Chọn mục phải" size="large" className="rounded-lg">
+                        {rightItems.map((item, itemIndex) => (
+                          <Option key={`right-option-${item.id}-${itemIndex}`} value={item.id}>
+                            {item.id}: {item.text}
+                          </Option>
+                        ))}
+                      </Select>
+                    </Form.Item>
+                    {fields.length > 1 && <Button danger size="small" icon={<MinusCircleOutlined />} onClick={() => remove(name)} className="rounded-lg" />}
+                  </div>
+                ))}
+              </div>
+              <Button type="dashed" onClick={() => add({ left: "", right: "" })} block icon={<PlusOutlined />} className="mt-4 h-10 rounded-lg">
+                Thêm Cặp
+              </Button>
+            </>
+          )}
+        </Form.List>
+
+        {correctMatches?.length > 0 && (
+          <div className="mt-4 p-3 bg-blue-50 rounded-lg border border-blue-100">
+            <Text strong className="text-blue-800">Tóm Tắt Các Cặp:</Text>
+            <div className="mt-2 space-y-1">
+              {correctMatches?.map((match: any, index: number) => {
+                const leftItem = leftItems.find((item) => item.id === match.left);
+                const rightItem = rightItems.find((item) => item.id === match.right);
+                if (leftItem && rightItem) {
+                  return (
+                    <div key={index} className="text-blue-700">
+                      {leftItem.id}: {getDisplayText(leftItem.content)} → {rightItem.id}: {rightItem.text}
                     </div>
                   );
                 }
@@ -437,30 +235,22 @@ const MatchingTextTextForm: React.FC<MatchingTextTextFormProps> = ({
             </div>
           </div>
         )}
-      </Card>
+      </SectionContainer>
 
-      {/* Additional Settings */}
-      <Card title="Cài Đặt Thêm" className="mb-6">
-        <Form.Item
-          label="2. Giải Thích (Tùy Chọn)"
-          name={['data', 'explanation']}
-          help="Cung cấp giải thích sẽ được hiển thị sau khi học viên trả lời"
-        >
-          <TextArea
-            rows={3}
-            placeholder="Giải thích logic ghép hoặc cung cấp ngữ cảnh thêm..."
-          />
-        </Form.Item>
-
-        <Form.Item
-          label="3. Kích Hoạt"
-          name="isActive"
-          valuePropName="checked"
-          initialValue={true}
-        >
-          <Switch />
-        </Form.Item>
-      </Card>
+      {/* Section 5: Additional Settings */}
+      <SectionContainer>
+        <SectionHeader step={5} title="Cài Đặt Bổ Sung" description="Giải thích và trạng thái" icon={<CheckCircleOutlined />} />
+        <FormField label="Giải thích" hint="Hiển thị sau khi học viên trả lời">
+          <Form.Item name={["data", "explanation"]} className="mb-0">
+            <TextArea rows={3} className="rounded-lg" placeholder="Giải thích logic ghép hoặc cung cấp ngữ cảnh thêm..." />
+          </Form.Item>
+        </FormField>
+        <FormField label="Kích hoạt">
+          <Form.Item name="isActive" valuePropName="checked" initialValue={true} className="mb-0">
+            <Switch />
+          </Form.Item>
+        </FormField>
+      </SectionContainer>
     </div>
   );
 };
