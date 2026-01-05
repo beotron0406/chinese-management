@@ -23,8 +23,6 @@ export async function GET(request: NextRequest) {
     if (sortBy) queryParams.append('sortBy', sortBy);
     if (sortOrder) queryParams.append('sortOrder', sortOrder);
 
-    console.log(`🔄 Fetching grammar patterns with params:`, Object.fromEntries(queryParams));
-
     const response = await fetch(
       `${API_BASE_URL}/grammar-patterns?${queryParams.toString()}`,
       {
@@ -42,7 +40,7 @@ export async function GET(request: NextRequest) {
     }
 
     const responseBody: GrammarPatternListResponse = await response.json();
-    console.log('✅ Grammar patterns fetched successfully');
+
     
     return NextResponse.json(responseBody);
   } catch (error) {
@@ -60,8 +58,6 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     const patternData = await request.json();
-    
-    console.log('🔄 Creating grammar pattern (pattern only):', patternData);
 
     const response = await fetch(`${API_BASE_URL}/grammar-patterns`, {
       method: 'POST',
@@ -78,7 +74,7 @@ export async function POST(request: NextRequest) {
     }
 
     const responseBody = await response.json();
-    console.log('✅ Grammar pattern created successfully');
+
     
     return NextResponse.json(responseBody, { status: 201 });
   } catch (error) {

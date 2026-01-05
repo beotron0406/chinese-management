@@ -8,7 +8,7 @@ interface CourseSelectProps {
   onChange?: (value: number) => void;
   disabled?: boolean;
   placeholder?: string;
-  style?: React.CSSProperties;
+  className?: string;
   allowClear?: boolean;
   showOnlyActive?: boolean;
   excludeCourseId?: number;
@@ -20,7 +20,7 @@ const CourseSelect: React.FC<CourseSelectProps> = ({
   onChange,
   disabled = false,
   placeholder = "Chọn khóa học",
-  style,
+  className,
   allowClear = false,
   showOnlyActive = true,
   excludeCourseId,
@@ -92,7 +92,7 @@ const CourseSelect: React.FC<CourseSelectProps> = ({
       disabled={disabled}
       loading={loading}
       placeholder={placeholder}
-      style={{ width: '100%', ...style }}
+      className={`w-full ${className || ''}`}
       optionFilterProp="children"
       showSearch
       allowClear={allowClear}

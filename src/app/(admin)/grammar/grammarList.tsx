@@ -305,17 +305,17 @@ const GrammarList: React.FC = () => {
       />
 
       <Card>
-        <Space style={{ marginBottom: 16 }}>
+        <Space className="mb-4">
           <Input.Search
             placeholder="Tìm kiếm mẫu ngữ pháp..."
             allowClear
             onSearch={handleSearch}
-            style={{ width: 300 }}
+            className="w-[300px]"
           />
           <Select
             placeholder="Lọc theo Cấp HSK"
             allowClear
-            style={{ width: 150 }}
+            className="w-[150px]"
             onChange={handleHSKFilter}
           >
             {HSK_LEVEL_OPTIONS.map((option) => (

@@ -1,10 +1,19 @@
 "use client";
-import React, { useState, useEffect } from 'react';
-import { Form, Input, Button, Card, Space, Typography, Switch, Row, Col } from 'antd';
-import { PlusOutlined, DeleteOutlined, SoundOutlined } from '@ant-design/icons';
-import { pinyin } from 'pinyin-pro';
-import type { FormInstance } from 'antd/es/form';
-import { SelectionTextTextQuestionData } from '@/types/questionType';
+import React, { useState, useEffect } from "react";
+import { Form, Input, Button, Space, Typography, Switch } from "antd";
+import {
+  PlusOutlined,
+  DeleteOutlined,
+  QuestionCircleOutlined,
+  OrderedListOutlined,
+  CheckCircleOutlined,
+} from "@ant-design/icons";
+import type { FormInstance } from "antd/es/form";
+import { SelectionTextTextQuestionData, TextOption } from "@/types/questionType";
+import { TextContent } from "@/types/textContent";
+import TextContentInput from "@/components/shared/TextContentInput";
+import { getDisplayText } from "@/utils/textContentUtils";
+import { SectionContainer, SectionHeader, FormField } from "@/components/shared/FormStyles";
 
 const { Text } = Typography;
 const { TextArea } = Input;
@@ -18,55 +27,64 @@ interface SelectionTextTextFormProps {
 }
 
 const SelectionTextTextForm: React.FC<SelectionTextTextFormProps> = ({ form, initialValues }) => {
-  const [options, setOptions] = useState<SelectionTextTextQuestionData['options']>([
-    { id: '1', text: '' },
-    { id: '2', text: '' },
-    { id: '3', text: '' },
-    { id: '4', text: '' }
+  const [options, setOptions] = useState<TextOption[]>([
+    { id: "1" },
+    { id: "2" },
+    { id: "3" },
+    { id: "4" },
   ]);
-  const [correctAnswer, setCorrectAnswer] = useState<string>('1');
+  const [correctAnswer, setCorrectAnswer] = useState<string>("1");
+  const [questionContent, setQuestionContent] = useState<TextContent>({ text: "" });
 
-  // Initialize form with existing data
   useEffect(() => {
     if (initialValues?.data) {
       const { data } = initialValues;
+
       if (data.options) {
-        setOptions(data.options);
+        const normalizedOptions: TextOption[] = data.options.map((opt) => ({
+          id: opt.id,
+          content: opt.content || (opt.text ? { text: opt.text } : undefined),
+          text: opt.text,
+        }));
+        setOptions(normalizedOptions);
       }
+
+      if (data.questionContent) {
+        setQuestionContent(data.questionContent);
+      } else if (data.question) {
+        setQuestionContent({ text: data.question });
+      }
+
       if (data.correctAnswer) {
         setCorrectAnswer(data.correctAnswer);
       }
     }
   }, [initialValues]);
 
-  const generatePinyin = (chinese: string): string => {
-    try {
-      return pinyin(chinese, {
-        toneType: 'symbol',
-        type: 'array'
-      }).join(' ');
-    } catch (error) {
-      console.warn('Failed to generate pinyin:', error);
-      return '';
-    }
-  };
-
-  const updateFormData = (newOptions: SelectionTextTextQuestionData['options'], newCorrectAnswer: string) => {
+  const updateFormData = (
+    newOptions: TextOption[],
+    newCorrectAnswer: string,
+    newQuestionContent?: TextContent
+  ) => {
+    const qContent = newQuestionContent || questionContent;
     form.setFieldsValue({
       data: {
+        questionContent: qContent,
         options: newOptions,
-        correctAnswer: newCorrectAnswer
-      }
+        correctAnswer: newCorrectAnswer,
+      },
     });
   };
 
-  const handleTextChange = (optionId: string, value: string) => {
-    const updatedOptions = options.map(option => {
+  const handleQuestionContentChange = (content: TextContent) => {
+    setQuestionContent(content);
+    updateFormData(options, correctAnswer, content);
+  };
+
+  const handleOptionContentChange = (optionId: string, content: TextContent) => {
+    const updatedOptions = options.map((option) => {
       if (option.id === optionId) {
-        return {
-          ...option,
-          text: value
-        };
+        return { ...option, content };
       }
       return option;
     });
@@ -77,21 +95,20 @@ const SelectionTextTextForm: React.FC<SelectionTextTextFormProps> = ({ form, ini
 
   const addOption = () => {
     const newId = (options.length + 1).toString();
-    const newOptions = [...options, { id: newId, text: '' }];
+    const newOptions = [...options, { id: newId }];
     setOptions(newOptions);
     updateFormData(newOptions, correctAnswer);
   };
 
   const removeOption = (optionId: string) => {
-    if (options.length <= 2) return; // Keep minimum 2 options
+    if (options.length <= 2) return;
 
-    const filteredOptions = options.filter(opt => opt.id !== optionId);
+    const filteredOptions = options.filter((opt) => opt.id !== optionId);
     setOptions(filteredOptions);
 
-    // If removed option was correct answer, reset to first option
     let newCorrectAnswer = correctAnswer;
     if (correctAnswer === optionId) {
-      newCorrectAnswer = filteredOptions[0]?.id || '1';
+      newCorrectAnswer = filteredOptions[0]?.id || "1";
       setCorrectAnswer(newCorrectAnswer);
     }
 
@@ -103,136 +120,173 @@ const SelectionTextTextForm: React.FC<SelectionTextTextFormProps> = ({ form, ini
     updateFormData(options, optionId);
   };
 
+  const getOptionDisplayText = (option: TextOption): string => {
+    if (option.content) {
+      return getDisplayText(option.content);
+    }
+    return option.text || "";
+  };
+
   return (
-    <div>
-      {/* Question Setup */}
-      <Card title="Thiết Lập Câu Hỏi" style={{ marginBottom: '24px' }}>
-        <Form.Item
-          label="Hướng Dẫn Câu Hỏi"
-          name={['data', 'instruction']}
-          rules={[{ required: true, message: 'Vui lòng nhập hướng dẫn câu hỏi' }]}
-        >
-          <Input placeholder="VD: Chọn bản dịch đúng cho từ tiếng Trung" />
-        </Form.Item>
+    <div className="max-w-2xl mx-auto">
+      {/* Section 1: Question Setup */}
+      <SectionContainer>
+        <SectionHeader
+          step={1}
+          title="Thiết Lập Câu Hỏi"
+          description="Nhập hướng dẫn và nội dung câu hỏi"
+          icon={<QuestionCircleOutlined />}
+        />
 
-        <Form.Item
-          label="Nội Dung Câu Hỏi"
-          name={['data', 'question']}
-          rules={[{ required: true, message: 'Vui lòng nhập nội dung câu hỏi' }]}
-        >
-          <TextArea
-            rows={3}
-            placeholder="Nhập câu hỏi của bạn tại đây"
-          />
-        </Form.Item>
-      </Card>
-
-      {/* Answer Options */}
-      <Card
-        title="Các Lựa Chọn Trả Lời"
-        extra={
-          <Button
-            type="dashed"
-            icon={<PlusOutlined />}
-            onClick={addOption}
-            disabled={options.length >= 6}
+        <FormField label="Hướng dẫn câu hỏi" required>
+          <Form.Item
+            name={["data", "instruction"]}
+            rules={[{ required: true, message: "Bắt buộc" }]}
+            className="mb-0"
           >
-            Thêm Lựa Chọn
-          </Button>
-        }
-        style={{ marginBottom: '24px' }}
-      >
-        <Space direction="vertical" style={{ width: '100%' }} size="large">
-          {options.map((option, index) => (
-            <Card
-              key={option.id}
-              size="small"
-              style={{
-                border: correctAnswer === option.id ? '2px solid #1890ff' : '1px solid #d9d9d9',
-                backgroundColor: correctAnswer === option.id ? '#f6ffed' : 'white'
-              }}
-              title={
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <span>Lựa Chọn {index + 1}</span>
-                  <Space>
-                    <Button
-                      type={correctAnswer === option.id ? 'primary' : 'default'}
-                      size="small"
-                      onClick={() => handleCorrectAnswerChange(option.id)}
-                    >
-                      {correctAnswer === option.id ? 'Đáp Án Đúng' : 'Đánh Dấu Đúng'}
-                    </Button>
-                    {options.length > 2 && (
-                      <Button
-                        danger
-                        size="small"
-                        icon={<DeleteOutlined />}
-                        onClick={() => removeOption(option.id)}
-                      />
-                    )}
-                  </Space>
-                </div>
-              }
-            >
-              <div>
-                <Text strong>Nội Dung Lựa Chọn</Text>
-                <Input
-                  placeholder="Nhập nội dung lựa chọn"
-                  value={option.text}
-                  onChange={(e) => handleTextChange(option.id, e.target.value)}
-                  style={{ marginTop: '4px' }}
-                />
-              </div>
+            <Input
+              size="large"
+              className="rounded-lg"
+              placeholder="VD: Chọn bản dịch đúng cho từ tiếng Trung"
+            />
+          </Form.Item>
+        </FormField>
 
-              {/* Preview */}
-              {option.text && (
-                <div style={{ marginTop: '12px', padding: '8px', backgroundColor: '#fafafa', borderRadius: '4px' }}>
-                  <Text strong>Xem Trước: </Text>
-                  <span style={{ fontSize: '16px', color: '#1890ff' }}>{option.text}</span>
-                </div>
-              )}
-            </Card>
+        <FormField label="Nội dung câu hỏi" required>
+          <TextContentInput
+            value={questionContent}
+            onChange={handleQuestionContentChange}
+            placeholder="Nhập câu hỏi của bạn tại đây"
+            multiline
+            rows={3}
+          />
+        </FormField>
+      </SectionContainer>
+
+      {/* Section 2: Answer Options */}
+      <SectionContainer>
+        <SectionHeader
+          step={2}
+          title="Các Lựa Chọn Trả Lời"
+          description="Thêm các đáp án và chọn đáp án đúng"
+          icon={<OrderedListOutlined />}
+        />
+
+        <div className="space-y-4">
+          {options.map((option, index) => (
+            <div
+              key={option.id}
+              className={`p-4 rounded-xl border-2 transition-all ${
+                correctAnswer === option.id
+                  ? "border-green-500 bg-green-50"
+                  : "border-gray-200 bg-white hover:border-gray-300"
+              }`}
+            >
+              <div className="flex justify-between items-center mb-3">
+                <span className="text-sm font-bold text-gray-600">
+                  Lựa chọn {index + 1}
+                </span>
+                <Space>
+                  <Button
+                    type={correctAnswer === option.id ? "primary" : "default"}
+                    size="small"
+                    onClick={() => handleCorrectAnswerChange(option.id)}
+                    className="rounded-lg"
+                    icon={correctAnswer === option.id ? <CheckCircleOutlined /> : null}
+                  >
+                    {correctAnswer === option.id ? "Đáp án đúng" : "Đánh dấu đúng"}
+                  </Button>
+                  {options.length > 2 && (
+                    <Button
+                      danger
+                      size="small"
+                      icon={<DeleteOutlined />}
+                      onClick={() => removeOption(option.id)}
+                      className="rounded-lg"
+                    />
+                  )}
+                </Space>
+              </div>
+              <TextContentInput
+                value={option.content}
+                onChange={(content) => handleOptionContentChange(option.id, content)}
+                placeholder="Nhập nội dung lựa chọn"
+              />
+            </div>
           ))}
-        </Space>
+        </div>
+
+        <Button
+          type="dashed"
+          icon={<PlusOutlined />}
+          onClick={addOption}
+          disabled={options.length >= 6}
+          className="w-full mt-4 h-10 rounded-lg"
+        >
+          Thêm lựa chọn
+        </Button>
 
         {/* Correct Answer Summary */}
-        <div style={{ marginTop: '16px', padding: '12px', backgroundColor: '#e6f7ff', borderRadius: '6px' }}>
-          <Text strong>Đáp Án Đúng: </Text>
-          <Text>Lựa Chọn {options.findIndex(opt => opt.id === correctAnswer) + 1}</Text>
-          {options.find(opt => opt.id === correctAnswer)?.text && (
-            <Text> - {options.find(opt => opt.id === correctAnswer)?.text}</Text>
-          )}
+        <div className="mt-4 p-3 bg-blue-50 rounded-lg border border-blue-100">
+          <Text strong className="text-blue-800">
+            Đáp án đúng:{" "}
+          </Text>
+          <Text className="text-blue-700">
+            Lựa chọn {options.findIndex((opt) => opt.id === correctAnswer) + 1}
+            {getOptionDisplayText(
+              options.find((opt) => opt.id === correctAnswer) || { id: "" }
+            ) && (
+              <span>
+                {" "}
+                -{" "}
+                {getOptionDisplayText(
+                  options.find((opt) => opt.id === correctAnswer) || { id: "" }
+                )}
+              </span>
+            )}
+          </Text>
         </div>
-      </Card>
+      </SectionContainer>
 
-      {/* Additional Settings */}
-      <Card title="Cài Đặt Bổ Sung" style={{ marginBottom: '24px' }}>
-        <Form.Item
-          label="Giải Thích (Tùy Chọn)"
-          name={['data', 'explanation']}
-          help="Cung cấp giải thích sẽ được hiển thị sau khi học viên trả lời"
-        >
-          <TextArea
-            rows={3}
-            placeholder="Giải thích tại sao đây là đáp án đúng..."
-          />
-        </Form.Item>
+      {/* Section 3: Additional Settings */}
+      <SectionContainer>
+        <SectionHeader
+          step={3}
+          title="Cài Đặt Bổ Sung"
+          description="Giải thích và trạng thái câu hỏi"
+          icon={<CheckCircleOutlined />}
+        />
 
-        <Form.Item
-          label="Kích Hoạt"
-          name="isActive"
-          valuePropName="checked"
-          initialValue={true}
-        >
-          <Switch />
-        </Form.Item>
-      </Card>
+        <FormField label="Giải thích" hint="Hiển thị sau khi học viên trả lời">
+          <Form.Item name={["data", "explanation"]} className="mb-0">
+            <TextArea
+              rows={3}
+              className="rounded-lg"
+              placeholder="Giải thích tại sao đây là đáp án đúng..."
+            />
+          </Form.Item>
+        </FormField>
 
-      {/* Hidden form fields for proper data structure */}
-      <Form.Item name={['data', 'options']} style={{ display: 'none' }}>
+        <FormField label="Kích hoạt">
+          <Form.Item
+            name="isActive"
+            valuePropName="checked"
+            initialValue={true}
+            className="mb-0"
+          >
+            <Switch />
+          </Form.Item>
+        </FormField>
+      </SectionContainer>
+
+      {/* Hidden form fields */}
+      <Form.Item name={["data", "questionContent"]} className="hidden">
         <Input />
       </Form.Item>
-      <Form.Item name={['data', 'correctAnswer']} style={{ display: 'none' }}>
+      <Form.Item name={["data", "options"]} className="hidden">
+        <Input />
+      </Form.Item>
+      <Form.Item name={["data", "correctAnswer"]} className="hidden">
         <Input />
       </Form.Item>
     </div>

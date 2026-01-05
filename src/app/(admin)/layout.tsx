@@ -18,13 +18,11 @@ export default function AdminLayout({
     <ProtectedRoute adminOnly>
       <CourseProvider>
         <LessonCacheProvider>
-          <Layout style={{ minHeight: "100vh" }}>
+          <Layout className="min-h-screen">
             <AdminSidebar />
             <Layout>
               <AdminTopbar />
-              <Content
-                style={{ margin: "24px 16px", padding: 24, minHeight: 280 }}
-              >
+              <Content className="mx-4 my-6 p-6 min-h-[280px]">
                 {children}
               </Content>
             </Layout>

@@ -9,7 +9,6 @@ export async function GET(
 ) {
   try {
     const lessonId = params.id;
-    console.log(`🔄 Fetching lesson words: ${lessonId}`);
 
     const response = await fetch(`${API_BASE_URL}/lessons/${lessonId}/words`, {
       method: 'GET',
@@ -25,7 +24,6 @@ export async function GET(
     }
 
     const responseBody: LessonWord[] = await response.json();
-    console.log('✅ Lesson words fetched successfully');
     
     return NextResponse.json(responseBody);
   } catch (error) {
@@ -47,8 +45,6 @@ export async function POST(
   try {
     const lessonId = params.id;
     const words: AddLessonWordDto[] = await request.json();
-    
-    console.log(`🔄 Adding words to lesson: ${lessonId}`, words);
 
     const response = await fetch(`${API_BASE_URL}/lessons/${lessonId}/words`, {
       method: 'POST',
@@ -65,7 +61,6 @@ export async function POST(
     }
 
     const responseBody = await response.json();
-    console.log('✅ Words added to lesson successfully');
     
     return NextResponse.json(responseBody);
   } catch (error) {
@@ -88,8 +83,6 @@ export async function DELETE(
     const lessonId = params.id;
     const { searchParams } = new URL(request.url);
     const wordSenseIds = searchParams.get('wordSenseIds');
-    
-    console.log(`🔄 Removing words from lesson: ${lessonId}`, wordSenseIds);
 
     const queryString = wordSenseIds ? `?wordSenseIds=${wordSenseIds}` : '';
     
@@ -107,7 +100,6 @@ export async function DELETE(
     }
 
     const responseBody = await response.json();
-    console.log('✅ Words removed from lesson successfully');
     
     return NextResponse.json(responseBody);
   } catch (error) {

@@ -9,8 +9,6 @@ export async function PATCH(
   try {
     const translationId = params.id;
     const translationData = await request.json();
-    
-    console.log(`🔄 Updating grammar translation: ${translationId}`, translationData);
 
     const response = await fetch(`${API_BASE_URL}/grammar-translations/${translationId}`, {
       method: 'PATCH',
@@ -27,7 +25,6 @@ export async function PATCH(
     }
 
     const responseBody = await response.json();
-    console.log('✅ Grammar translation updated successfully');
     
     return NextResponse.json(responseBody);
   } catch (error) {
@@ -48,7 +45,6 @@ export async function DELETE(
 ) {
   try {
     const translationId = params.id;
-    console.log(`🔄 Deleting grammar translation: ${translationId}`);
 
     const response = await fetch(`${API_BASE_URL}/grammar-translations/${translationId}`, {
       method: 'DELETE',
@@ -63,8 +59,6 @@ export async function DELETE(
       throw new Error(errorData.message || `API error: ${response.status}`);
     }
 
-    console.log('✅ Grammar translation deleted successfully');
-    
     return NextResponse.json({ message: 'Grammar translation deleted successfully' }, { status: 204 });
   } catch (error) {
     console.error('❌ Error deleting grammar translation:', error);

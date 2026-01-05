@@ -24,7 +24,6 @@ export async function GET(
     }
 
     const responseBody: Lesson[] = await response.json();
-    console.log('✅ Lessons by course fetched successfully');
     
     return NextResponse.json(responseBody);
   } catch (error) {

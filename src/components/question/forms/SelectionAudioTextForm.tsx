@@ -3,30 +3,35 @@ import React, { useState, useEffect, forwardRef, useImperativeHandle } from "rea
 import {
   Form,
   Input,
-  Card,
-  Typography,
   Upload,
   Button,
   message,
   Space,
+  Typography,
 } from "antd";
 import {
   SoundOutlined,
   UploadOutlined,
   DeleteOutlined,
   PlusOutlined,
+  QuestionCircleOutlined,
+  OrderedListOutlined,
+  CheckCircleOutlined,
 } from "@ant-design/icons";
 import { pinyin } from "pinyin-pro";
 import type { FormInstance } from "antd/es/form";
-import { SelectionAudioTextQuestionData } from '@/types/questionType';
-import { uploadAudioByType, validateFile, UploadProgress } from '@/utils/s3Upload';
-import UploadModal from '@/components/common/UploadModal';
-import TTSButton from '@/components/shared/TTSButton';
+import { SelectionAudioTextQuestionData, TextOption } from "@/types/questionType";
+import { TextContent } from "@/types/textContent";
+import { uploadAudioByType, validateFile, UploadProgress } from "@/utils/s3Upload";
+import UploadModal from "@/components/common/UploadModal";
+import TTSButton from "@/components/shared/TTSButton";
+import TextContentInput from "@/components/shared/TextContentInput";
+import { getDisplayText } from "@/utils/textContentUtils";
+import { SectionContainer, SectionHeader, FormField } from "@/components/shared/FormStyles";
 
 const { Text } = Typography;
 const { TextArea } = Input;
 
-// Dev mode flag - set to false to hide individual upload buttons
 const DEV_MODE = false;
 
 interface SelectionAudioTextFormProps {
@@ -45,234 +50,158 @@ export interface SelectionAudioTextFormRef {
 const SelectionAudioTextForm = forwardRef<SelectionAudioTextFormRef, SelectionAudioTextFormProps>(({
   form,
   initialValues,
-  questionType = 'question_selection_audio_text',
+  questionType = "question_selection_audio_text",
 }, ref) => {
-  // Audio transcript state
   const [transcriptText, setTranscriptText] = useState<string>("");
   const [audioTranscriptChinese, setAudioTranscriptChinese] = useState<string>("");
   const [audioTranscriptPinyin, setAudioTranscriptPinyin] = useState<string>("");
-
-  // Audio upload state
   const [selectedAudioFile, setSelectedAudioFile] = useState<File | null>(null);
   const [uploadModalVisible, setUploadModalVisible] = useState(false);
-  const [uploadStatus, setUploadStatus] = useState<'uploading' | 'success' | 'error' | 'idle'>('idle');
+  const [uploadStatus, setUploadStatus] = useState<"uploading" | "success" | "error" | "idle">("idle");
   const [uploadProgress, setUploadProgress] = useState(0);
   const [uploadedAudioUrl, setUploadedAudioUrl] = useState<string | undefined>(undefined);
-  const [uploadError, setUploadError] = useState<string>('');
-
-  // Options state
-  const [options, setOptions] = useState<SelectionAudioTextQuestionData['options']>([
-    { id: '1', text: '' },
-    { id: '2', text: '' },
-    { id: '3', text: '' },
-    { id: '4', text: '' }
+  const [uploadError, setUploadError] = useState<string>("");
+  const [options, setOptions] = useState<TextOption[]>([
+    { id: "1" },
+    { id: "2" },
+    { id: "3" },
+    { id: "4" },
   ]);
-  const [correctAnswer, setCorrectAnswer] = useState<string>('1');
+  const [correctAnswer, setCorrectAnswer] = useState<string>("1");
 
   const generatePinyin = (chinese: string): string => {
     try {
-      return pinyin(chinese, {
-        toneType: 'symbol',
-        type: 'array'
-      }).join(' ');
+      return pinyin(chinese, { toneType: "symbol", type: "array" }).join(" ");
     } catch (error) {
-      console.warn('Failed to generate pinyin:', error);
-      return '';
+      console.warn("Failed to generate pinyin:", error);
+      return "";
     }
   };
 
-  const updateFormData = (newOptions: SelectionAudioTextQuestionData['options'], newCorrectAnswer: string) => {
+  const updateFormData = (newOptions: SelectionAudioTextQuestionData["options"], newCorrectAnswer: string) => {
     form.setFieldsValue({
       data: {
-        ...form.getFieldValue('data'),
+        ...form.getFieldValue("data"),
         options: newOptions,
-        correctAnswer: newCorrectAnswer
-      }
+        correctAnswer: newCorrectAnswer,
+      },
     });
   };
 
-  // Handle transcript changes
   const handleTranscriptChange = (value: string) => {
     setTranscriptText(value);
     setAudioTranscriptChinese(value);
     const pinyinResult = generatePinyin(value);
     setAudioTranscriptPinyin(pinyinResult);
-    
     form.setFieldsValue({
       data: {
-        ...form.getFieldValue('data'),
+        ...form.getFieldValue("data"),
         audio_transcript_chinese: value,
-        audio_transcript_pinyin: pinyinResult
-      }
+        audio_transcript_pinyin: pinyinResult,
+      },
     });
   };
 
-  // Audio upload handlers
   const handleAudioFileChange = async (file: File | null) => {
     if (!file) return false;
-
-    // Validate file
-    const audioValidation = validateFile(file, 'audio', 10);
+    const audioValidation = validateFile(file, "audio", 10);
     if (!audioValidation.isValid) {
       message.error(audioValidation.error);
       return false;
     }
-
-    // Set file in state
     setSelectedAudioFile(file);
-
-    // Auto-upload immediately
     setUploadModalVisible(true);
-    setUploadStatus('uploading');
+    setUploadStatus("uploading");
     setUploadProgress(0);
-    setUploadError('');
+    setUploadError("");
 
     try {
-      const result = await uploadAudioByType(
-        file,
-        questionType,
-        (progress: UploadProgress) => {
-          setUploadProgress(Math.round(progress.percentage));
-        }
-      );
-
+      const result = await uploadAudioByType(file, questionType, (progress: UploadProgress) => {
+        setUploadProgress(Math.round(progress.percentage));
+      });
       if (result.success && result.url) {
         setUploadedAudioUrl(result.url);
         form.setFieldsValue({
-          data: {
-            ...form.getFieldValue('data'),
-            audio: result.url,
-            audio_url: result.url,
-          }
+          data: { ...form.getFieldValue("data"), audio: result.url, audio_url: result.url },
         });
-        setUploadStatus('success');
+        setUploadStatus("success");
         setUploadProgress(100);
         setSelectedAudioFile(null);
-        message.success('Tải âm thanh lên thành công!');
+        message.success("Tải âm thanh lên thành công!");
       } else {
-        throw new Error(result.error || 'Upload failed');
+        throw new Error(result.error || "Upload failed");
       }
     } catch (error) {
-      console.error('Upload error:', error);
-      setUploadStatus('error');
-      setUploadError(error instanceof Error ? error.message : 'Upload failed');
-      message.error('Tải lên thất bại. Vui lòng thử lại.');
+      console.error("Upload error:", error);
+      setUploadStatus("error");
+      setUploadError(error instanceof Error ? error.message : "Upload failed");
+      message.error("Tải lên thất bại.");
     }
-
     return false;
-  };
-
-  const handleUploadAudio = async () => {
-    if (!selectedAudioFile) {
-      message.warning('Vui lòng chọn file âm thanh để tải lên');
-      return;
-    }
-
-    const audioValidation = validateFile(selectedAudioFile, 'audio', 10);
-    if (!audioValidation.isValid) {
-      message.error(audioValidation.error);
-      return;
-    }
-
-    setUploadModalVisible(true);
-    setUploadStatus('uploading');
-    setUploadProgress(0);
-    setUploadError('');
-
-    try {
-      const result = await uploadAudioByType(
-        selectedAudioFile,
-        questionType,
-        (progress: UploadProgress) => {
-          setUploadProgress(Math.round(progress.percentage));
-        }
-      );
-
-      if (result.success) {
-        setUploadedAudioUrl(result.url);
-        form.setFieldsValue({
-          data: {
-            ...form.getFieldValue('data'),
-            audio: result.url,
-            audio_url: result.url,
-          }
-        });
-        setUploadStatus('success');
-        setUploadProgress(100);
-        setSelectedAudioFile(null);
-        message.success('Tải âm thanh lên thành công!');
-      } else {
-        throw new Error(result.error);
-      }
-    } catch (error) {
-      console.error('Upload error:', error);
-      setUploadStatus('error');
-      setUploadError(error instanceof Error ? error.message : 'Upload failed');
-      message.error('Tải lên thất bại. Vui lòng thử lại.');
-    }
   };
 
   const handleRemoveAudio = () => {
     setSelectedAudioFile(null);
     setUploadedAudioUrl(undefined);
     form.setFieldsValue({
-      data: {
-        ...form.getFieldValue('data'),
-        audio: undefined,
-        audio_url: undefined,
-      }
+      data: { ...form.getFieldValue("data"), audio: undefined, audio_url: undefined },
     });
   };
 
-  // Handle TTS audio generated
-  const handleTTSAudioGenerated = (audioUrl: string) => {
-    setUploadedAudioUrl(audioUrl);
-    form.setFieldsValue({
-      data: {
-        ...form.getFieldValue('data'),
-        audio: audioUrl,
-        audio_url: audioUrl,
+  const handleTTSAudioGenerated = async (audioUrl: string, audioBlob: Blob) => {
+    try {
+      setUploadModalVisible(true);
+      setUploadStatus("uploading");
+      setUploadProgress(0);
+      setUploadError("");
+      const filename = `tts_generated_${Date.now()}.wav`;
+      const file = new File([audioBlob], filename, { type: "audio/wav" });
+      const result = await uploadAudioByType(file, questionType, (progress: UploadProgress) => {
+        setUploadProgress(Math.round(progress.percentage));
+      });
+      if (result.success && result.url) {
+        setUploadedAudioUrl(result.url);
+        form.setFieldsValue({
+          data: { ...form.getFieldValue("data"), audio: result.url, audio_url: result.url },
+        });
+        setUploadStatus("success");
+        setUploadProgress(100);
+        message.success("Tạo và tải lên giọng nói thành công!");
+      } else {
+        throw new Error(result.error || "Upload failed");
       }
-    });
-    message.success('Tạo giọng nói thành công!');
+    } catch (error) {
+      console.error("TTS Upload error:", error);
+      setUploadStatus("error");
+      setUploadError(error instanceof Error ? error.message : "Upload failed");
+      message.error("Lỗi khi tải lên giọng nói");
+    }
   };
 
-  // Option management
-  const handleOptionTextChange = (optionId: string, value: string) => {
-    const updatedOptions = options.map(option => {
-      if (option.id === optionId) {
-        return {
-          ...option,
-          text: value
-        };
-      }
-      return option;
-    });
-
+  const handleOptionContentChange = (optionId: string, content: TextContent) => {
+    const updatedOptions = options.map((option) =>
+      option.id === optionId ? { ...option, content } : option
+    );
     setOptions(updatedOptions);
     updateFormData(updatedOptions, correctAnswer);
   };
 
   const addOption = () => {
     const newId = (options.length + 1).toString();
-    const newOptions = [...options, { id: newId, text: '' }];
+    const newOptions: TextOption[] = [...options, { id: newId }];
     setOptions(newOptions);
     updateFormData(newOptions, correctAnswer);
   };
 
   const removeOption = (optionId: string) => {
-    if (options.length <= 2) return; // Keep minimum 2 options
-
-    const filteredOptions = options.filter(opt => opt.id !== optionId);
+    if (options.length <= 2) return;
+    const filteredOptions = options.filter((opt) => opt.id !== optionId);
     setOptions(filteredOptions);
-
-    // If removed option was correct answer, reset to first option
     let newCorrectAnswer = correctAnswer;
     if (correctAnswer === optionId) {
-      newCorrectAnswer = filteredOptions[0]?.id || '1';
+      newCorrectAnswer = filteredOptions[0]?.id || "1";
       setCorrectAnswer(newCorrectAnswer);
     }
-
     updateFormData(filteredOptions, newCorrectAnswer);
   };
 
@@ -281,329 +210,217 @@ const SelectionAudioTextForm = forwardRef<SelectionAudioTextFormRef, SelectionAu
     updateFormData(options, optionId);
   };
 
-  // Unified upload method for audio file
   const handleUploadAllFiles = async (showModal: boolean = true): Promise<boolean> => {
-    // Check if we have audio to upload
     const hasAudioToUpload = selectedAudioFile && !uploadedAudioUrl;
-
     if (!hasAudioToUpload) {
-      // Check if audio is already uploaded
-      if (uploadedAudioUrl) {
-        console.log('Audio already uploaded');
-        return true;
-      }
-
-      message.warning('Vui lòng chọn và tải lên file âm thanh');
+      if (uploadedAudioUrl) return true;
+      message.warning("Vui lòng chọn và tải lên file âm thanh");
       return false;
     }
-
-    // Validate audio file
-    const audioValidation = validateFile(selectedAudioFile, 'audio', 10);
+    const audioValidation = validateFile(selectedAudioFile, "audio", 10);
     if (!audioValidation.isValid) {
       message.error(audioValidation.error);
       return false;
     }
-
-    if (showModal) {
-      setUploadModalVisible(true);
-    }
-    setUploadStatus('uploading');
+    if (showModal) setUploadModalVisible(true);
+    setUploadStatus("uploading");
     setUploadProgress(0);
-    setUploadError('');
+    setUploadError("");
 
     try {
-      const result = await uploadAudioByType(
-        selectedAudioFile,
-        questionType,
-        (progress: UploadProgress) => {
-          setUploadProgress(Math.round(progress.percentage));
-        }
-      );
-
+      const result = await uploadAudioByType(selectedAudioFile, questionType, (progress: UploadProgress) => {
+        setUploadProgress(Math.round(progress.percentage));
+      });
       if (result.success) {
         setUploadedAudioUrl(result.url);
-        
         form.setFieldsValue({
-          data: {
-            ...form.getFieldValue('data'),
-            audio: result.url,
-            audio_url: result.url,
-          }
+          data: { ...form.getFieldValue("data"), audio: result.url, audio_url: result.url },
         });
-
-        setUploadStatus('success');
+        setUploadStatus("success");
         setUploadProgress(100);
         setSelectedAudioFile(null);
-
-        if (showModal) {
-          message.success('Tải âm thanh lên thành công!');
-        }
+        if (showModal) message.success("Tải âm thanh lên thành công!");
         return true;
       } else {
         throw new Error(result.error);
       }
     } catch (error) {
-      console.error('Upload error:', error);
-      setUploadStatus('error');
-      setUploadError(error instanceof Error ? error.message : 'Upload failed');
-      message.error('Tải lên thất bại. Vui lòng thử lại.');
+      console.error("Upload error:", error);
+      setUploadStatus("error");
+      setUploadError(error instanceof Error ? error.message : "Upload failed");
+      message.error("Tải lên thất bại.");
       return false;
     }
   };
 
-  // Expose upload method to parent
-  useImperativeHandle(ref, () => ({
-    uploadFiles: () => handleUploadAllFiles(false),
-  }));
+  useImperativeHandle(ref, () => ({ uploadFiles: () => handleUploadAllFiles(false) }));
 
-  // Initialize values
   useEffect(() => {
     if (initialValues?.data) {
       const { data } = initialValues;
-      
-      if (data.audio || data.audio_url) {
-        setUploadedAudioUrl(data.audio_url || data.audio);
-      }
-      
+      if (data.audio || data.audio_url) setUploadedAudioUrl(data.audio_url || data.audio);
       if (data.audio_transcript_chinese) {
         setAudioTranscriptChinese(data.audio_transcript_chinese);
         setTranscriptText(data.audio_transcript_chinese);
       }
-      
-      if (data.audio_transcript_pinyin) {
-        setAudioTranscriptPinyin(data.audio_transcript_pinyin);
-      }
-      
+      if (data.audio_transcript_pinyin) setAudioTranscriptPinyin(data.audio_transcript_pinyin);
       if (data.options) {
-        setOptions(data.options);
+        const normalizedOptions: TextOption[] = data.options.map((opt) => ({
+          id: opt.id,
+          content: opt.content || (opt.text ? { text: opt.text } : undefined),
+          text: opt.text,
+        }));
+        setOptions(normalizedOptions);
       }
-      
-      if (data.correctAnswer) {
-        setCorrectAnswer(data.correctAnswer);
-      }
+      if (data.correctAnswer) setCorrectAnswer(data.correctAnswer);
     }
   }, [initialValues]);
 
   return (
-    <div>
-      {/* Question Setup */}
-      <Card title="Thiết Lập Câu Hỏi" style={{ marginBottom: '24px' }}>
-        <Form.Item
-          label="Hướng Dẫn Câu Hỏi"
-          name={['data', 'instruction']}
-          rules={[{ required: true, message: 'Vui lòng nhập hướng dẫn câu hỏi' }]}
-        >
-          <Input placeholder="ví dụ: Nghe audio và chọn văn bản đúng" />
-        </Form.Item>
-      </Card>
-
-      {/* Audio Section */}
-      <Card title="File Âm Thanh" style={{ marginBottom: "24px" }}>
-        <Form.Item
-          label="File Âm Thanh"
-          name={['data', 'audio']}
-          rules={[{ required: true, message: "Vui lòng tải lên file âm thanh" }]}
-        >
-          <div>
-            <Space>
-              <Upload
-                accept="audio/*"
-                maxCount={1}
-                showUploadList={false}
-                beforeUpload={(file) => {
-                  handleAudioFileChange(file);
-                  return false;
-                }}
-                disabled={!!uploadedAudioUrl}
-              >
-                <Button
-                  icon={<UploadOutlined />}
-                  disabled={!!uploadedAudioUrl}
-                >
-                  {selectedAudioFile ? selectedAudioFile.name : 'Chọn Âm Thanh'}
-                </Button>
-              </Upload>
-              <TTSButton
-                text={audioTranscriptChinese}
-                onAudioGenerated={handleTTSAudioGenerated}
-                disabled={!!uploadedAudioUrl}
-                buttonText="Tạo giọng nói"
-              />
-            </Space>
-            {uploadedAudioUrl && (
-              <div style={{ marginTop: 8 }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                  <SoundOutlined style={{ color: '#52c41a' }} />
-                  <span style={{ color: '#52c41a' }}>Âm thanh đã tải lên</span>
-                  <Button
-                    size="small"
-                    icon={<DeleteOutlined />}
-                    onClick={handleRemoveAudio}
-                    type="text"
-                    danger
-                  />
-                </div>
-                <div style={{ marginTop: 4 }}>
-                  <audio controls style={{ width: '100%' }}>
-                    <source src={uploadedAudioUrl} />
-                    Trình duyệt của bạn không hỗ trợ phần tử âm thanh.
-                  </audio>
-                </div>
-              </div>
-            )}
-          </div>
-        </Form.Item>
-
-        {/* Audio Transcript */}
-        <Form.Item
-          label="Bản Ghi Âm Thanh (Tiếng Trung)"
-          name={['data', 'audio_transcript_chinese']}
-          help="Bản ghi tùy chọn của nội dung âm thanh"
-        >
-          <TextArea
-            rows={2}
-            placeholder="Nhập bản ghi tiếng Trung của âm thanh"
-            onChange={(e) => handleTranscriptChange(e.target.value)}
-            style={{ fontSize: "16px" }}
-          />
-        </Form.Item>
-
-        {audioTranscriptPinyin && (
-          <Form.Item label="Pinyin Tự Động Tạo">
-            <div style={{ 
-              padding: '8px 12px', 
-              backgroundColor: '#f5f5f5', 
-              borderRadius: '6px',
-              fontSize: '14px',
-              color: '#666'
-            }}>
-              {audioTranscriptPinyin}
-            </div>
-          </Form.Item>
-        )}
-
-        <Form.Item
-          label="Bản Dịch Âm Thanh (Tiếng Việt)"
-          name={['data', 'audio_transcript_translation']}
-          help="Bản dịch tiếng Việt tùy chọn của âm thanh"
-        >
-          <TextArea
-            rows={2}
-            placeholder="Nhập bản dịch tiếng Việt"
-          />
-        </Form.Item>
-
-        {/* Hidden form fields */}
-        <Form.Item name={['data', 'audio_url']} style={{ display: 'none' }}>
-          <Input />
-        </Form.Item>
-        <Form.Item name={['data', 'audio_transcript_pinyin']} style={{ display: 'none' }}>
-          <Input />
-        </Form.Item>
-      </Card>
-
-      {/* Answer Options */}
-      <Card
-        title="Các Lựa Chọn Trả Lời"
-        extra={
-          <Button
-            type="dashed"
-            icon={<PlusOutlined />}
-            onClick={addOption}
-            disabled={options.length >= 6}
+    <div className="max-w-2xl mx-auto">
+      {/* Section 1: Question Setup */}
+      <SectionContainer>
+        <SectionHeader
+          step={1}
+          title="Thiết Lập Câu Hỏi"
+          description="Nhập hướng dẫn câu hỏi"
+          icon={<QuestionCircleOutlined />}
+        />
+        <FormField label="Hướng dẫn câu hỏi" required>
+          <Form.Item
+            name={["data", "instruction"]}
+            rules={[{ required: true, message: "Bắt buộc" }]}
+            className="mb-0"
           >
-            Thêm Tùy Chọn
-          </Button>
-        }
-        style={{ marginBottom: '24px' }}
-      >
-        <Space direction="vertical" style={{ width: '100%' }} size="large">
-          {options.map((option, index) => (
-            <Card
-              key={option.id}
-              size="small"
-              style={{
-                border: correctAnswer === option.id ? '2px solid #1890ff' : '1px solid #d9d9d9',
-                backgroundColor: correctAnswer === option.id ? '#f6ffed' : 'white'
-              }}
-              title={
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <span>Tùy Chọn {index + 1}</span>
-                  <Space>
-                    <Button
-                      type={correctAnswer === option.id ? 'primary' : 'default'}
-                      size="small"
-                      onClick={() => handleCorrectAnswerChange(option.id)}
-                    >
-                      {correctAnswer === option.id ? 'Đáp Án Đúng' : 'Đánh Dấu Là Đúng'}
-                    </Button>
-                    {options.length > 2 && (
-                      <Button
-                        danger
-                        size="small"
-                        icon={<DeleteOutlined />}
-                        onClick={() => removeOption(option.id)}
-                      />
-                    )}
-                  </Space>
-                </div>
-              }
-            >
-              {/* Option Text */}
-              <div>
-                <Text strong>Văn Bản Tùy Chọn</Text>
-                <Input
-                  placeholder={`Nhập văn bản tùy chọn ${index + 1}`}
-                  value={option.text}
-                  onChange={(e) => handleOptionTextChange(option.id, e.target.value)}
-                  style={{ marginTop: '4px', fontSize: '16px' }}
-                />
-              </div>
+            <Input size="large" className="rounded-lg" placeholder="VD: Nghe audio và chọn văn bản đúng" />
+          </Form.Item>
+        </FormField>
+      </SectionContainer>
 
-              {/* Preview */}
-              {option.text && (
-                <div style={{ marginTop: '12px', padding: '8px', backgroundColor: '#fafafa', borderRadius: '4px' }}>
-                  <Text strong>Xem Trước: </Text>
-                  <div style={{ marginTop: '4px', fontSize: '14px' }}>
-                    {option.text}
+      {/* Section 2: Audio */}
+      <SectionContainer>
+        <SectionHeader
+          step={2}
+          title="File Âm Thanh"
+          description="Tải lên hoặc tạo âm thanh cho câu hỏi"
+          icon={<SoundOutlined />}
+        />
+        <FormField label="File âm thanh" required>
+          <Form.Item name={["data", "audio"]} rules={[{ required: true, message: "Bắt buộc" }]} className="mb-0">
+            <div className="p-4 border border-dashed border-gray-300 rounded-xl bg-gray-50/50">
+              <Space>
+                <Upload
+                  accept="audio/*"
+                  maxCount={1}
+                  showUploadList={false}
+                  beforeUpload={(file) => { handleAudioFileChange(file); return false; }}
+                >
+                  <Button icon={<UploadOutlined />} size="large" className="rounded-lg">
+                    {selectedAudioFile ? selectedAudioFile.name : "Chọn Âm Thanh"}
+                  </Button>
+                </Upload>
+                <TTSButton text={audioTranscriptChinese} onAudioGenerated={handleTTSAudioGenerated} buttonText="Tạo TTS" />
+              </Space>
+              {uploadedAudioUrl && (
+                <div className="mt-4">
+                  <div className="flex items-center gap-2 text-green-600 mb-2">
+                    <SoundOutlined />
+                    <span className="text-sm font-medium">Đã tải lên</span>
+                    <Button size="small" icon={<DeleteOutlined />} onClick={handleRemoveAudio} type="text" danger>Xóa</Button>
                   </div>
+                  <audio controls className="w-full"><source src={uploadedAudioUrl} /></audio>
                 </div>
               )}
-            </Card>
+            </div>
+          </Form.Item>
+        </FormField>
+
+        <FormField label="Bản ghi tiếng Trung" hint="Dùng để tạo TTS">
+          <Form.Item name={["data", "audio_transcript_chinese"]} className="mb-0">
+            <TextArea rows={2} className="rounded-lg" placeholder="Nhập bản ghi tiếng Trung" onChange={(e) => handleTranscriptChange(e.target.value)} />
+          </Form.Item>
+        </FormField>
+
+        {audioTranscriptPinyin && (
+          <FormField label="Pinyin">
+            <Form.Item name={["data", "audio_transcript_pinyin"]} className="mb-0">
+              <Input size="large" className="rounded-lg" value={audioTranscriptPinyin} onChange={(e) => {
+                setAudioTranscriptPinyin(e.target.value);
+                form.setFieldsValue({ data: { ...form.getFieldValue("data"), audio_transcript_pinyin: e.target.value } });
+              }} />
+            </Form.Item>
+          </FormField>
+        )}
+
+        <FormField label="Dịch nghĩa tiếng Việt">
+          <Form.Item name={["data", "audio_transcript_translation"]} className="mb-0">
+            <TextArea rows={2} className="rounded-lg" placeholder="Nhập bản dịch" />
+          </Form.Item>
+        </FormField>
+
+        <Form.Item name={["data", "audio_url"]} className="hidden"><Input /></Form.Item>
+      </SectionContainer>
+
+      {/* Section 3: Answer Options */}
+      <SectionContainer>
+        <SectionHeader step={3} title="Các Lựa Chọn Trả Lời" description="Thêm đáp án và chọn đáp án đúng" icon={<OrderedListOutlined />} />
+        <div className="space-y-4">
+          {options.map((option, index) => (
+            <div
+              key={option.id}
+              className={`p-4 rounded-xl border-2 transition-all ${
+                correctAnswer === option.id ? "border-green-500 bg-green-50" : "border-gray-200 bg-white hover:border-gray-300"
+              }`}
+            >
+              <div className="flex justify-between items-center mb-3">
+                <span className="text-sm font-bold text-gray-600">Lựa chọn {index + 1}</span>
+                <Space>
+                  <Button
+                    type={correctAnswer === option.id ? "primary" : "default"}
+                    size="small"
+                    onClick={() => handleCorrectAnswerChange(option.id)}
+                    className="rounded-lg"
+                    icon={correctAnswer === option.id ? <CheckCircleOutlined /> : null}
+                  >
+                    {correctAnswer === option.id ? "Đáp án đúng" : "Đánh dấu đúng"}
+                  </Button>
+                  {options.length > 2 && (
+                    <Button danger size="small" icon={<DeleteOutlined />} onClick={() => removeOption(option.id)} className="rounded-lg" />
+                  )}
+                </Space>
+              </div>
+              <TextContentInput value={option.content} onChange={(content) => handleOptionContentChange(option.id, content)} placeholder="Nhập nội dung lựa chọn" />
+            </div>
           ))}
-        </Space>
-
-        {/* Correct Answer Summary */}
-        <div style={{ marginTop: '16px', padding: '12px', backgroundColor: '#e6f7ff', borderRadius: '6px' }}>
-          <Text strong>Đáp Án Đúng: </Text>
-          <Text>Tùy Chọn {options.findIndex(opt => opt.id === correctAnswer) + 1}</Text>
-          {options.find(opt => opt.id === correctAnswer)?.text && (
-            <Text> - {options.find(opt => opt.id === correctAnswer)?.text}</Text>
-          )}
         </div>
-      </Card>
+        <Button type="dashed" icon={<PlusOutlined />} onClick={addOption} disabled={options.length >= 6} className="w-full mt-4 h-10 rounded-lg">
+          Thêm lựa chọn
+        </Button>
+        <div className="mt-4 p-3 bg-blue-50 rounded-lg border border-blue-100">
+          <Text strong className="text-blue-800">Đáp án đúng: </Text>
+          <Text className="text-blue-700">
+            Lựa chọn {options.findIndex((opt) => opt.id === correctAnswer) + 1}
+            {(() => {
+              const correctOpt = options.find((opt) => opt.id === correctAnswer);
+              const displayText = correctOpt?.content ? getDisplayText(correctOpt.content) : correctOpt?.text;
+              return displayText && <span> - {displayText}</span>;
+            })()}
+          </Text>
+        </div>
+      </SectionContainer>
 
-      {/* Additional Settings */}
-      <Card title="Cài Đặt Thêm" style={{ marginBottom: '24px' }}>
-        <Form.Item
-          label="Giải Thích (Tùy Chọn)"
-          name={['data', 'explanation']}
-          help="Cung cấp giải thích sẽ được hiển thị sau khi học viên trả lời"
-        >
-          <TextArea
-            rows={3}
-            placeholder="Giải thích tại sao đây là đáp án đúng..."
-          />
-        </Form.Item>
-      </Card>
+      {/* Section 4: Additional Settings */}
+      <SectionContainer>
+        <SectionHeader step={4} title="Cài Đặt Bổ Sung" description="Giải thích đáp án" icon={<CheckCircleOutlined />} />
+        <FormField label="Giải thích" hint="Hiển thị sau khi học viên trả lời">
+          <Form.Item name={["data", "explanation"]} className="mb-0">
+            <TextArea rows={3} className="rounded-lg" placeholder="Giải thích tại sao đây là đáp án đúng..." />
+          </Form.Item>
+        </FormField>
+      </SectionContainer>
 
-      {/* Hidden form fields for proper data structure */}
-      <Form.Item name={['data', 'options']} style={{ display: 'none' }}>
-        <Input />
-      </Form.Item>
-      <Form.Item name={['data', 'correctAnswer']} style={{ display: 'none' }}>
-        <Input />
-      </Form.Item>
+      <Form.Item name={["data", "options"]} className="hidden"><Input /></Form.Item>
+      <Form.Item name={["data", "correctAnswer"]} className="hidden"><Input /></Form.Item>
 
       <UploadModal
         visible={uploadModalVisible}
@@ -612,14 +429,12 @@ const SelectionAudioTextForm = forwardRef<SelectionAudioTextFormRef, SelectionAu
         uploadProgress={uploadProgress}
         uploadedUrls={{ audioUrl: uploadedAudioUrl }}
         errorMessage={uploadError}
-        fileNames={{
-          audioName: selectedAudioFile?.name,
-        }}
+        fileNames={{ audioName: selectedAudioFile?.name }}
       />
     </div>
   );
 });
 
-SelectionAudioTextForm.displayName = 'SelectionAudioTextForm';
+SelectionAudioTextForm.displayName = "SelectionAudioTextForm";
 
 export default SelectionAudioTextForm;

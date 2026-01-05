@@ -15,8 +15,6 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    console.log(`🔄 Generating TTS: "${text}" with voice: ${voice}`);
-
     const response = await fetch(`${TTS_API_BASE_URL}/audio-gen/tts`, {
       method: "POST",
       headers: {
@@ -30,7 +28,6 @@ export async function POST(request: NextRequest) {
     }
 
     const audioBuffer = await response.arrayBuffer();
-    console.log("✅ TTS generated successfully");
 
     return new NextResponse(audioBuffer, {
       headers: {

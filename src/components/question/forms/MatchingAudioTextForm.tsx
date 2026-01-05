@@ -3,13 +3,12 @@ import React, { useState, useEffect, forwardRef, useImperativeHandle } from "rea
 import {
   Form,
   Input,
-  Card,
-  Typography,
   Upload,
   Button,
   message,
   Space,
   Select,
+  Typography,
   Switch,
 } from "antd";
 import {
@@ -18,19 +17,21 @@ import {
   DeleteOutlined,
   PlusOutlined,
   MinusCircleOutlined,
+  QuestionCircleOutlined,
+  BarsOutlined,
+  LinkOutlined,
+  CheckCircleOutlined,
 } from "@ant-design/icons";
 import type { FormInstance } from "antd/es/form";
-import { MatchingAudioTextQuestionData } from '@/types/questionType';
-import { uploadAudioByType, validateFile, UploadProgress } from '@/utils/s3Upload';
-import UploadModal from '@/components/common/UploadModal';
-import TTSButton from '@/components/shared/TTSButton';
+import { MatchingAudioTextQuestionData } from "@/types/questionType";
+import { uploadAudioByType, validateFile, UploadProgress } from "@/utils/s3Upload";
+import UploadModal from "@/components/common/UploadModal";
+import TTSButton from "@/components/shared/TTSButton";
+import { SectionContainer, SectionHeader, FormField } from "@/components/shared/FormStyles";
 
 const { Text } = Typography;
 const { TextArea } = Input;
 const { Option } = Select;
-
-// Dev mode flag - set to false to hide individual upload buttons
-const DEV_MODE = false;
 
 interface MatchingAudioTextFormProps {
   form: FormInstance;
@@ -48,688 +49,333 @@ export interface MatchingAudioTextFormRef {
 const MatchingAudioTextForm = forwardRef<MatchingAudioTextFormRef, MatchingAudioTextFormProps>(({
   form,
   initialValues,
-  questionType = 'question_matching_audio_text',
+  questionType = "question_matching_audio_text",
 }, ref) => {
-  // Audio uploads state for left column (tracking which audio is being uploaded)
-  const [leftAudioUploads, setLeftAudioUploads] = useState<{
-    [key: number]: {
-      file: File | null;
-      uploadedUrl?: string;
-    }
-  }>({});
-
-  // Upload modal state
+  const [leftAudioUploads, setLeftAudioUploads] = useState<{ [key: number]: { file: File | null; uploadedUrl?: string } }>({});
   const [uploadModalVisible, setUploadModalVisible] = useState(false);
-  const [uploadStatus, setUploadStatus] = useState<'uploading' | 'success' | 'error' | 'idle'>('idle');
+  const [uploadStatus, setUploadStatus] = useState<"uploading" | "success" | "error" | "idle">("idle");
   const [uploadProgress, setUploadProgress] = useState(0);
-  const [uploadError, setUploadError] = useState<string>('');
+  const [uploadError, setUploadError] = useState<string>("");
+  const [leftItems, setLeftItems] = useState<MatchingAudioTextQuestionData["leftColumn"]>([]);
+  const [rightItems, setRightItems] = useState<MatchingAudioTextQuestionData["rightColumn"]>([]);
 
-  // State for watching form values
-  const [leftItems, setLeftItems] = useState<MatchingAudioTextQuestionData['leftColumn']>([]);
-  const [rightItems, setRightItems] = useState<MatchingAudioTextQuestionData['rightColumn']>([]);
-
-  // Watch for changes in the columns to update the select options
   const leftValues = Form.useWatch(["data", "leftColumn"], form) || [];
   const rightValues = Form.useWatch(["data", "rightColumn"], form) || [];
+  const correctMatches = Form.useWatch(["data", "correctMatches"], form) || [];
 
-  // Initialize form with existing data
+  const generateRightId = (index: number): string => String.fromCharCode(65 + index);
+
   useEffect(() => {
     if (initialValues?.data) {
       const { data } = initialValues;
-      
       if (data.leftColumn) {
         setLeftItems(data.leftColumn);
-        // Initialize audio uploads state
         const audioUploads: typeof leftAudioUploads = {};
-        data.leftColumn.forEach((item, index) => {
-          if (item.audio || item.audio_url) {
-            audioUploads[index] = { file: null, uploadedUrl: item.audio_url || item.audio };
-          }
-        });
+        data.leftColumn.forEach((item, index) => { if (item.audio || item.audio_url) audioUploads[index] = { file: null, uploadedUrl: item.audio_url || item.audio }; });
         setLeftAudioUploads(audioUploads);
       }
-      
-      if (data.rightColumn) {
-        setRightItems(data.rightColumn);
-      }
+      if (data.rightColumn) setRightItems(data.rightColumn);
     }
   }, [initialValues]);
 
-  // Update left and right items when form values change
   useEffect(() => {
-    const updatedLeftItems = leftValues
-      .map((item: any, index: number) => ({
-        id: item?.id || `${index + 1}`,
-        audio: item?.audio || '',
-        audio_url: item?.audio_url || item?.audio || '',
-        transcript: item?.transcript || '',
-      }))
-      .filter((item: any) => item.transcript || item.audio || item.audio_url);
-
+    const updatedLeftItems = leftValues.map((item: any, index: number) => ({ id: item?.id || `${index + 1}`, audio: item?.audio || "", audio_url: item?.audio_url || item?.audio || "", transcript: item?.transcript || "" })).filter((item: any) => item.transcript || item.audio || item.audio_url);
     setLeftItems(updatedLeftItems);
   }, [leftValues]);
 
   useEffect(() => {
-    const updatedRightItems = rightValues
-      .map((item: any, index: number) => ({
-        id: item?.id || String.fromCharCode(65 + index), // A, B, C...
-        text: item?.text || "",
-      }))
-      .filter((item: any) => item.text);
-
+    const updatedRightItems = rightValues.map((item: any, index: number) => ({ id: item?.id || generateRightId(index), text: item?.text || "" })).filter((item: any) => item.text);
     setRightItems(updatedRightItems);
   }, [rightValues]);
 
-  // Audio upload handlers for left column - auto upload
   const handleLeftAudioChange = async (itemIndex: number, file: File | null) => {
-    if (!file) {
-      setLeftAudioUploads(prev => ({
-        ...prev,
-        [itemIndex]: { file: null, uploadedUrl: prev[itemIndex]?.uploadedUrl }
-      }));
-      return false;
-    }
-
-    const audioValidation = validateFile(file, 'audio', 10);
-    if (!audioValidation.isValid) {
-      message.error(audioValidation.error);
-      return false;
-    }
-
-    setLeftAudioUploads(prev => ({
-      ...prev,
-      [itemIndex]: { file, uploadedUrl: prev[itemIndex]?.uploadedUrl }
-    }));
-
-    // Auto upload
+    if (!file) return false;
+    const audioValidation = validateFile(file, "audio", 10);
+    if (!audioValidation.isValid) { message.error(audioValidation.error); return false; }
+    setLeftAudioUploads((prev) => ({ ...prev, [itemIndex]: { file, uploadedUrl: prev[itemIndex]?.uploadedUrl } }));
     setUploadModalVisible(true);
-    setUploadStatus('uploading');
+    setUploadStatus("uploading");
     setUploadProgress(0);
-    setUploadError('');
+    setUploadError("");
 
     try {
-      const result = await uploadAudioByType(
-        file,
-        questionType,
-        (progress: UploadProgress) => {
-          setUploadProgress(Math.round(progress.percentage));
-        }
-      );
-
+      const result = await uploadAudioByType(file, questionType, (progress: UploadProgress) => {
+        setUploadProgress(Math.round(progress.percentage));
+      });
       if (result.success && result.url) {
-        setLeftAudioUploads(prev => ({
-          ...prev,
-          [itemIndex]: { file: null, uploadedUrl: result.url }
-        }));
-
-        const leftItems = form.getFieldValue(['data', 'leftColumn']) || [];
-        leftItems[itemIndex] = {
-          ...leftItems[itemIndex],
-          audio: result.url,
-          audio_url: result.url,
-        };
-        form.setFieldsValue({
-          data: {
-            ...form.getFieldValue('data'),
-            leftColumn: leftItems,
-          }
-        });
-
-        setUploadStatus('success');
+        setLeftAudioUploads((prev) => ({ ...prev, [itemIndex]: { file: null, uploadedUrl: result.url } }));
+        const leftItems = form.getFieldValue(["data", "leftColumn"]) || [];
+        leftItems[itemIndex] = { ...leftItems[itemIndex], audio: result.url, audio_url: result.url };
+        form.setFieldsValue({ data: { ...form.getFieldValue("data"), leftColumn: leftItems } });
+        setUploadStatus("success");
         setUploadProgress(100);
-        message.success('Tải âm thanh lên thành công!');
+        message.success("Tải âm thanh lên thành công!");
       } else {
-        throw new Error(result.error || 'Tải lên thất bại - không có URL trả về');
+        throw new Error(result.error || "Upload failed");
       }
     } catch (error) {
-      console.error('Upload error:', error);
-      setUploadStatus('error');
-      setUploadError(error instanceof Error ? error.message : 'Tải lên thất bại');
-      message.error('Tải lên thất bại. Vui lòng thử lại.');
+      console.error("Upload error:", error);
+      setUploadStatus("error");
+      setUploadError(error instanceof Error ? error.message : "Upload failed");
+      message.error("Tải lên thất bại.");
     }
-
     return false;
   };
 
-  const handleUploadLeftAudio = async (itemIndex: number) => {
-    const audioUpload = leftAudioUploads[itemIndex];
-    if (!audioUpload?.file) {
-      message.warning('Vui lòng chọn file âm thanh để tải lên');
-      return;
-    }
-
-    const audioValidation = validateFile(audioUpload.file, 'audio', 10);
-    if (!audioValidation.isValid) {
-      message.error(audioValidation.error);
-      return;
-    }
-
-    setUploadModalVisible(true);
-    setUploadStatus('uploading');
-    setUploadProgress(0);
-    setUploadError('');
-
-    try {
-      const result = await uploadAudioByType(
-        audioUpload.file,
-        questionType,
-        (progress: UploadProgress) => {
-          setUploadProgress(Math.round(progress.percentage));
-        }
-      );
-
-      if (result.success && result.url) {
-        // Update state
-        setLeftAudioUploads(prev => ({
-          ...prev,
-          [itemIndex]: { file: null, uploadedUrl: result.url }
-        }));
-
-        // Update form
-        const leftItems = form.getFieldValue(['data', 'leftColumn']) || [];
-        leftItems[itemIndex] = {
-          ...leftItems[itemIndex],
-          audio: result.url,
-          audio_url: result.url,
-        };
-        form.setFieldsValue({
-          data: {
-            ...form.getFieldValue('data'),
-            leftColumn: leftItems,
-          }
-        });
-
-        setUploadStatus('success');
-        setUploadProgress(100);
-        message.success('Tải âm thanh lên thành công!');
-      } else {
-        throw new Error(result.error || 'Upload failed - no URL returned');
-      }
-    } catch (error) {
-      console.error('Upload error:', error);
-      setUploadStatus('error');
-      setUploadError(error instanceof Error ? error.message : 'Upload failed');
-      message.error('Tải lên thất bại. Vui lòng thử lại.');
-    }
-  };
-
   const handleRemoveLeftAudio = (itemIndex: number) => {
-    setLeftAudioUploads(prev => ({
-      ...prev,
-      [itemIndex]: { file: null, uploadedUrl: undefined }
-    }));
-
-    const leftItems = form.getFieldValue(['data', 'leftColumn']) || [];
+    setLeftAudioUploads((prev) => ({ ...prev, [itemIndex]: { file: null, uploadedUrl: undefined } }));
+    const leftItems = form.getFieldValue(["data", "leftColumn"]) || [];
     if (leftItems[itemIndex]) {
-      leftItems[itemIndex] = {
-        ...leftItems[itemIndex],
-        audio: '',
-        audio_url: '',
-      };
-      form.setFieldsValue({
-        data: {
-          ...form.getFieldValue('data'),
-          leftColumn: leftItems,
-        }
-      });
+      leftItems[itemIndex] = { ...leftItems[itemIndex], audio: "", audio_url: "" };
+      form.setFieldsValue({ data: { ...form.getFieldValue("data"), leftColumn: leftItems } });
     }
   };
 
-  // Unified upload method for all files
   const handleUploadAllFiles = async (showModal: boolean = true): Promise<boolean> => {
-    // Check if we have files to upload
-    const leftAudiosToUpload = Object.entries(leftAudioUploads)
-      .filter(([_, upload]) => upload.file && !upload.uploadedUrl);
-
+    const leftAudiosToUpload = Object.entries(leftAudioUploads).filter(([_, upload]) => upload.file && !upload.uploadedUrl);
     if (leftAudiosToUpload.length === 0) {
-      // Check if everything is already uploaded
-      const leftItems = form.getFieldValue(['data', 'leftColumn']) || [];
-      const allLeftItemsHaveAudios = leftItems.length > 0 && leftItems.every((item: any, index: number) =>
-        item && (item.audio || item.audio_url || leftAudioUploads[index]?.uploadedUrl)
-      );
-
-      if (allLeftItemsHaveAudios) {
-        console.log('All files already uploaded');
-        return true;
-      }
-
-      message.warning('Vui lòng chọn và tải lên tất cả file âm thanh yêu cầu');
+      const leftItems = form.getFieldValue(["data", "leftColumn"]) || [];
+      const allLeftItemsHaveAudios = leftItems.length > 0 && leftItems.every((item: any, index: number) => item && (item.audio || item.audio_url || leftAudioUploads[index]?.uploadedUrl));
+      if (allLeftItemsHaveAudios) return true;
+      message.warning("Vui lòng chọn và tải lên tất cả file âm thanh");
       return false;
     }
-
-    // Validate all files
     for (const [index, upload] of leftAudiosToUpload) {
       if (upload.file) {
-        const audioValidation = validateFile(upload.file, 'audio', 10);
-        if (!audioValidation.isValid) {
-          message.error(`Left item ${parseInt(index) + 1} audio: ${audioValidation.error}`);
-          return false;
-        }
+        const audioValidation = validateFile(upload.file, "audio", 10);
+        if (!audioValidation.isValid) { message.error(`Audio ${parseInt(index) + 1}: ${audioValidation.error}`); return false; }
       }
     }
-
-    if (showModal) {
-      setUploadModalVisible(true);
-    }
-    setUploadStatus('uploading');
+    if (showModal) setUploadModalVisible(true);
+    setUploadStatus("uploading");
     setUploadProgress(0);
-    setUploadError('');
+    setUploadError("");
 
     try {
       const uploadPromises: Promise<any>[] = [];
       const totalFiles = leftAudiosToUpload.length;
       let completedFiles = 0;
-
-      // Upload left column audios if needed
       for (const [index, upload] of leftAudiosToUpload) {
         if (upload.file) {
-          const audioPromise = uploadAudioByType(
-            upload.file,
-            questionType,
-            (progress: UploadProgress) => {
-              const fileProgress = progress.percentage / totalFiles;
-              setUploadProgress(Math.round((completedFiles / totalFiles) * 100 + fileProgress));
-            }
-          ).then(result => ({ type: 'left_audio', index: parseInt(index), result }));
+          const audioPromise = uploadAudioByType(upload.file, questionType, (progress: UploadProgress) => {
+            const fileProgress = progress.percentage / totalFiles;
+            setUploadProgress(Math.round((completedFiles / totalFiles) * 100 + fileProgress));
+          }).then((result) => ({ type: "left_audio", index: parseInt(index), result }));
           uploadPromises.push(audioPromise);
         }
       }
-
       const results = await Promise.all(uploadPromises);
-
-      // Process results
       const newLeftAudioUploads = { ...leftAudioUploads };
-      const leftItems = form.getFieldValue(['data', 'leftColumn']) || [];
-
+      const leftItems = form.getFieldValue(["data", "leftColumn"]) || [];
       for (const item of results) {
-        if (item.type === 'left_audio') {
+        if (item.type === "left_audio") {
           if (item.result.success && item.result.url) {
             newLeftAudioUploads[item.index] = { file: null, uploadedUrl: item.result.url };
-            leftItems[item.index] = {
-              ...leftItems[item.index],
-              audio: item.result.url,
-              audio_url: item.result.url,
-            };
+            leftItems[item.index] = { ...leftItems[item.index], audio: item.result.url, audio_url: item.result.url };
           } else {
-            throw new Error(`Left item ${item.index + 1} audio upload failed: ${item.result.error}`);
+            throw new Error(`Audio ${item.index + 1} upload failed: ${item.result.error}`);
           }
         }
         completedFiles++;
       }
-
-      // Update form and state
       setLeftAudioUploads(newLeftAudioUploads);
-      form.setFieldsValue({
-        data: {
-          ...form.getFieldValue('data'),
-          leftColumn: leftItems,
-        }
-      });
-
-      setUploadStatus('success');
+      form.setFieldsValue({ data: { ...form.getFieldValue("data"), leftColumn: leftItems } });
+      setUploadStatus("success");
       setUploadProgress(100);
-
-      if (showModal) {
-        message.success('Tất cả file đã tải lên thành công!');
-      }
+      if (showModal) message.success("Tất cả file đã tải lên thành công!");
       return true;
     } catch (error) {
-      console.error('Upload error:', error);
-      setUploadStatus('error');
-      setUploadError(error instanceof Error ? error.message : 'Upload failed');
-      message.error('Tải lên thất bại. Vui lòng thử lại.');
+      console.error("Upload error:", error);
+      setUploadStatus("error");
+      setUploadError(error instanceof Error ? error.message : "Upload failed");
+      message.error("Tải lên thất bại.");
       return false;
     }
   };
 
-  // Expose upload method to parent
-  useImperativeHandle(ref, () => ({
-    uploadFiles: () => handleUploadAllFiles(false),
-  }));
-
-  // Generate ID for right column (A, B, C...)
-  const generateRightId = (index: number): string => {
-    return String.fromCharCode(65 + index); // 65 is ASCII for 'A'
-  };
+  useImperativeHandle(ref, () => ({ uploadFiles: () => handleUploadAllFiles(false) }));
 
   return (
-    <div>
-      {/* Question Setup */}
-      <Card title="Thiết Lập Câu Hỏi" style={{ marginBottom: '24px' }}>
-        <Form.Item
-          label="Hướng Dẫn Câu Hỏi"
-          name={["data", "instruction"]}
-          rules={[{ required: true, message: "Vui lòng nhập hướng dẫn câu hỏi" }]}
-        >
-          <TextArea
-            placeholder="Nhập hướng dẫn cho học viên (ví dụ: 'Nghe audio và ghép với văn bản đúng')"
-            autoSize={{ minRows: 2, maxRows: 4 }}
-          />
-        </Form.Item>
-      </Card>
+    <div className="max-w-2xl mx-auto">
+      {/* Section 1: Question Setup */}
+      <SectionContainer>
+        <SectionHeader step={1} title="Thiết Lập Câu Hỏi" description="Nhập hướng dẫn cho học viên" icon={<QuestionCircleOutlined />} />
+        <FormField label="Hướng dẫn câu hỏi" required>
+          <Form.Item name={["data", "instruction"]} rules={[{ required: true, message: "Bắt buộc" }]} className="mb-0">
+            <TextArea rows={2} className="rounded-lg" placeholder="VD: Nghe audio và ghép với văn bản đúng" />
+          </Form.Item>
+        </FormField>
+      </SectionContainer>
 
-      {/* Left Column (Audio) */}
-      <Card
-        title="Cột Trái (Âm Thanh)"
-        style={{ marginBottom: '24px' }}
-      >
-        <Form.List
-          name={["data", "leftColumn"]}
-          initialValue={[{ id: "1", audio: "", audio_url: "", transcript: "" }]}
-        >
+      {/* Section 2: Left Column (Audio) */}
+      <SectionContainer>
+        <SectionHeader step={2} title="Cột Trái (Âm Thanh)" description="Tải lên hoặc tạo audio bằng TTS" icon={<SoundOutlined />} />
+        <Form.List name={["data", "leftColumn"]} initialValue={[{ id: "1", audio: "", audio_url: "", transcript: "" }]}>
           {(fields, { add, remove }) => (
             <>
-              {fields.map(({ key, name, ...restField }, index) => {
-                const audioUpload = leftAudioUploads[index];
-                return (
-                  <Card
-                    key={key}
-                    size="small"
-                    style={{ marginBottom: '16px' }}
-                    title={`Mục Âm Thanh ${index + 1}`}
-                    extra={
-                      fields.length > 1 && (
-                        <Button
-                          danger
-                          size="small"
-                          icon={<MinusCircleOutlined />}
-                          onClick={() => remove(name)}
-                        />
-                      )
-                    }
-                  >
-                    {/* ID (Number) */}
-                    <Form.Item
-                      {...restField}
-                      label="ID"
-                      name={[name, "id"]}
-                      initialValue={`${index + 1}`}
-                      style={{ width: "100px" }}
-                    >
-                      <Input
-                        disabled
-                        style={{ textAlign: "center", fontWeight: "bold" }}
-                      />
-                    </Form.Item>
-
-                    {/* Audio Upload */}
-                    <Form.Item
-                      {...restField}
-                      label="File Âm Thanh"
-                      name={[name, "audio"]}
-                      rules={[{ required: true, message: "Vui lòng tải lên file âm thanh" }]}
-                    >
-                      <div>
-                        <Space>
-                          <Upload
-                            accept="audio/*"
-                            maxCount={1}
-                            showUploadList={false}
-                            beforeUpload={(file) => {
-                              handleLeftAudioChange(index, file);
-                              return false;
-                            }}
-                            disabled={!!audioUpload?.uploadedUrl}
-                          >
-                            <Button
-                              icon={<UploadOutlined />}
-                              disabled={!!audioUpload?.uploadedUrl}
-                            >
-                              {audioUpload?.file ? audioUpload.file.name : 'Chọn Âm Thanh'}
-                            </Button>
-                          </Upload>
-                          <TTSButton
-                            text={form.getFieldValue(['data', 'leftColumn', index, 'transcript']) || ''}
-                            buttonText="Tạo Giọng Nói"
-                            size="middle"
-                            disabled={!!audioUpload?.uploadedUrl}
-                            onAudioGenerated={(audioUrl) => {
-                              setLeftAudioUploads(prev => ({
-                                ...prev,
-                                [index]: { file: null, uploadedUrl: audioUrl }
-                              }));
-                              const leftItems = form.getFieldValue(['data', 'leftColumn']) || [];
-                              leftItems[index] = {
-                                ...leftItems[index],
-                                audio: audioUrl,
-                                audio_url: audioUrl,
-                              };
-                              form.setFieldsValue({
-                                data: {
-                                  ...form.getFieldValue('data'),
-                                  leftColumn: leftItems,
-                                }
-                              });
-                              message.success('Tạo giọng nói thành công!');
-                            }}
-                          />
-                        </Space>
-                        {audioUpload?.uploadedUrl && (
-                          <div style={{ marginTop: 8 }}>
-                            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                              <SoundOutlined style={{ color: '#52c41a' }} />
-                              <span style={{ color: '#52c41a' }}>Âm thanh đã tải lên</span>
-                              <Button
-                                size="small"
-                                icon={<DeleteOutlined />}
-                                onClick={() => handleRemoveLeftAudio(index)}
-                                type="text"
-                                danger
-                              />
-                            </div>
-                            <div style={{ marginTop: 4 }}>
-                              <audio controls style={{ maxWidth: 300 }}>
-                                <source src={audioUpload.uploadedUrl} />
-                                Your browser does not support the audio element.
-                              </audio>
-                            </div>
-                          </div>
+              <div className="space-y-4">
+                {fields.map(({ key, name, ...restField }, index) => {
+                  const audioUpload = leftAudioUploads[index];
+                  return (
+                    <div key={key} className="p-4 border-2 border-gray-200 rounded-xl bg-white">
+                      <div className="flex justify-between items-center mb-3">
+                        <div className="flex items-center gap-2">
+                          <span className="w-8 h-8 rounded-lg bg-blue-100 text-blue-600 font-bold flex items-center justify-center">{index + 1}</span>
+                          <span className="text-sm font-medium text-gray-600">Mục âm thanh {index + 1}</span>
+                        </div>
+                        {fields.length > 1 && (
+                          <Button danger size="small" icon={<MinusCircleOutlined />} onClick={() => remove(name)} className="rounded-lg" />
                         )}
                       </div>
-                    </Form.Item>
-
-                    {/* Transcript (Optional) */}
-                    <Form.Item
-                      {...restField}
-                      label="Bản Ghi (Tùy Chọn)"
-                      name={[name, "transcript"]}
-                      help="Bản ghi tùy chọn của nội dung âm thanh"
-                    >
-                      <Input placeholder="Nhập bản ghi của âm thanh" />
-                    </Form.Item>
-
-                    {/* Hidden audio_url field */}
-                    <Form.Item
-                      {...restField}
-                      name={[name, "audio_url"]}
-                      style={{ display: 'none' }}
-                    >
-                      <Input />
-                    </Form.Item>
-                  </Card>
-                );
-              })}
-              <Form.Item>
-                <Button
-                  type="dashed"
-                  onClick={() =>
-                    add({ id: `${fields.length + 1}`, audio: "", audio_url: "", transcript: "" })
-                  }
-                  block
-                  icon={<PlusOutlined />}
-                >
-                  Thêm Mục Âm Thanh
-                </Button>
-              </Form.Item>
+                      <Form.Item {...restField} name={[name, "id"]} initialValue={`${index + 1}`} className="hidden"><Input /></Form.Item>
+                      <Form.Item {...restField} label="File Âm Thanh" name={[name, "audio"]} rules={[{ required: true, message: "Bắt buộc" }]} className="mb-2">
+                        <div className="p-4 border border-dashed border-gray-300 rounded-xl bg-gray-50/50">
+                          <Space wrap>
+                            <Upload accept="audio/*" maxCount={1} showUploadList={false} beforeUpload={(file) => { handleLeftAudioChange(index, file); return false; }}>
+                              <Button icon={<UploadOutlined />} size="large" className="rounded-lg">
+                                {audioUpload?.file ? audioUpload.file.name : "Chọn Âm Thanh"}
+                              </Button>
+                            </Upload>
+                            <TTSButton
+                              text={form.getFieldValue(["data", "leftColumn", index, "transcript"]) || ""}
+                              buttonText="Tạo Giọng Nói"
+                              size="middle"
+                              onAudioGenerated={async (audioUrl, audioBlob) => {
+                                try {
+                                  setUploadModalVisible(true);
+                                  setUploadStatus("uploading");
+                                  setUploadProgress(0);
+                                  setUploadError("");
+                                  const filename = `tts_generated_${Date.now()}.wav`;
+                                  const file = new File([audioBlob], filename, { type: "audio/wav" });
+                                  const result = await uploadAudioByType(file, questionType, (progress: UploadProgress) => {
+                                    setUploadProgress(Math.round(progress.percentage));
+                                  });
+                                  if (result.success && result.url) {
+                                    setLeftAudioUploads((prev) => ({ ...prev, [index]: { file: null, uploadedUrl: result.url } }));
+                                    const leftItems = form.getFieldValue(["data", "leftColumn"]) || [];
+                                    leftItems[index] = { ...leftItems[index], audio: result.url, audio_url: result.url };
+                                    form.setFieldsValue({ data: { ...form.getFieldValue("data"), leftColumn: leftItems } });
+                                    setUploadStatus("success");
+                                    setUploadProgress(100);
+                                    message.success("Tạo và tải lên giọng nói thành công!");
+                                  } else {
+                                    throw new Error(result.error || "Upload failed");
+                                  }
+                                } catch (error) {
+                                  console.error("TTS Upload error:", error);
+                                  setUploadStatus("error");
+                                  setUploadError(error instanceof Error ? error.message : "Upload failed");
+                                  message.error("Lỗi khi tải lên giọng nói");
+                                }
+                              }}
+                            />
+                          </Space>
+                          {audioUpload?.uploadedUrl && (
+                            <div className="mt-4">
+                              <div className="flex items-center gap-2 text-green-600 mb-2">
+                                <SoundOutlined />
+                                <span className="text-sm font-medium">Đã tải lên</span>
+                                <Button size="small" icon={<DeleteOutlined />} onClick={() => handleRemoveLeftAudio(index)} type="text" danger>Xóa</Button>
+                              </div>
+                              <audio controls className="max-w-[300px]"><source src={audioUpload.uploadedUrl} /></audio>
+                            </div>
+                          )}
+                        </div>
+                      </Form.Item>
+                      <Form.Item {...restField} label="Bản ghi (tùy chọn)" name={[name, "transcript"]} className="mb-0">
+                        <Input size="large" className="rounded-lg" placeholder="Nhập bản ghi của âm thanh" />
+                      </Form.Item>
+                      <Form.Item {...restField} name={[name, "audio_url"]} className="hidden"><Input /></Form.Item>
+                    </div>
+                  );
+                })}
+              </div>
+              <Button type="dashed" onClick={() => add({ id: `${fields.length + 1}`, audio: "", audio_url: "", transcript: "" })} block icon={<PlusOutlined />} className="mt-4 h-10 rounded-lg">
+                Thêm Mục Âm Thanh
+              </Button>
             </>
           )}
         </Form.List>
-      </Card>
+      </SectionContainer>
 
-      {/* Right Column (Text) */}
-      <Card
-        title="Cột Phải (Văn Bản/Bản Dịch)"
-        style={{ marginBottom: '24px' }}
-      >
-        <Form.List
-          name={["data", "rightColumn"]}
-          initialValue={[{ id: "A", text: "" }]}
-        >
+      {/* Section 3: Right Column (Text) */}
+      <SectionContainer>
+        <SectionHeader step={3} title="Cột Phải (Văn Bản)" description="Thêm các mục văn bản cần ghép" icon={<BarsOutlined />} />
+        <Form.List name={["data", "rightColumn"]} initialValue={[{ id: "A", text: "" }]}>
           {(fields, { add, remove }) => (
             <>
-              {fields.map(({ key, name, ...restField }, index) => (
-                <Space
-                  key={key}
-                  style={{ display: "flex", marginBottom: 8 }}
-                  align="baseline"
-                >
-                  {/* ID (Letter) */}
-                  <Form.Item
-                    {...restField}
-                    name={[name, "id"]}
-                    initialValue={generateRightId(index)}
-                    style={{ width: "60px", marginRight: 8 }}
-                  >
-                    <Input
-                      disabled
-                      style={{ textAlign: "center", fontWeight: "bold" }}
-                      placeholder="Chữ Cái"
-                    />
-                  </Form.Item>
-
-                  {/* Text */}
-                  <Form.Item
-                    {...restField}
-                    name={[name, "text"]}
-                    rules={[{ required: true, message: "Thiếu văn bản" }]}
-                    style={{ width: "400px" }}
-                  >
-                    <Input placeholder="Nhập văn bản/bản dịch" />
-                  </Form.Item>
-
-                  {fields.length > 1 && (
-                    <Button
-                      danger
-                      size="small"
-                      icon={<MinusCircleOutlined />}
-                      onClick={() => remove(name)}
-                    />
-                  )}
-                </Space>
-              ))}
-              <Form.Item>
-                <Button
-                  type="dashed"
-                  onClick={() =>
-                    add({
-                      id: generateRightId(fields.length),
-                      text: "",
-                    })
-                  }
-                  block
-                  icon={<PlusOutlined />}
-                >
-                  Thêm Mục Văn Bản
-                </Button>
-              </Form.Item>
+              <div className="space-y-3">
+                {fields.map(({ key, name, ...restField }, index) => (
+                  <div key={key} className="flex items-center gap-3">
+                    <span className="w-8 h-8 rounded-lg bg-green-100 text-green-600 font-bold flex items-center justify-center flex-shrink-0">{generateRightId(index)}</span>
+                    <Form.Item {...restField} name={[name, "text"]} rules={[{ required: true, message: "Bắt buộc" }]} className="mb-0 flex-1">
+                      <Input size="large" className="rounded-lg" placeholder="Nhập văn bản/bản dịch" />
+                    </Form.Item>
+                    {fields.length > 1 && <Button danger size="small" icon={<MinusCircleOutlined />} onClick={() => remove(name)} className="rounded-lg" />}
+                    <Form.Item {...restField} name={[name, "id"]} initialValue={generateRightId(index)} className="hidden"><Input /></Form.Item>
+                  </div>
+                ))}
+              </div>
+              <Button type="dashed" onClick={() => add({ id: generateRightId(fields.length), text: "" })} block icon={<PlusOutlined />} className="mt-4 h-10 rounded-lg">
+                Thêm Mục Văn Bản
+              </Button>
             </>
           )}
         </Form.List>
-      </Card>
+      </SectionContainer>
 
-      {/* Correct Matches */}
-      <Card
-        title="Các Cặp Đúng"
-        extra={
-          <Text type="secondary">
-            Chọn các cặp ghép từ cột trái và cột phải
-          </Text>
-        }
-        style={{ marginBottom: '24px' }}
-      >
-        <Form.List
-          name={["data", "correctMatches"]}
-          initialValue={[{ left: "", right: "" }]}
-        >
+      {/* Section 4: Correct Matches */}
+      <SectionContainer>
+        <SectionHeader step={4} title="Các Cặp Đúng" description="Chọn các cặp ghép đúng" icon={<LinkOutlined />} />
+        <Form.List name={["data", "correctMatches"]} initialValue={[{ left: "", right: "" }]}>
           {(fields, { add, remove }) => (
             <>
-              {fields.map(({ key, name, ...restField }, index) => (
-                <Space
-                  key={key}
-                  style={{ display: "flex", marginBottom: 8 }}
-                  align="baseline"
-                >
-                  <Text strong>Cặp {index + 1}:</Text>
-                  <Form.Item
-                    {...restField}
-                    name={[name, "left"]}
-                    rules={[{ required: true, message: "Chọn mục bên trái" }]}
-                    style={{ width: "200px" }}
-                  >
-                    <Select placeholder="Chọn mục âm thanh">
-                      {leftItems.map((item, itemIndex) => (
-                        <Option key={`left-option-${item.id}-${itemIndex}`} value={item.id}>
-                          {item.id}: {item.transcript || 'File âm thanh'}
-                        </Option>
-                      ))}
-                    </Select>
-                  </Form.Item>
-                  <Text type="secondary">ghép với</Text>
-                  <Form.Item
-                    {...restField}
-                    name={[name, "right"]}
-                    rules={[{ required: true, message: "Chọn mục bên phải" }]}
-                    style={{ width: "200px" }}
-                  >
-                    <Select placeholder="Chọn mục văn bản">
-                      {rightItems.map((item, itemIndex) => (
-                        <Option key={`right-option-${item.id}-${itemIndex}`} value={item.id}>
-                          {item.id}: {item.text}
-                        </Option>
-                      ))}
-                    </Select>
-                  </Form.Item>
-                  {fields.length > 1 && (
-                    <Button
-                      danger
-                      size="small"
-                      icon={<MinusCircleOutlined />}
-                      onClick={() => remove(name)}
-                    />
-                  )}
-                </Space>
-              ))}
-              <Form.Item>
-                <Button
-                  type="dashed"
-                  onClick={() => add({ left: "", right: "" })}
-                  block
-                  icon={<PlusOutlined />}
-                >
-                  Thêm Cặp
-                </Button>
-              </Form.Item>
+              <div className="space-y-3">
+                {fields.map(({ key, name, ...restField }, index) => (
+                  <div key={key} className="flex items-center gap-3 p-3 bg-gray-50 rounded-xl">
+                    <Text strong className="text-gray-600 w-16">Cặp {index + 1}:</Text>
+                    <Form.Item {...restField} name={[name, "left"]} rules={[{ required: true, message: "Chọn" }]} className="mb-0 flex-1">
+                      <Select placeholder="Chọn mục âm thanh" size="large" className="rounded-lg">
+                        {leftItems.map((item, itemIndex) => (
+                          <Option key={`left-option-${item.id}-${itemIndex}`} value={item.id}>
+                            {item.id}: {item.transcript || "File âm thanh"}
+                          </Option>
+                        ))}
+                      </Select>
+                    </Form.Item>
+                    <span className="text-gray-400">→</span>
+                    <Form.Item {...restField} name={[name, "right"]} rules={[{ required: true, message: "Chọn" }]} className="mb-0 flex-1">
+                      <Select placeholder="Chọn mục văn bản" size="large" className="rounded-lg">
+                        {rightItems.map((item, itemIndex) => (
+                          <Option key={`right-option-${item.id}-${itemIndex}`} value={item.id}>
+                            {item.id}: {item.text}
+                          </Option>
+                        ))}
+                      </Select>
+                    </Form.Item>
+                    {fields.length > 1 && <Button danger size="small" icon={<MinusCircleOutlined />} onClick={() => remove(name)} className="rounded-lg" />}
+                  </div>
+                ))}
+              </div>
+              <Button type="dashed" onClick={() => add({ left: "", right: "" })} block icon={<PlusOutlined />} className="mt-4 h-10 rounded-lg">
+                Thêm Cặp
+              </Button>
             </>
           )}
         </Form.List>
 
-        {/* Match Preview */}
-        {form.getFieldValue(['data', 'correctMatches'])?.length > 0 && (
-          <div style={{ marginTop: '16px', padding: '12px', backgroundColor: '#e6f7ff', borderRadius: '6px' }}>
-            <Text strong>Tóm Tắt Các Cặp:</Text>
-            <div style={{ marginTop: '8px' }}>
-              {form.getFieldValue(['data', 'correctMatches'])?.map((match: any, index: number) => {
-                const leftItem = leftItems.find(item => item.id === match.left);
-                const rightItem = rightItems.find(item => item.id === match.right);
-                
+        {correctMatches?.length > 0 && (
+          <div className="mt-4 p-3 bg-blue-50 rounded-lg border border-blue-100">
+            <Text strong className="text-blue-800">Tóm Tắt Các Cặp:</Text>
+            <div className="mt-2 space-y-1">
+              {correctMatches?.map((match: any, index: number) => {
+                const leftItem = leftItems.find((item) => item.id === match.left);
+                const rightItem = rightItems.find((item) => item.id === match.right);
                 if (leftItem && rightItem) {
                   return (
-                    <div key={index} style={{ marginBottom: '4px' }}>
-                      <Text>
-                        {leftItem.id}: {leftItem.transcript || 'File âm thanh'} 
-                        {' → '}
-                        {rightItem.id}: {rightItem.text}
-                      </Text>
+                    <div key={index} className="text-blue-700">
+                      {leftItem.id}: {leftItem.transcript || "File âm thanh"} → {rightItem.id}: {rightItem.text}
                     </div>
                   );
                 }
@@ -738,30 +384,22 @@ const MatchingAudioTextForm = forwardRef<MatchingAudioTextFormRef, MatchingAudio
             </div>
           </div>
         )}
-      </Card>
+      </SectionContainer>
 
-      {/* Additional Settings */}
-      <Card title="Cài Đặt Thêm" style={{ marginBottom: '24px' }}>
-        <Form.Item
-          label="Giải Thích (Tùy Chọn)"
-          name={['data', 'explanation']}
-          help="Cung cấp giải thích sẽ được hiển thị sau khi học viên trả lời"
-        >
-          <TextArea
-            rows={3}
-            placeholder="Giải thích logic ghép hoặc cung cấp ngữ cảnh thêm..."
-          />
-        </Form.Item>
-
-        <Form.Item
-          label="Kích Hoạt"
-          name="isActive"
-          valuePropName="checked"
-          initialValue={true}
-        >
-          <Switch />
-        </Form.Item>
-      </Card>
+      {/* Section 5: Additional Settings */}
+      <SectionContainer>
+        <SectionHeader step={5} title="Cài Đặt Bổ Sung" description="Giải thích và trạng thái" icon={<CheckCircleOutlined />} />
+        <FormField label="Giải thích" hint="Hiển thị sau khi học viên trả lời">
+          <Form.Item name={["data", "explanation"]} className="mb-0">
+            <TextArea rows={3} className="rounded-lg" placeholder="Giải thích logic ghép hoặc cung cấp ngữ cảnh thêm..." />
+          </Form.Item>
+        </FormField>
+        <FormField label="Kích hoạt">
+          <Form.Item name="isActive" valuePropName="checked" initialValue={true} className="mb-0">
+            <Switch />
+          </Form.Item>
+        </FormField>
+      </SectionContainer>
 
       <UploadModal
         visible={uploadModalVisible}
@@ -776,6 +414,6 @@ const MatchingAudioTextForm = forwardRef<MatchingAudioTextFormRef, MatchingAudio
   );
 });
 
-MatchingAudioTextForm.displayName = 'MatchingAudioTextForm';
+MatchingAudioTextForm.displayName = "MatchingAudioTextForm";
 
 export default MatchingAudioTextForm;

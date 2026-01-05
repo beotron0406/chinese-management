@@ -4,30 +4,30 @@ import {
   Form,
   Input,
   Button,
-  Card,
   Space,
   Tag,
   Typography,
   Switch,
-  Select,
-  Row,
-  Col,
-  Divider,
   Alert,
 } from "antd";
 import {
-  MinusCircleOutlined,
   PlusOutlined,
-  ReloadOutlined,
   DeleteOutlined,
+  QuestionCircleOutlined,
+  EditOutlined,
+  OrderedListOutlined,
+  CheckCircleOutlined,
 } from "@ant-design/icons";
-import { pinyin } from "pinyin-pro";
 import type { FormInstance } from "antd/es/form";
-import { FillTextTextQuestionData } from "@/types/questionType";
+import { FillTextTextQuestionData, FillSegment, FillBlankAnswer } from "@/types/questionType";
+import { TextContent } from "@/types/textContent";
+import ChineseInput from "@/components/shared/ChineseInput";
+import TextContentDisplay from "@/components/shared/TextContentDisplay";
+import { getDisplayText } from "@/utils/textContentUtils";
+import { SectionContainer, SectionHeader, FormField } from "@/components/shared/FormStyles";
 
 const { TextArea } = Input;
-const { Text, Title } = Typography;
-const { Option } = Select;
+const { Text } = Typography;
 
 interface FillTextTextFormProps {
   form: FormInstance;
@@ -37,854 +37,235 @@ interface FillTextTextFormProps {
   };
 }
 
-const FillTextTextForm: React.FC<FillTextTextFormProps> = ({
-  form,
-  initialValues,
-}) => {
-  const [sentenceParts, setSentenceParts] = useState<string[]>([""]);
-  const [pinyinParts, setPinyinParts] = useState<string[]>([""]);
-  const [optionBankItems, setOptionBankItems] = useState<string[]>([]);
+const FillTextTextForm: React.FC<FillTextTextFormProps> = ({ form, initialValues }) => {
+  const [segments, setSegments] = useState<FillSegment[]>([{ type: "text", content: { chinese: [""], pinyin: [""] } }]);
+  const [optionBankItems, setOptionBankItems] = useState<TextContent[]>([]);
+  const [blankAnswers, setBlankAnswers] = useState<FillBlankAnswer[]>([]);
 
-  useEffect(() => {
-    const subscription = form.getFieldValue(["data", "optionBank"]) || [];
-    setOptionBankItems(subscription);
-  }, [form.getFieldValue(["data", "optionBank"])]);
+  const getBlankIndices = (): number[] => segments.filter((s) => s.type === "blank" && s.blankIndex).map((s) => s.blankIndex!).sort((a, b) => a - b);
+  const getNextBlankIndex = (): number => { const indices = getBlankIndices(); return indices.length === 0 ? 1 : Math.max(...indices) + 1; };
 
-  // Handle option bank changes
-  const handleOptionBankChange = () => {
-    const currentOptions = form.getFieldValue(["data", "optionBank"]) || [];
-    setOptionBankItems(currentOptions);
-  };
-  // Initialize form with existing data
   useEffect(() => {
     if (initialValues?.data) {
       const { data } = initialValues;
-
-      if (data.sentence && data.sentence.length > 0) {
-        setSentenceParts(data.sentence);
+      if (data.segments && data.segments.length > 0) {
+        setSegments(data.segments);
+      } else if (data.sentence && data.sentence.length > 0) {
+        const convertedSegments: FillSegment[] = data.sentence.map((part, index) => {
+          const blankMatch = part.match(/^\[(\d+)\]$/);
+          if (blankMatch) return { type: "blank" as const, blankIndex: parseInt(blankMatch[1]) };
+          return { type: "text" as const, content: { chinese: [part], pinyin: data.pinyin?.[index] ? [data.pinyin[index]] : [""] } };
+        });
+        setSegments(convertedSegments);
       }
-
-      if (data.pinyin && data.pinyin.length > 0) {
-        setPinyinParts(data.pinyin);
-      }
+      if (data.optionBankItems && data.optionBankItems.length > 0) setOptionBankItems(data.optionBankItems);
+      else if (data.optionBank && data.optionBank.length > 0) setOptionBankItems(data.optionBank.map((opt) => ({ chinese: [opt], pinyin: [""] })));
+      if (data.blankAnswers && data.blankAnswers.length > 0) setBlankAnswers(data.blankAnswers);
+      else if (data.blanks && data.blanks.length > 0) setBlankAnswers(data.blanks.map((blank) => ({ index: blank.index, correctAnswers: blank.correct.map((c) => ({ chinese: [c], pinyin: [""] })) })));
     }
   }, [initialValues]);
 
-  // Generate pinyin for a sentence part
-  const generatePartPinyin = (index: number, text: string) => {
-    if (!text.trim() || text.match(/^\[\d+\]$/)) {
-      // If it's a blank marker or empty, keep as is
-      const newPinyinParts = [...pinyinParts];
-      newPinyinParts[index] = text;
-      setPinyinParts(newPinyinParts);
-
-      form.setFieldsValue({
-        data: {
-          ...form.getFieldValue("data"),
-          pinyin: newPinyinParts,
-        },
-      });
-      return;
-    }
-
-    try {
-      const pinyinText = pinyin(text, {
-        toneType: "symbol",
-        type: "array",
-      }).join(" ");
-
-      const newPinyinParts = [...pinyinParts];
-      newPinyinParts[index] = pinyinText;
-      setPinyinParts(newPinyinParts);
-
-      form.setFieldsValue({
-        data: {
-          ...form.getFieldValue("data"),
-          pinyin: newPinyinParts,
-        },
-      });
-    } catch (error) {
-      console.warn("Failed to generate pinyin:", error);
-    }
+  const updateFormData = () => {
+    form.setFieldsValue({ data: { ...form.getFieldValue("data"), segments, optionBankItems, blankAnswers } });
   };
 
-  // Handle sentence part change
-  const handleSentencePartChange = (index: number, value: string) => {
-    const newSentenceParts = [...sentenceParts];
-    newSentenceParts[index] = value;
-    setSentenceParts(newSentenceParts);
+  useEffect(() => { updateFormData(); }, [segments, optionBankItems, blankAnswers]);
 
-    // Ensure pinyin array has same length
-    const newPinyinParts = [...pinyinParts];
-    while (newPinyinParts.length < newSentenceParts.length) {
-      newPinyinParts.push("");
-    }
-    setPinyinParts(newPinyinParts);
-
-    // Update form
-    form.setFieldsValue({
-      data: {
-        ...form.getFieldValue("data"),
-        sentence: newSentenceParts,
-      },
-    });
-
-    // Generate pinyin for this part
-    generatePartPinyin(index, value);
+  const addTextSegment = () => setSegments([...segments, { type: "text" as const, content: { chinese: [""], pinyin: [""] } }]);
+  const addBlankSegment = () => {
+    const nextIndex = getNextBlankIndex();
+    setSegments([...segments, { type: "blank" as const, blankIndex: nextIndex }]);
+    setBlankAnswers([...blankAnswers, { index: nextIndex, correctAnswers: [] }]);
   };
-
-  // Handle pinyin part change (manual edit)
-  const handlePinyinPartChange = (index: number, value: string) => {
-    const newPinyinParts = [...pinyinParts];
-    newPinyinParts[index] = value;
-    setPinyinParts(newPinyinParts);
-
-    form.setFieldsValue({
-      data: {
-        ...form.getFieldValue("data"),
-        pinyin: newPinyinParts,
-      },
-    });
+  const removeSegment = (index: number) => {
+    if (segments.length <= 1) return;
+    const removedSegment = segments[index];
+    setSegments(segments.filter((_, i) => i !== index));
+    if (removedSegment.type === "blank" && removedSegment.blankIndex) setBlankAnswers(blankAnswers.filter((ba) => ba.index !== removedSegment.blankIndex));
   };
-
-  // Add new sentence part
-  const addSentencePart = () => {
-    const newSentenceParts = [...sentenceParts, ""];
-    const newPinyinParts = [...pinyinParts, ""];
-    setSentenceParts(newSentenceParts);
-    setPinyinParts(newPinyinParts);
-
-    form.setFieldsValue({
-      data: {
-        ...form.getFieldValue("data"),
-        sentence: newSentenceParts,
-        pinyin: newPinyinParts,
-      },
-    });
+  const updateSegmentContent = (index: number, content: TextContent) => { const newSegments = [...segments]; newSegments[index] = { ...newSegments[index], content }; setSegments(newSegments); };
+  const addOptionBankItem = () => setOptionBankItems([...optionBankItems, { chinese: [""], pinyin: [""] }]);
+  const removeOptionBankItem = (index: number) => setOptionBankItems(optionBankItems.filter((_, i) => i !== index));
+  const updateOptionBankItem = (index: number, content: TextContent) => { const newItems = [...optionBankItems]; newItems[index] = content; setOptionBankItems(newItems); };
+  const addAnswerToBlank = (blankIndex: number, content: TextContent) => {
+    const newBlankAnswers = [...blankAnswers];
+    const existingAnswer = newBlankAnswers.find((ba) => ba.index === blankIndex);
+    if (existingAnswer) existingAnswer.correctAnswers = [...existingAnswer.correctAnswers, content];
+    else newBlankAnswers.push({ index: blankIndex, correctAnswers: [content] });
+    setBlankAnswers(newBlankAnswers);
   };
-
-  // Remove sentence part
-  const removeSentencePart = (index: number) => {
-    if (sentenceParts.length <= 1) return;
-
-    const newSentenceParts = sentenceParts.filter((_, i) => i !== index);
-    const newPinyinParts = pinyinParts.filter((_, i) => i !== index);
-    setSentenceParts(newSentenceParts);
-    setPinyinParts(newPinyinParts);
-
-    form.setFieldsValue({
-      data: {
-        ...form.getFieldValue("data"),
-        sentence: newSentenceParts,
-        pinyin: newPinyinParts,
-      },
-    });
+  const removeAnswerFromBlank = (blankIndex: number, answerIndex: number) => {
+    const newBlankAnswers = [...blankAnswers];
+    const existingAnswer = newBlankAnswers.find((ba) => ba.index === blankIndex);
+    if (existingAnswer) existingAnswer.correctAnswers = existingAnswer.correctAnswers.filter((_, i) => i !== answerIndex);
+    setBlankAnswers(newBlankAnswers);
   };
-
-  // Check if part is a blank marker
-  const isBlankMarker = (text: string) => {
-    return /^\[\d+\]$/.test(text || "");
+  const updateAnswerInBlank = (blankIndex: number, answerIndex: number, content: TextContent) => {
+    const newBlankAnswers = [...blankAnswers];
+    const existingAnswer = newBlankAnswers.find((ba) => ba.index === blankIndex);
+    if (existingAnswer) existingAnswer.correctAnswers[answerIndex] = content;
+    setBlankAnswers(newBlankAnswers);
   };
+  const getAnswersForBlank = (blankIndex: number): TextContent[] => blankAnswers.find((ba) => ba.index === blankIndex)?.correctAnswers || [];
 
-  // Generate available blank numbers
-  const getAvailableBlankNumbers = () => {
-    const usedNumbers = sentenceParts
-      .filter((part) => isBlankMarker(part))
-      .map((part) => parseInt(part.match(/\d+/)?.[0] || "0"))
-      .filter((num) => num > 0);
-
-    const maxNum = Math.max(0, ...usedNumbers);
-    const available = [];
-
-    for (let i = 1; i <= maxNum + 1; i++) {
-      if (!usedNumbers.includes(i)) {
-        available.push(i);
-      }
-    }
-
-    return available;
-  };
-  const markAsBlank = (index: number) => {
-    // Find the next available blank number
-    const usedNumbers = sentenceParts
-      .filter((part) => isBlankMarker(part))
-      .map((part) => parseInt(part.match(/\d+/)?.[0] || "0"))
-      .filter((num) => num > 0);
-
-    const nextBlankNumber = Math.max(0, ...usedNumbers) + 1;
-    const blankMarker = `[${nextBlankNumber}]`;
-
-    handleSentencePartChange(index, blankMarker);
-  };
-
-  // Unmark a blank (convert back to regular text)
-  const unmarkBlank = (index: number) => {
-    handleSentencePartChange(index, "");
-  };
   return (
-    <div>
-      {/* Instructions */}
-      <Alert
-        message="Công Cụ Tạo Câu Hỏi Điền Chỗ Trống"
-        description="Tạo câu hỏi để học sinh điền từ tiếng Trung. Sử dụng [1], [2], v.v. để đánh dấu vị trí chỗ trống."
-        type="info"
-        style={{ marginBottom: "24px" }}
-      />
+    <div className="max-w-2xl mx-auto">
+      <Alert message="Công Cụ Tạo Câu Hỏi Điền Chỗ Trống" description="Xây dựng câu bằng các đoạn văn bản và chỗ trống." type="info" className="mb-6 rounded-xl" />
 
-      {/* Step 1: Question Setup */}
-      <Card title="Bước 1: Thiết Lập Câu Hỏi" style={{ marginBottom: "24px" }}>
-        <Form.Item
-          label="Hướng Dẫn"
-          name={["data", "instruction"]}
-          rules={[{ required: true, message: "Vui lòng nhập hướng dẫn" }]}
-        >
-          <TextArea
-            placeholder="Nhập hướng dẫn (ví dụ: 'Điền từ tiếng Trung thích hợp vào chỗ trống.')"
-            autoSize={{ minRows: 2, maxRows: 4 }}
-          />
-        </Form.Item>
-      </Card>
+      {/* Section 1: Question Setup */}
+      <SectionContainer>
+        <SectionHeader step={1} title="Thiết Lập Câu Hỏi" description="Nhập hướng dẫn câu hỏi" icon={<QuestionCircleOutlined />} />
+        <FormField label="Hướng dẫn" required>
+          <Form.Item name={["data", "instruction"]} rules={[{ required: true, message: "Bắt buộc" }]} className="mb-0">
+            <TextArea rows={2} className="rounded-lg" placeholder="VD: Điền từ tiếng Trung thích hợp vào chỗ trống" />
+          </Form.Item>
+        </FormField>
+      </SectionContainer>
 
-      {/* Step 2: Sentence Builder */}
-      <Card
-        title="Bước 2: Xây Dựng Câu Với Chỗ Trống"
-        extra={
-          <Button
-            type="primary"
-            icon={<PlusOutlined />}
-            onClick={addSentencePart}
-          >
-            Thêm Phần
-          </Button>
-        }
-        style={{ marginBottom: "24px" }}
-      >
-        <div style={{ marginBottom: "16px" }}>
-          <Text type="secondary">
-            Xây dựng câu từng phần. Sử dụng [1], [2], v.v. cho vị trí chỗ trống.
-          </Text>
+      {/* Section 2: Segment Builder */}
+      <SectionContainer>
+        <SectionHeader step={2} title="Xây Dựng Câu" description="Thêm văn bản và chỗ trống" icon={<EditOutlined />} />
+        <div className="flex gap-2 mb-4">
+          <Button type="primary" icon={<PlusOutlined />} onClick={addTextSegment} className="rounded-lg">Thêm Văn Bản</Button>
+          <Button icon={<PlusOutlined />} onClick={addBlankSegment} className="rounded-lg bg-orange-100 border-orange-300 text-orange-700">Thêm Chỗ Trống</Button>
         </div>
-
-        {sentenceParts.map((part, index) => (
-          <Card
-            key={index}
-            size="small"
-            style={{
-              marginBottom: "12px",
-              backgroundColor: isBlankMarker(part) ? "#fff7e6" : "#ffffff",
-            }}
-            title={
-              <div
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "space-between",
-                }}
-              >
-                <div>
-                  Phần {index + 1}
-                  {isBlankMarker(part) && (
-                    <Tag color="orange" style={{ marginLeft: 8 }}>
-                      CHỖ TRỐNG {part.match(/\d+/)?.[0]}
-                    </Tag>
-                  )}
+        <div className="space-y-3">
+          {segments.map((segment, index) => (
+            <div key={index} className={`p-4 rounded-xl border-2 ${segment.type === "blank" ? "bg-orange-50 border-orange-300" : "bg-white border-gray-200"}`}>
+              <div className="flex justify-between items-center mb-3">
+                <div className="flex items-center gap-2">
+                  <span className="text-sm font-bold text-gray-600">Đoạn {index + 1}</span>
+                  {segment.type === "blank" ? <Tag color="orange">Chỗ Trống #{segment.blankIndex}</Tag> : <Tag color="blue">Văn Bản</Tag>}
                 </div>
-                <Space>
-                  {!isBlankMarker(part) ? (
-                    <Button
-                      type="primary"
-                      size="small"
-                      onClick={() => markAsBlank(index)}
-                      style={{ fontSize: "12px" }}
-                    >
-                      Đánh Dấu Chỗ Trống
-                    </Button>
-                  ) : (
-                    <Button
-                      type="default"
-                      size="small"
-                      onClick={() => unmarkBlank(index)}
-                      style={{ fontSize: "12px" }}
-                    >
-                      Bỏ Đánh Dấu
-                    </Button>
-                  )}
-                  {sentenceParts.length > 1 && (
-                    <Button
-                      danger
-                      size="small"
-                      icon={<DeleteOutlined />}
-                      onClick={() => removeSentencePart(index)}
-                    />
-                  )}
-                </Space>
+                {segments.length > 1 && <Button type="text" size="small" icon={<DeleteOutlined />} onClick={() => removeSegment(index)} danger />}
               </div>
-            }
-          >
-            <Row gutter={16}>
-              <Col span={12}>
-                <div style={{ marginBottom: "8px" }}>
-                  <Text strong>Chữ Trung:</Text>
+              {segment.type === "text" ? (
+                <ChineseInput value={segment.content} onChange={(content: TextContent) => updateSegmentContent(index, content)} placeholder="Nhập chữ Trung..." />
+              ) : (
+                <div className="py-4 px-3 bg-yellow-200 border-2 border-dashed border-orange-400 rounded-lg text-center">
+                  <div className="text-lg font-bold text-yellow-700">CHỖ TRỐNG #{segment.blankIndex}</div>
+                  <div className="text-xs text-yellow-600 mt-1">Học sinh sẽ điền vào đây</div>
                 </div>
-                {isBlankMarker(part) ? (
-                  <div
-                    style={{
-                      padding: "8px 12px",
-                      backgroundColor: "#ffeaa7",
-                      border: "2px dashed #ffa940",
-                      borderRadius: "6px",
-                      textAlign: "center",
-                      fontSize: "16px",
-                      fontWeight: "bold",
-                      color: "#d68910",
-                    }}
-                  >
-                    VỊ TRÍ CHỖ TRỐNG {part.match(/\d+/)?.[0]}
-                  </div>
-                ) : (
-                  <Input
-                    placeholder="Nhập chữ Trung"
-                    value={part}
-                    onChange={(e) =>
-                      handleSentencePartChange(index, e.target.value)
-                    }
-                    style={{
-                      fontSize: "16px",
-                    }}
-                  />
-                )}
-                {isBlankMarker(part) && (
-                  <div style={{ marginTop: 4 }}>
-                    <Text type="secondary" style={{ fontSize: "12px" }}>
-                      Vị trí này sẽ là chỗ trống để học sinh điền
-                    </Text>
-                  </div>
-                )}
-              </Col>
-              <Col span={12}>
-                <div style={{ marginBottom: "8px" }}>
-                  <Text strong>Pinyin:</Text>
-                  {!isBlankMarker(part) && (
-                    <Button
-                      type="link"
-                      size="small"
-                      icon={<ReloadOutlined />}
-                      onClick={() => generatePartPinyin(index, part)}
-                      style={{ padding: 0, marginLeft: 8 }}
-                    >
-                      Tự động tạo
-                    </Button>
-                  )}
-                </div>
-                {isBlankMarker(part) ? (
-                  <div
-                    style={{
-                      padding: "8px 12px",
-                      backgroundColor: "#ffeaa7",
-                      border: "2px dashed #ffa940",
-                      borderRadius: "6px",
-                      textAlign: "center",
-                      fontSize: "16px",
-                      fontWeight: "bold",
-                      color: "#d68910",
-                    }}
-                  >
-                    {part}
-                  </div>
-                ) : (
-                  <Input
-                    placeholder="Pinyin (tự động tạo hoặc nhập thủ công)"
-                    value={pinyinParts[index] || ""}
-                    onChange={(e) =>
-                      handlePinyinPartChange(index, e.target.value)
-                    }
-                    style={{
-                      fontSize: "16px",
-                      color: "#1890ff",
-                    }}
-                  />
-                )}
-              </Col>
-            </Row>
-          </Card>
-        ))}
-
-        {/* Hidden form fields */}
-        <Form.Item name={["data", "sentence"]} style={{ display: "none" }}>
-          <Input />
-        </Form.Item>
-        <Form.Item name={["data", "pinyin"]} style={{ display: "none" }}>
-          <Input />
-        </Form.Item>
-      </Card>
-
-      {/* Step 3: Vietnamese Translation */}
-      <Card
-        title="Bước 3: Bản Dịch Tiếng Việt"
-        style={{ marginBottom: "24px" }}
-      >
-        <Form.Item
-          label="Bản Dịch Tiếng Việt"
-          name={["data", "vietnamese"]}
-          rules={[
-            { required: true, message: "Vui lòng nhập bản dịch tiếng Việt" },
-          ]}
-        >
-          <TextArea
-            placeholder="Nhập bản dịch tiếng Việt với [1], [2], v.v. cho vị trí chỗ trống (ví dụ: '[1] xin chào, [2] là Lý Minh.')"
-            autoSize={{ minRows: 2, maxRows: 4 }}
-          />
-        </Form.Item>
-      </Card>
-
-      {/* Step 4: Preview */}
-      <Card title="Xem Trước Câu" style={{ marginBottom: "24px" }}>
-        <div
-          style={{
-            padding: "16px",
-            backgroundColor: "#fafafa",
-            borderRadius: "6px",
-          }}
-        >
-          <div style={{ marginBottom: "12px" }}>
-            <Text strong>Chinese: </Text>
-            <span style={{ fontSize: "18px" }}>
-              {sentenceParts.map((part, index) => (
-                <span key={index}>
-                  {isBlankMarker(part) ? (
-                    <span
-                      style={{
-                        backgroundColor: "#ffeaa7",
-                        padding: "2px 8px",
-                        borderRadius: "4px",
-                        border: "1px dashed #ffa940",
-                        color: "#d68910",
-                        fontWeight: "bold",
-                      }}
-                    >
-                      ____
-                    </span>
-                  ) : (
-                    part
-                  )}
-                  {index < sentenceParts.length - 1 ? " " : ""}
-                </span>
-              ))}
-            </span>
-          </div>
-          <div style={{ marginBottom: "12px" }}>
-            <Text strong>Pinyin: </Text>
-            <span style={{ fontSize: "16px", color: "#1890ff" }}>
-              {pinyinParts.map((part, index) => (
-                <span key={index}>
-                  {isBlankMarker(part) ? (
-                    <span
-                      style={{
-                        backgroundColor: "#ffeaa7",
-                        padding: "2px 8px",
-                        borderRadius: "4px",
-                        border: "1px dashed #ffa940",
-                        color: "#d68910",
-                        fontWeight: "bold",
-                      }}
-                    >
-                      ____
-                    </span>
-                  ) : (
-                    part
-                  )}
-                  {index < pinyinParts.length - 1 ? " " : ""}
-                </span>
-              ))}
-            </span>
-          </div>
-          <div>
-            <Text strong>Tiếng Việt: </Text>
-            <span style={{ fontSize: "16px", color: "#666" }}>
-              {form.getFieldValue(["data", "vietnamese"]) ||
-                "Nhập bản dịch tiếng Việt ở trên"}
-            </span>
+              )}
+            </div>
+          ))}
+        </div>
+        <div className="mt-4 p-4 bg-gray-50 rounded-xl">
+          <Text strong>Xem Trước Câu:</Text>
+          <div className="mt-2 flex flex-wrap items-end gap-1">
+            {segments.map((segment, index) => (
+              <span key={index}>
+                {segment.type === "text" ? <TextContentDisplay content={segment.content} /> : <span className="inline-block px-3 py-1 bg-yellow-200 border border-dashed border-orange-400 rounded text-orange-600 font-bold">____</span>}
+              </span>
+            ))}
           </div>
         </div>
-      </Card>
+      </SectionContainer>
 
-      {/* Step 5: Option Bank */}
-      <Card
-        title="Bước 5: Ngân Hàng Lựa Chọn (Gợi Ý)"
-        style={{ marginBottom: "24px" }}
-      >
-        <div style={{ marginBottom: "12px" }}>
-          <Text type="secondary">
-            Thêm các từ tiếng Trung làm lựa chọn cho học sinh.
-          </Text>
+      {/* Section 3: Vietnamese Translation */}
+      <SectionContainer>
+        <SectionHeader step={3} title="Bản Dịch" description="Nhập bản dịch tiếng Việt" icon={<EditOutlined />} />
+        <FormField label="Bản dịch tiếng Việt" required>
+          <Form.Item name={["data", "vietnamese"]} rules={[{ required: true, message: "Bắt buộc" }]} className="mb-0">
+            <TextArea rows={2} className="rounded-lg" placeholder="VD: Tôi [1] học [2]." />
+          </Form.Item>
+        </FormField>
+      </SectionContainer>
+
+      {/* Section 4: Option Bank */}
+      <SectionContainer>
+        <SectionHeader step={4} title="Ngân Hàng Lựa Chọn" description="Thêm các từ/cụm từ gợi ý" icon={<OrderedListOutlined />} />
+        <div className="space-y-3">
+          {optionBankItems.map((item, index) => (
+            <div key={index} className="flex items-start gap-2">
+              <div className="flex-1"><ChineseInput value={item} onChange={(content: TextContent) => updateOptionBankItem(index, content)} placeholder="Nhập từ..." /></div>
+              <Button type="text" icon={<DeleteOutlined />} onClick={() => removeOptionBankItem(index)} danger />
+            </div>
+          ))}
         </div>
-        <Form.List name={["data", "optionBank"]}>
-          {(fields, { add, remove }) => (
-            <>
-              {fields.map(({ key, name, ...restField }) => (
-                <Space
-                  key={key}
-                  style={{ display: "flex", marginBottom: 8 }}
-                  align="baseline"
-                >
-                  <Form.Item
-                    {...restField}
-                    name={name}
-                    rules={[{ required: true, message: "Vui lòng nhập lựa chọn" }]}
-                  >
-                    <Input
-                      placeholder="Nhập từ tiếng Trung"
-                      style={{ width: 200, fontSize: "16px" }}
-                      onChange={handleOptionBankChange}
-                      onBlur={handleOptionBankChange}
-                    />
-                  </Form.Item>
-                  <Button
-                    danger
-                    icon={<MinusCircleOutlined />}
-                    onClick={() => {
-                      remove(name);
-                      // Update option bank state after removal
-                      setTimeout(handleOptionBankChange, 100);
-                    }}
-                  />
-                </Space>
-              ))}
-              <Form.Item>
-                <Button
-                  type="dashed"
-                  onClick={() => {
-                    add();
-                    // Update option bank state after addition
-                    setTimeout(handleOptionBankChange, 100);
-                  }}
-                  block
-                  icon={<PlusOutlined />}
-                >
-                  Thêm Lựa Chọn
-                </Button>
-              </Form.Item>
-            </>
-          )}
-        </Form.List>
-
-        {/* Display current options */}
-        {optionBankItems.filter(Boolean).length > 0 && (
-          <div style={{ marginTop: "16px" }}>
-            <Text strong>Lựa Chọn Hiện Tại: </Text>
-            <div style={{ marginTop: "8px" }}>
-              {optionBankItems.filter(Boolean).map((option, index) => (
-                <Tag
-                  key={index}
-                  style={{
-                    margin: "4px",
-                    fontSize: "14px",
-                    padding: "4px 8px",
-                  }}
-                >
-                  {option}
-                </Tag>
-              ))}
+        <Button type="dashed" icon={<PlusOutlined />} onClick={addOptionBankItem} className="w-full mt-4 h-10 rounded-lg">Thêm Lựa Chọn</Button>
+        {optionBankItems.length > 0 && (
+          <div className="mt-4 p-3 bg-blue-50 rounded-lg">
+            <Text strong>Lựa Chọn Hiện Có:</Text>
+            <div className="mt-2 flex flex-wrap gap-2">
+              {optionBankItems.map((item, index) => <Tag key={index} color="blue" className="py-1 px-2"><TextContentDisplay content={item} size="small" /></Tag>)}
             </div>
           </div>
         )}
-      </Card>
+      </SectionContainer>
 
-      {/* Step 6: Set Correct Answers */}
-      <Card
-        title="Bước 6: Đặt Đáp Án Đúng"
-        style={{ marginBottom: "24px" }}
-      >
-        <div style={{ marginBottom: "12px" }}>
-          <Text type="secondary">
-            Xác định đáp án đúng cho mỗi vị trí chỗ trống. Bạn có thể chọn từ
-            ngân hàng lựa chọn hoặc nhập đáp án mới.
-          </Text>
-        </div>
-
-        {/* Auto-generate blank answer fields based on sentence blanks */}
-        {sentenceParts
-          .map((part, index) => ({ part, originalIndex: index }))
-          .filter(({ part }) => isBlankMarker(part))
-          .map(({ part, originalIndex }) => {
-            const blankNumber = parseInt(part.match(/\d+/)?.[0] || "0");
-            const currentOptions =
-              form.getFieldValue(["data", "optionBank"]) || [];
-
-            return (
-              <Card
-                key={`blank-${blankNumber}`}
-                size="small"
-                style={{ marginBottom: "12px" }}
-                title={
-                  <div>
-                    <span>
-                      Chỗ Trống {blankNumber} - Vị Trí {originalIndex + 1}
-                    </span>
-                    <Tag color="blue" style={{ marginLeft: 8 }}>
-                      Ngữ cảnh: {sentenceParts[originalIndex - 1] || ""} ___{" "}
-                      {sentenceParts[originalIndex + 1] || ""}
-                    </Tag>
+      {/* Section 5: Correct Answers */}
+      <SectionContainer>
+        <SectionHeader step={5} title="Đáp Án Đúng" description="Xác định đáp án cho mỗi chỗ trống" icon={<CheckCircleOutlined />} />
+        {getBlankIndices().length === 0 ? (
+          <Alert message="Chưa có chỗ trống" description="Thêm chỗ trống trong Bước 2 để đặt đáp án." type="info" showIcon className="rounded-lg" />
+        ) : (
+          <div className="space-y-4">
+            {getBlankIndices().map((blankIndex) => {
+              const answers = getAnswersForBlank(blankIndex);
+              return (
+                <div key={blankIndex} className="p-4 bg-gray-50 rounded-xl border border-gray-200">
+                  <div className="flex items-center justify-between mb-3">
+                    <div className="flex items-center gap-2"><Tag color="orange">Chỗ Trống #{blankIndex}</Tag><Text type="secondary">({answers.length} đáp án)</Text></div>
+                    <Button type="dashed" size="small" icon={<PlusOutlined />} onClick={() => addAnswerToBlank(blankIndex, { text: "" })} className="rounded-lg">Thêm Đáp Án</Button>
                   </div>
-                }
-              >
-                <Row gutter={16}>
-                  <Col span={16}>
-                    <Form.Item
-                      label="Đáp Án Đúng"
-                      name={["data", "blanks", blankNumber - 1, "correct"]}
-                      rules={[
-                        {
-                          required: true,
-                          message: "Vui lòng thêm ít nhất một đáp án đúng",
-                        },
-                      ]}
-                      initialValue={[]}
-                    >
-                      <Select
-                        mode="tags"
-                        placeholder="Chọn từ ngân hàng lựa chọn hoặc nhập đáp án đúng"
-                        style={{ width: "100%" }}
-                        dropdownRender={(menu) => (
-                          <div>
-                            {currentOptions.filter(Boolean).length > 0 && (
-                              <div
-                                style={{
-                                  padding: "8px",
-                                  borderBottom: "1px solid #f0f0f0",
-                                }}
-                              >
-                                <Text
-                                  type="secondary"
-                                  style={{ fontSize: "12px" }}
-                                >
-                                  Lựa chọn khả dụng:
-                                </Text>
-                              </div>
-                            )}
-                            {menu}
-                            <div
-                              style={{
-                                padding: "8px",
-                                borderTop: "1px solid #f0f0f0",
-                              }}
-                            >
-                              <Text
-                                type="secondary"
-                                style={{ fontSize: "12px" }}
-                              >
-                                Nhập để thêm đáp án tùy chỉnh
-                              </Text>
-                            </div>
-                          </div>
-                        )}
-                      >
-                        {currentOptions
-                          .filter(Boolean)
-                          .map((option: string, idx: number) => (
-                            <Option key={`option-${idx}`} value={option}>
-                              <div
-                                style={{
-                                  display: "flex",
-                                  alignItems: "center",
-                                }}
-                              >
-                                <span
-                                  style={{ fontSize: "16px", marginRight: 8 }}
-                                >
-                                  {option}
-                                </span>
-                                <Tag color="green">
-                                  Từ Ngân Hàng
-                                </Tag>
-                              </div>
-                            </Option>
-                          ))}
-                      </Select>
-                    </Form.Item>
-                  </Col>
-                  <Col span={8}>
-                    <div style={{ padding: "8px 0" }}>
-                      <Text strong style={{ fontSize: "12px" }}>
-                        Chọn Nhanh:
-                      </Text>
-                      <div style={{ marginTop: "4px" }}>
-                        {currentOptions
-                          .filter(Boolean)
-                          .slice(0, 3)
-                          .map((option: string, idx: number) => (
-                            <Button
-                              key={`quick-${idx}`}
-                              size="small"
-                              style={{
-                                margin: "2px",
-                                fontSize: "12px",
-                                height: "24px",
-                              }}
-                              onClick={() => {
-                                const currentAnswers =
-                                  form.getFieldValue([
-                                    "data",
-                                    "blanks",
-                                    blankNumber - 1,
-                                    "correct",
-                                  ]) || [];
-                                if (!currentAnswers.includes(option)) {
-                                  form.setFieldsValue({
-                                    data: {
-                                      ...form.getFieldValue("data"),
-                                      blanks: {
-                                        ...form.getFieldValue([
-                                          "data",
-                                          "blanks",
-                                        ]),
-                                        [blankNumber - 1]: {
-                                          ...form.getFieldValue([
-                                            "data",
-                                            "blanks",
-                                            blankNumber - 1,
-                                          ]),
-                                          correct: [...currentAnswers, option],
-                                        },
-                                      },
-                                    },
-                                  });
-                                }
-                              }}
-                            >
-                              {option}
-                            </Button>
-                          ))}
+                  {answers.length === 0 ? (
+                    <Text type="secondary">Chưa có đáp án. Nhấn "Thêm Đáp Án" để bắt đầu.</Text>
+                  ) : (
+                    <div className="space-y-2">
+                      {answers.map((answer, answerIndex) => (
+                        <div key={answerIndex} className="flex items-start gap-2">
+                          <div className="flex-1"><ChineseInput value={answer} onChange={(content: TextContent) => updateAnswerInBlank(blankIndex, answerIndex, content)} placeholder="Nhập đáp án..." compact /></div>
+                          <Button type="text" icon={<DeleteOutlined />} onClick={() => removeAnswerFromBlank(blankIndex, answerIndex)} danger />
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                  {optionBankItems.length > 0 && (
+                    <div className="mt-3 pt-3 border-t border-gray-200">
+                      <Text className="text-xs text-gray-500">Chọn nhanh từ ngân hàng:</Text>
+                      <div className="mt-1 flex flex-wrap gap-1">
+                        {optionBankItems.slice(0, 5).map((item, idx) => <Button key={idx} size="small" className="text-xs rounded-lg" onClick={() => addAnswerToBlank(blankIndex, item)}>{getDisplayText(item)}</Button>)}
                       </div>
                     </div>
-                  </Col>
-                </Row>
-
-                {/* Hidden field for blank index */}
-                <Form.Item
-                  name={["data", "blanks", blankNumber - 1, "index"]}
-                  initialValue={blankNumber}
-                  style={{ display: "none" }}
-                >
-                  <Input />
-                </Form.Item>
-              </Card>
-            );
-          })}
-
-        {sentenceParts.filter((part) => isBlankMarker(part)).length === 0 && (
-          <Alert
-            message="Không phát hiện chỗ trống"
-            description="Đánh dấu một số phần câu làm chỗ trống để đặt đáp án đúng."
-            type="info"
-            showIcon
-          />
+                  )}
+                </div>
+              );
+            })}
+          </div>
         )}
-
-        {/* Summary of current blanks and answers */}
-        {sentenceParts.filter((part) => isBlankMarker(part)).length > 0 && (
-          <Card
-            title="Tóm Tắt"
-            size="small"
-            style={{ marginTop: "16px", backgroundColor: "#fafafa" }}
-          >
-            <div>
-              <Text strong>Tổng Quan Chỗ Trống:</Text>
-              <div style={{ marginTop: "8px" }}>
-                {sentenceParts
-                  .map((part, index) => ({ part, originalIndex: index }))
-                  .filter(({ part }) => isBlankMarker(part))
-                  .map(({ part, originalIndex }) => {
-                    const blankNumber = parseInt(part.match(/\d+/)?.[0] || "0");
-                    const answers =
-                      form.getFieldValue([
-                        "data",
-                        "blanks",
-                        blankNumber - 1,
-                        "correct",
-                      ]) || [];
-
-                    return (
-                      <div
-                        key={`summary-${blankNumber}`}
-                        style={{ margin: "4px 0" }}
-                      >
-                        <Tag color="orange">Chỗ Trống {blankNumber}</Tag>
-                        <span style={{ margin: "0 8px" }}>→</span>
-                        {answers.length > 0 ? (
-                          answers.map((answer: string, idx: number) => (
-                            <Tag
-                              key={idx}
-                              color="green"
-                              style={{ margin: "2px" }}
-                            >
-                              {answer}
-                            </Tag>
-                          ))
-                        ) : (
-                          <Tag color="red">Chưa đặt đáp án</Tag>
-                        )}
-                      </div>
-                    );
-                  })}
-              </div>
+        {getBlankIndices().length > 0 && (
+          <div className="mt-4 p-3 bg-green-50 rounded-lg border border-green-100">
+            <Text strong className="text-green-800">Tóm Tắt Đáp Án:</Text>
+            <div className="mt-2 space-y-1">
+              {getBlankIndices().map((blankIndex) => {
+                const answers = getAnswersForBlank(blankIndex);
+                return (
+                  <div key={blankIndex} className="flex items-center gap-2">
+                    <Tag color="orange">#{blankIndex}</Tag><span>→</span>
+                    {answers.length > 0 ? answers.map((answer, idx) => <Tag key={idx} color="green">{getDisplayText(answer)}</Tag>) : <Tag color="red">Chưa đặt đáp án</Tag>}
+                  </div>
+                );
+              })}
             </div>
-          </Card>
+          </div>
         )}
-      </Card>
+      </SectionContainer>
 
-      {/* Step 7: Explanation */}
-      <Card title="Bước 7: Giải Thích" style={{ marginBottom: "24px" }}>
-        <Form.Item
-          label="Giải Thích"
-          name={["data", "explanation"]}
-          rules={[{ required: true, message: "Vui lòng nhập giải thích" }]}
-        >
-          <TextArea
-            placeholder="Giải thích đáp án đúng, quy tắc ngữ pháp và ý nghĩa từ..."
-            autoSize={{ minRows: 3, maxRows: 6 }}
-          />
-        </Form.Item>
-      </Card>
-
-      {/* Additional Settings */}
-      <Card title="Cài Đặt Bổ Sung" style={{ marginBottom: "24px" }}>
-        <Form.Item
-          label="Kích Hoạt"
-          name="isActive"
-          valuePropName="checked"
-          initialValue={true}
-        >
-          <Switch />
-        </Form.Item>
-      </Card>
-
-      <Card title="Xem Trước JSON" style={{ marginBottom: "24px" }}>
-        <pre
-          style={{
-            backgroundColor: "#f5f5f5",
-            padding: "12px",
-            borderRadius: "4px",
-            fontSize: "12px",
-            overflow: "auto",
-            maxHeight: "300px",
-          }}
-        >
-          {JSON.stringify(
-            {
-              instruction: form.getFieldValue(["data", "instruction"]),
-              sentence: sentenceParts,
-              pinyin: pinyinParts,
-              vietnamese: form.getFieldValue(["data", "vietnamese"]),
-              optionBank: form.getFieldValue(["data", "optionBank"]),
-              blanks: form.getFieldValue(["data", "blanks"]),
-              explanation: form.getFieldValue(["data", "explanation"]),
-            },
-            null,
-            2
-          )}
-        </pre>
-      </Card>
+      {/* Section 6: Explanation */}
+      <SectionContainer>
+        <SectionHeader step={6} title="Cài Đặt Bổ Sung" description="Giải thích và trạng thái" icon={<CheckCircleOutlined />} />
+        <FormField label="Giải thích" required>
+          <Form.Item name={["data", "explanation"]} rules={[{ required: true, message: "Bắt buộc" }]} className="mb-0">
+            <TextArea rows={3} className="rounded-lg" placeholder="Giải thích đáp án đúng, quy tắc ngữ pháp..." />
+          </Form.Item>
+        </FormField>
+        <FormField label="Kích hoạt">
+          <Form.Item name="isActive" valuePropName="checked" initialValue={true} className="mb-0">
+            <Switch />
+          </Form.Item>
+        </FormField>
+      </SectionContainer>
     </div>
   );
 };

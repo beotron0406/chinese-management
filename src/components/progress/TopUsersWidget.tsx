@@ -16,11 +16,11 @@ export default function TopUsersWidget({ topUsers, loading }: TopUsersWidgetProp
   const getRankIcon = (index: number) => {
     switch (index) {
       case 0:
-        return <span style={{ fontSize: '20px' }}>🥇</span>; // Vàng
+        return <span className="text-xl">🥇</span>; // Vàng
       case 1:
-        return <span style={{ fontSize: '20px' }}>🥈</span>; // Bạc
+        return <span className="text-xl">🥈</span>; // Bạc
       case 2:
-        return <span style={{ fontSize: '20px' }}>🥉</span>; // Đồng
+        return <span className="text-xl">🥉</span>; // Đồng
       default:
         return null;
     }
@@ -39,43 +39,30 @@ export default function TopUsersWidget({ topUsers, loading }: TopUsersWidgetProp
     }
   };
 
-  const getAvatarColor = (index: number) => {
+  const getAvatarClassName = (index: number) => {
     const colors = [
-      '#FFD700', // Vàng cho #1
-      '#C0C0C0', // Bạc cho #2  
-      '#CD7F32', // Đồng cho #3
-      '#87CEEB', // Sky blue
-      '#DDA0DD', // Plum
-      '#98FB98', // Pale green
-      '#F0E68C', // Khaki
-      '#FF69B4'  // Hot pink
+      'bg-yellow-400', // Vàng cho #1
+      'bg-gray-300', // Bạc cho #2  
+      'bg-orange-400', // Đồng cho #3
+      'bg-sky-300', // Sky blue
+      'bg-purple-300', // Plum
+      'bg-green-300', // Pale green
+      'bg-yellow-200', // Khaki
+      'bg-pink-400'  // Hot pink
     ];
-    return colors[index] || '#1890ff';
+    return colors[index] || 'bg-blue-500';
   };
 
-  const getBackgroundColor = (index: number) => {
+  const getAvatarBorderClassName = (index: number) => {
     switch (index) {
       case 0:
-        return '#FFF7E6'; // Vàng nhạt
+        return 'border-2 border-yellow-400';
       case 1:
-        return '#E6FFFB'; // Cyan nhạt
+        return 'border-2 border-cyan-400';
       case 2:
-        return '#FFF2E8'; // Cam nhạt
+        return 'border-2 border-orange-400';
       default:
-        return '#FAFAFA'; // Xám nhạt
-    }
-  };
-
-  const getBorderColor = (index: number) => {
-    switch (index) {
-      case 0:
-        return '#FFD700'; // Vàng
-      case 1:
-        return '#13C2C2'; // Cyan
-      case 2:
-        return '#FA8C16'; // Cam
-      default:
-        return '#F0F0F0'; // Xám
+        return '';
     }
   };
 
@@ -151,11 +138,7 @@ export default function TopUsersWidget({ topUsers, loading }: TopUsersWidgetProp
                   {/* Avatar */}
                   <Avatar 
                     size="large" 
-                    style={{ 
-                      backgroundColor: getAvatarColor(index),
-                      border: index < 3 ? `2px solid ${getBorderColor(index)}` : 'none'
-                    }}
-                    className="text-base font-bold"
+                    className={`text-base font-bold ${getAvatarClassName(index)} ${getAvatarBorderClassName(index)}`}
                   >
                     {user.displayName?.charAt(0)?.toUpperCase() || 'U'}
                   </Avatar>

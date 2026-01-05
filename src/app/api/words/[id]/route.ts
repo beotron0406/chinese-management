@@ -9,8 +9,6 @@ export async function GET(
 ) {
   try {
     const { id } = params;
-    
-    console.log('🔄 Fetching word by ID:', id);
 
     const response = await fetch(`${API_BASE_URL}/words/${id}`, {
       method: 'GET',
@@ -35,7 +33,6 @@ export async function GET(
     }
 
     const responseBody = await response.json();
-    console.log('✅ Word fetched successfully:', responseBody.simplified);
     
     return NextResponse.json(responseBody);
   } catch (error) {
@@ -57,8 +54,6 @@ export async function DELETE(
 ) {
   try {
     const { id } = params;
-    
-    console.log('🔄 Deleting word:', id);
 
     const response = await fetch(`${API_BASE_URL}/words/${id}`, {
       method: 'DELETE',
@@ -82,9 +77,10 @@ export async function DELETE(
       throw new Error(errorData.message || `API error: ${response.status}`);
     }
 
-    console.log('✅ Word deleted successfully:', id);
-    
-    return new NextResponse(null, { status: 204 });
+    return NextResponse.json({
+      status: true,
+      message: 'Word deleted successfully'
+    });
   } catch (error) {
     console.error('❌ Error deleting word:', error);
     return NextResponse.json(

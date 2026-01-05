@@ -38,6 +38,8 @@ import {
   LessonGrammarPattern,
   LessonWord,
 } from "@/types/itemTypes";
+import TextContentDisplay, { TextContentInline } from "@/components/shared/TextContentDisplay";
+import { getDisplayText } from "@/utils/textContentUtils";
 
 const { Title, Text, Paragraph } = Typography;
 const { TabPane } = Tabs;
@@ -111,9 +113,9 @@ export default function LessonItemsPage() {
     setModalVisible(true);
   };
 
-  const handleDeleteItem = async (itemId: number) => {
+  const handleDeleteItem = async (itemId: number, itemType: string) => {
     try {
-      await lessonApi.deleteLessonContent(itemId);
+      await lessonApi.deleteLessonContent(itemId, itemType);
       message.success("Xóa nội dung thành công");
       fetchData();
     } catch (error) {
@@ -154,19 +156,17 @@ export default function LessonItemsPage() {
   const renderContentCard = (item: ContentItem) => {
     const { type, data } = item;
 
-    const cardStyle = { marginBottom: 12, fontSize: "0.85em" };
     const titleLevel = 5;
-    const smallTextStyle = { fontSize: 14 };
 
     if (type === "content_word_definition") {
       return (
         <Card
           hoverable
-          style={cardStyle}
+          className="mb-3 text-sm"
           size="small"
           extra={
             <Space size="small">
-              <Tag color="green" style={{ fontSize: 11 }}>
+              <Tag color="green" className="text-xs">
                 Định nghĩa từ
               </Tag>
               <Button
@@ -176,7 +176,7 @@ export default function LessonItemsPage() {
               />
               <Popconfirm
                 title="Xóa nội dung này?"
-                onConfirm={() => handleDeleteItem(item.id)}
+                onConfirm={() => handleDeleteItem(item.id, item.itemType)}
               >
                 <Button size="small" danger icon={<DeleteOutlined />} />
               </Popconfirm>
@@ -189,31 +189,29 @@ export default function LessonItemsPage() {
                 <Image
                   src={data.picture_url}
                   alt="word"
-                  style={{ width: "100%", maxHeight: 120, objectFit: "cover" }}
+                  className="w-full max-h-[120px] object-cover"
                 />
               </Col>
             )}
             <Col span={data.picture_url ? 18 : 24}>
-              <Title level={3} style={{ marginBottom: 4 }}>
+              <Title level={3} className="!mb-1">
                 {data.chinese_text}
               </Title>
-              <Text type="secondary" style={{ fontSize: 14 }}>
+              <Text type="secondary" className="text-sm">
                 {data.pinyin}
               </Text>
               <br />
-              <Tag color="blue" style={{ fontSize: 11, marginTop: 4 }}>
+              <Tag color="blue" className="text-xs mt-1">
                 {data.speech}
               </Tag>
-              <Paragraph
-                style={{ marginTop: 8, marginBottom: 0, fontSize: 13 }}
-              >
+              <Paragraph className="mt-2 !mb-0 text-sm">
                 {data.translation}
               </Paragraph>
               {data.audio_url && (
                 <audio
                   controls
                   src={data.audio_url}
-                  style={{ width: "100%", marginTop: 8, height: 32 }}
+                  className="w-full mt-2 h-8"
                 />
               )}
             </Col>
@@ -226,11 +224,11 @@ export default function LessonItemsPage() {
       return (
         <Card
           hoverable
-          style={cardStyle}
+          className="mb-3 text-sm"
           size="small"
           extra={
             <Space size="small">
-              <Tag color="cyan" style={{ fontSize: 11 }}>
+              <Tag color="cyan" className="text-xs">
                 Câu
               </Tag>
               <Button
@@ -240,7 +238,7 @@ export default function LessonItemsPage() {
               />
               <Popconfirm
                 title="Xóa nội dung này?"
-                onConfirm={() => handleDeleteItem(item.id)}
+                onConfirm={() => handleDeleteItem(item.id, item.itemType)}
               >
                 <Button size="small" danger icon={<DeleteOutlined />} />
               </Popconfirm>
@@ -251,34 +249,24 @@ export default function LessonItemsPage() {
             <Image
               src={data.picture_url}
               alt="sentences"
-              style={{
-                marginBottom: 12,
-                maxWidth: 200,
-                maxHeight: 120,
-                objectFit: "cover",
-              }}
+              className="mb-3 max-w-[200px] max-h-[120px] object-cover"
             />
           )}
-          {Array.isArray(data.chinese_text) &&
-            data.chinese_text.map((text: string, index: number) => (
-              <div key={index} style={{ marginBottom: 8 }}>
-                <Title level={titleLevel} style={{ marginBottom: 2 }}>
-                  {text}
-                </Title>
-                <Text type="secondary" style={{ fontSize: 12 }}>
-                  {data.pinyin?.[index]}
-                </Text>
-              </div>
-            ))}
+          <div className="flex flex-wrap gap-x-1 items-end">
+            {Array.isArray(data.chinese_text) &&
+              data.chinese_text.map((text: string, index: number) => (
+                <div key={index} className="text-center">
+                  <Title level={titleLevel} className="!mb-0">
+                    {text}
+                  </Title>
+                  <Text type="secondary" className="text-xs">
+                    {data.pinyin?.[index]}
+                  </Text>
+                </div>
+              ))}
+          </div>
           {data.explaination && (
-            <Paragraph
-              style={{
-                marginTop: 12,
-                fontStyle: "italic",
-                fontSize: 12,
-                marginBottom: 0,
-              }}
-            >
+            <Paragraph className="mt-3 italic text-xs !mb-0">
               {data.explaination}
             </Paragraph>
           )}
@@ -286,7 +274,7 @@ export default function LessonItemsPage() {
             <audio
               controls
               src={data.audio_url}
-              style={{ width: "100%", marginTop: 8, height: 32 }}
+              className="w-full mt-2 h-8"
             />
           )}
         </Card>
@@ -297,11 +285,11 @@ export default function LessonItemsPage() {
       return (
         <Card
           hoverable
-          style={cardStyle}
+          className="mb-3 text-sm"
           size="small"
           extra={
             <Space size="small">
-              <Tag color="blue" style={{ fontSize: 11 }}>
+              <Tag color="blue" className="text-xs">
                 Câu hỏi lựa chọn
               </Tag>
               <Button
@@ -311,36 +299,40 @@ export default function LessonItemsPage() {
               />
               <Popconfirm
                 title="Xóa nội dung này?"
-                onConfirm={() => handleDeleteItem(item.id)}
+                onConfirm={() => handleDeleteItem(item.id, item.itemType)}
               >
                 <Button size="small" danger icon={<DeleteOutlined />} />
               </Popconfirm>
             </Space>
           }
         >
-          <Title level={titleLevel} style={{ marginBottom: 8 }}>
+          <Title level={titleLevel} className="!mb-2">
             {data.instruction}
           </Title>
-          {data.question && (
-            <Paragraph style={{ fontSize: 13, marginBottom: 12 }}>
-              {data.question}
+          {(data.question || data.questionContent) && (
+            <Paragraph className="text-sm !mb-3">
+              {data.questionContent ? (
+                <TextContentDisplay content={data.questionContent} />
+              ) : (
+                data.question
+              )}
             </Paragraph>
           )}
 
           {data.audio_url && (
-            <div style={{ marginBottom: 12 }}>
+            <div className="mb-3">
               <audio
                 controls
                 src={data.audio_url}
-                style={{ width: "100%", height: 32 }}
+                className="w-full h-8"
               />
               {data.audio_transcript_chinese && (
-                <div style={{ marginTop: 6 }}>
-                  <Text style={{ fontSize: 12 }}>
+                <div className="mt-1.5">
+                  <Text className="text-xs">
                     {data.audio_transcript_chinese}
                   </Text>
                   <br />
-                  <Text type="secondary" style={{ fontSize: 11 }}>
+                  <Text type="secondary" className="text-xs">
                     {data.audio_transcript_pinyin}
                   </Text>
                 </div>
@@ -351,38 +343,30 @@ export default function LessonItemsPage() {
           <Row gutter={[12, 12]}>
             {data.options?.map((option: any) => {
               const isCorrect = option.id === data.correctAnswer;
+              // Handle both legacy text and new content format
+              const optionText = option.content 
+                ? getDisplayText(option.content) 
+                : option.text;
               return (
                 <Col span={12} key={option.id}>
                   <Card
                     size="small"
-                    style={{
-                      border: isCorrect
-                        ? "2px solid #52c41a"
-                        : "1px solid #d9d9d9",
-                    }}
+                    className={isCorrect ? "border-2 border-green-500" : "border border-gray-300"}
                     bodyStyle={{ padding: 8 }}
                   >
                     {option.image ? (
                       <Image
                         src={option.image}
                         alt={option.alt}
-                        style={{
-                          width: "100%",
-                          maxHeight: 80,
-                          objectFit: "cover",
-                        }}
+                        className="w-full max-h-[80px] object-cover"
                       />
+                    ) : option.content ? (
+                      <TextContentDisplay content={option.content} size="small" />
                     ) : (
-                      <Text style={{ fontSize: 12 }}>{option.text}</Text>
+                      <Text className="text-xs">{option.text}</Text>
                     )}
                     {isCorrect && (
-                      <CheckCircleOutlined
-                        style={{
-                          color: "#52c41a",
-                          marginLeft: 4,
-                          fontSize: 12,
-                        }}
-                      />
+                      <CheckCircleOutlined className="text-green-500 ml-1 text-xs" />
                     )}
                   </Card>
                 </Col>
@@ -391,16 +375,8 @@ export default function LessonItemsPage() {
           </Row>
 
           {data.explanation && (
-            <Paragraph
-              style={{
-                marginTop: 12,
-                padding: 8,
-                background: "#f0f2f5",
-                fontSize: 12,
-                marginBottom: 0,
-              }}
-            >
-              <Text strong style={{ fontSize: 12 }}>
+            <Paragraph className="mt-3 p-2 bg-gray-100 text-xs !mb-0">
+              <Text strong className="text-xs">
                 Giải thích:{" "}
               </Text>
               {data.explanation}
@@ -414,11 +390,11 @@ export default function LessonItemsPage() {
       return (
         <Card
           hoverable
-          style={cardStyle}
+          className="mb-3 text-sm"
           size="small"
           extra={
             <Space size="small">
-              <Tag color="purple" style={{ fontSize: 11 }}>
+              <Tag color="purple" className="text-xs">
                 Câu hỏi ghép nối
               </Tag>
               <Button
@@ -428,100 +404,87 @@ export default function LessonItemsPage() {
               />
               <Popconfirm
                 title="Delete this item?"
-                onConfirm={() => handleDeleteItem(item.id)}
+                onConfirm={() => handleDeleteItem(item.id, item.itemType)}
               >
                 <Button size="small" danger icon={<DeleteOutlined />} />
               </Popconfirm>
             </Space>
           }
         >
-          <Title level={titleLevel} style={{ marginBottom: 12 }}>
+          <Title level={titleLevel} className="!mb-3">
             {data.instruction}
           </Title>
 
           <Row gutter={12}>
             <Col span={12}>
-              <Title level={5} style={{ fontSize: 13, marginBottom: 8 }}>
+              <Title level={5} className="text-sm !mb-2">
                 Cột bên trái
               </Title>
               {data.leftColumn?.map((item: any) => (
                 <Card
                   key={item.id}
                   size="small"
-                  style={{ marginBottom: 6 }}
+                  className="mb-1.5"
                   bodyStyle={{ padding: 8 }}
                 >
                   {item.audio_url && (
                     <audio
                       controls
                       src={item.audio_url}
-                      style={{ width: "100%", height: 28 }}
+                      className="w-full h-7"
                     />
                   )}
                   {item.text && (
-                    <Text style={{ fontSize: 12 }}>{item.text}</Text>
+                    <Text className="text-xs">{item.text}</Text>
                   )}
                   {item.pinyin && (
-                    <Text type="secondary" style={{ fontSize: 11 }}>
-                      {" "}
-                      ({item.pinyin})
+                    <Text type="secondary" className="text-xs">
+                      {" "}({item.pinyin})
                     </Text>
                   )}
                 </Card>
               ))}
             </Col>
             <Col span={12}>
-              <Title level={5} style={{ fontSize: 13, marginBottom: 8 }}>
+              <Title level={5} className="text-sm !mb-2">
                 Cột bên phải
               </Title>
               {data.rightColumn?.map((item: any) => (
                 <Card
                   key={item.id}
                   size="small"
-                  style={{ marginBottom: 6 }}
+                  className="mb-1.5"
                   bodyStyle={{ padding: 8 }}
                 >
                   {item.image && (
                     <Image
                       src={item.image}
                       alt={item.alt}
-                      style={{
-                        width: "100%",
-                        maxHeight: 60,
-                        objectFit: "cover",
-                      }}
+                      className="w-full max-h-[60px] object-cover"
                     />
                   )}
                   {item.text && (
-                    <Text style={{ fontSize: 12 }}>{item.text}</Text>
+                    <Text className="text-xs">{item.text}</Text>
                   )}
                 </Card>
               ))}
             </Col>
           </Row>
 
-          <div style={{ marginTop: 12 }}>
-            <Text strong style={{ fontSize: 12 }}>
+          <div className="mt-3">
+            <Text strong className="text-xs">
               Ghép nối đúng:{" "}
             </Text>
             {data.correctMatches?.map((match: any, index: number) => (
-              <Tag key={index} color="green" style={{ fontSize: 11 }}>
+              <Tag key={index} color="green" className="text-xs">
                 {match.left} ↔ {match.right}
               </Tag>
             ))}
           </div>
 
           {data.explanation && (
-            <Paragraph
-              style={{
-                marginTop: 12,
-                padding: 8,
-                background: "#f0f2f5",
-                fontSize: 12,
-                marginBottom: 0,
-              }}
-            >
-              <Text strong style={{ fontSize: 12 }}>
+            <Paragraph className="mt-3 p-2 bg-gray-100 text-xs !mb-0">
+              <Text strong className="text-xs">
                 Giải thích:{" "}
               </Text>
               {data.explanation}
@@ -535,12 +498,12 @@ export default function LessonItemsPage() {
       return (
         <Card
           hoverable
-          style={cardStyle}
+          className="mb-3 text-sm"
           size="small"
           extra={
             <Space size="small">
-              <Tag color="orange" style={{ fontSize: 11 }}>
-                Câu hỏi đúng/sai
+              <Tag color="orange" className="text-xs">
+                Câu hỏi đúng/sai (Audio)
               </Tag>
               <Button
                 size="small"
@@ -549,46 +512,66 @@ export default function LessonItemsPage() {
               />
               <Popconfirm
                 title="Xóa nội dung này?"
-                onConfirm={() => handleDeleteItem(item.id)}
+                onConfirm={() => handleDeleteItem(item.id, item.itemType)}
               >
                 <Button size="small" danger icon={<DeleteOutlined />} />
               </Popconfirm>
             </Space>
           }
         >
-          <Title level={titleLevel} style={{ marginBottom: 8 }}>
+          <Title level={titleLevel} className="!mb-2">
             {data.instruction}
           </Title>
 
-          {data.audio && (
+          {(data.audio || data.audio_url) && (
             <audio
               controls
-              src={data.audio}
-              style={{ width: "100%", marginBottom: 12, height: 32 }}
+              src={data.audio_url || data.audio}
+              className="w-full mb-3 h-8"
             />
           )}
 
-          <div style={{ marginBottom: 12 }}>
-            <Text strong style={{ fontSize: 13 }}>
-              {data.transcript}
-            </Text>
-            <br />
-            <Text type="secondary" style={{ fontSize: 12 }}>
-              {data.pinyin}
-            </Text>
-            <br />
-            <Text style={{ fontSize: 12 }}>{data.english}</Text>
+          {/* Audio transcript */}
+          <div className="mb-3 p-2 bg-gray-50 rounded">
+            <Text strong className="text-xs block mb-1">Nội dung âm thanh:</Text>
+            {data.transcriptContent ? (
+              <TextContentDisplay content={data.transcriptContent} size="small" />
+            ) : (
+              <>
+                <Text className="text-sm">{data.transcript}</Text>
+                {data.pinyin && (
+                  <>
+                    <br />
+                    <Text type="secondary" className="text-xs">{data.pinyin}</Text>
+                  </>
+                )}
+              </>
+            )}
+            {data.english && (
+              <>
+                <br />
+                <Text className="text-xs" type="secondary">{data.english}</Text>
+              </>
+            )}
           </div>
 
+          {/* Statement to judge */}
+          {data.statementContent && (
+            <div className="mb-3 p-2 bg-blue-50 rounded border border-blue-200">
+              <Text strong className="text-xs block mb-1">Câu phát biểu:</Text>
+              <TextContentDisplay content={data.statementContent} size="small" />
+            </div>
+          )}
+
           <div>
-            <Text strong style={{ fontSize: 12 }}>
+            <Text strong className="text-xs">
               Đáp án đúng:{" "}
             </Text>
             {data.correctAnswer ? (
               <Tag
                 color="green"
                 icon={<CheckCircleOutlined />}
-                style={{ fontSize: 11 }}
+                className="text-xs"
               >
                 Đúng
               </Tag>
@@ -596,7 +579,7 @@ export default function LessonItemsPage() {
               <Tag
                 color="red"
                 icon={<CloseCircleOutlined />}
-                style={{ fontSize: 11 }}
+                className="text-xs"
               >
                 Sai
               </Tag>
@@ -604,16 +587,91 @@ export default function LessonItemsPage() {
           </div>
 
           {data.explanation && (
-            <Paragraph
-              style={{
-                marginTop: 12,
-                padding: 8,
-                background: "#f0f2f5",
-                fontSize: 12,
-                marginBottom: 0,
-              }}
-            >
-              <Text strong style={{ fontSize: 12 }}>
+            <Paragraph className="mt-3 p-2 bg-gray-100 text-xs !mb-0">
+              <Text strong className="text-xs">
+                Giải thích:{" "}
+              </Text>
+              {data.explanation}
+            </Paragraph>
+          )}
+        </Card>
+      );
+    }
+
+    if (type === "question_bool_image_text") {
+      return (
+        <Card
+          hoverable
+          className="mb-3 text-sm"
+          size="small"
+          extra={
+            <Space size="small">
+              <Tag color="orange" className="text-xs">
+                Câu hỏi đúng/sai (Hình ảnh)
+              </Tag>
+              <Button
+                size="small"
+                icon={<EditOutlined />}
+                onClick={() => handleEditItem(item)}
+              />
+              <Popconfirm
+                title="Xóa nội dung này?"
+                onConfirm={() => handleDeleteItem(item.id, item.itemType)}
+              >
+                <Button size="small" danger icon={<DeleteOutlined />} />
+              </Popconfirm>
+            </Space>
+          }
+        >
+          <Title level={titleLevel} className="!mb-2">
+            {data.instruction}
+          </Title>
+
+          {/* Image */}
+          {(data.image || data.image_url) && (
+            <div className="mb-3">
+              <Image
+                src={data.image_url || data.image}
+                alt={data.alt || "Question image"}
+                className="max-w-[200px] max-h-[150px] object-cover rounded"
+              />
+            </div>
+          )}
+
+          {/* Statement to judge */}
+          {data.statementContent && (
+            <div className="mb-3 p-2 bg-blue-50 rounded border border-blue-200">
+              <Text strong className="text-xs block mb-1">Câu phát biểu:</Text>
+              <TextContentDisplay content={data.statementContent} size="small" />
+            </div>
+          )}
+
+          <div>
+            <Text strong className="text-xs">
+              Đáp án đúng:{" "}
+            </Text>
+            {data.correctAnswer ? (
+              <Tag
+                color="green"
+                icon={<CheckCircleOutlined />}
+                className="text-xs"
+              >
+                Đúng
+              </Tag>
+            ) : (
+              <Tag
+                color="red"
+                icon={<CloseCircleOutlined />}
+                className="text-xs"
+              >
+                Sai
+              </Tag>
+            )}
+          </div>
+
+          {data.explanation && (
+            <Paragraph className="mt-3 p-2 bg-gray-100 text-xs !mb-0">
+              <Text strong className="text-xs">
                 Giải thích:{" "}
               </Text>
               {data.explanation}
@@ -624,40 +682,35 @@ export default function LessonItemsPage() {
     }
 
     if (type === "question_fill_text_text") {
-      return (
-        <Card
-          hoverable
-          style={cardStyle}
-          size="small"
-          extra={
-            <Space size="small">
-              <Tag color="magenta" style={{ fontSize: 11 }}>
-                Điền vào chỗ trống
-              </Tag>
-              <Button
-                size="small"
-                icon={<EditOutlined />}
-                onClick={() => handleEditItem(item)}
-              />
-              <Popconfirm
-                title="Xóa nội dung này?"
-                onConfirm={() => handleDeleteItem(item.id)}
-              >
-                <Button size="small" danger icon={<DeleteOutlined />} />
-              </Popconfirm>
-            </Space>
-          }
-        >
-          <Title level={titleLevel} style={{ marginBottom: 8 }}>
-            {data.instruction}
-          </Title>
-
-          <div style={{ marginBottom: 12 }}>
-            <Text style={{ fontSize: 14 }}>
+      // Helper to render segments (new format) or sentence (legacy)
+      const renderSentence = () => {
+        // New format with segments
+        if (data.segments && data.segments.length > 0) {
+          return (
+            <div className="flex flex-wrap items-end gap-1">
+              {data.segments.map((segment: any, index: number) => (
+                <span key={index}>
+                  {segment.type === 'text' ? (
+                    <TextContentDisplay content={segment.content} size="small" />
+                  ) : (
+                    <Tag color="orange" className="text-xs">
+                      [Chỗ trống #{segment.blankIndex}]
+                    </Tag>
+                  )}
+                </span>
+              ))}
+            </div>
+          );
+        }
+        
+        // Legacy format
+        return (
+          <>
+            <Text className="text-sm">
               {data.sentence?.map((part: string, index: number) => (
                 <span key={index}>
                   {part.startsWith("[") ? (
-                    <Tag color="blue" style={{ fontSize: 11 }}>
+                    <Tag color="blue" className="text-xs">
                       {part}
                     </Tag>
                   ) : (
@@ -667,48 +720,118 @@ export default function LessonItemsPage() {
               ))}
             </Text>
             <br />
-            <Text type="secondary" style={{ fontSize: 12 }}>
+            <Text type="secondary" className="text-xs">
               {data.pinyin?.join(" ")}
             </Text>
-            <br />
-            <Text style={{ fontSize: 12 }}>{data.vietnamese}</Text>
-          </div>
+          </>
+        );
+      };
 
-          {data.optionBank && (
-            <div style={{ marginBottom: 12 }}>
-              <Text strong style={{ fontSize: 12 }}>
-                Ngân hàng lựa chọn:{" "}
-              </Text>
-              {data.optionBank.map((option: string, index: number) => (
-                <Tag key={index} style={{ fontSize: 11 }}>
-                  {option}
+      // Helper to render option bank
+      const renderOptionBank = () => {
+        // New format
+        if (data.optionBankItems && data.optionBankItems.length > 0) {
+          return data.optionBankItems.map((item: any, index: number) => (
+            <Tag key={index} className="text-xs">
+              <TextContentDisplay content={item} size="small" />
+            </Tag>
+          ));
+        }
+        
+        // Legacy format
+        if (data.optionBank) {
+          return data.optionBank.map((option: string, index: number) => (
+            <Tag key={index} className="text-xs">
+              {option}
+            </Tag>
+          ));
+        }
+        
+        return null;
+      };
+
+      // Helper to render answers
+      const renderAnswers = () => {
+        // New format
+        if (data.blankAnswers && data.blankAnswers.length > 0) {
+          return data.blankAnswers.map((blank: any, index: number) => (
+            <div key={index} className="mb-1">
+              <Tag color="orange" className="text-xs">#{blank.index}</Tag>
+              <span className="mx-1">→</span>
+              {blank.correctAnswers?.map((answer: any, aIdx: number) => (
+                <Tag key={aIdx} color="green" className="text-xs">
+                  {getDisplayText(answer)}
                 </Tag>
               ))}
+            </div>
+          ));
+        }
+        
+        // Legacy format
+        if (data.blanks) {
+          return data.blanks.map((blank: any, index: number) => (
+            <Tag key={index} color="green" className="text-xs">
+              [{blank.index}] = {blank.correct.join(", ")}
+            </Tag>
+          ));
+        }
+        
+        return null;
+      };
+
+      return (
+        <Card
+          hoverable
+          className="mb-3 text-sm"
+          size="small"
+          extra={
+            <Space size="small">
+              <Tag color="magenta" className="text-xs">
+                Điền vào chỗ trống
+              </Tag>
+              <Button
+                size="small"
+                icon={<EditOutlined />}
+                onClick={() => handleEditItem(item)}
+              />
+              <Popconfirm
+                title="Xóa nội dung này?"
+                onConfirm={() => handleDeleteItem(item.id, item.itemType)}
+              >
+                <Button size="small" danger icon={<DeleteOutlined />} />
+              </Popconfirm>
+            </Space>
+          }
+        >
+          <Title level={titleLevel} className="!mb-2">
+            {data.instruction}
+          </Title>
+
+          <div className="mb-3">
+            {renderSentence()}
+            <br />
+            <Text className="text-xs">{data.vietnamese}</Text>
+          </div>
+
+          {(data.optionBankItems || data.optionBank) && (
+            <div className="mb-3">
+              <Text strong className="text-xs">
+                Ngân hàng lựa chọn:{" "}
+              </Text>
+              {renderOptionBank()}
             </div>
           )}
 
           <div>
-            <Text strong style={{ fontSize: 12 }}>
+            <Text strong className="text-xs">
               Đáp án đúng:{" "}
             </Text>
-            {data.blanks?.map((blank: any, index: number) => (
-              <Tag key={index} color="green" style={{ fontSize: 11 }}>
-                [{blank.index}] = {blank.correct.join(", ")}
-              </Tag>
-            ))}
+            {renderAnswers()}
           </div>
 
           {data.explanation && (
-            <Paragraph
-              style={{
-                marginTop: 12,
-                padding: 8,
-                background: "#f0f2f5",
-                fontSize: 12,
-                marginBottom: 0,
-              }}
-            >
-              <Text strong style={{ fontSize: 12 }}>
+            <Paragraph className="mt-3 p-2 bg-gray-100 text-xs !mb-0">
+              <Text strong className="text-xs">
                 Giải thích:{" "}
               </Text>
               {data.explanation}
@@ -721,11 +844,11 @@ export default function LessonItemsPage() {
     return (
       <Card
         hoverable
-        style={cardStyle}
+        className="mb-3 text-sm"
         size="small"
         extra={
           <Space size="small">
-            <Tag style={{ fontSize: 11 }}>{type}</Tag>
+            <Tag className="text-xs">{type}</Tag>
             <Button
               size="small"
               icon={<EditOutlined />}
@@ -733,14 +856,14 @@ export default function LessonItemsPage() {
             />
             <Popconfirm
               title="Xóa nội dung này?"
-              onConfirm={() => handleDeleteItem(item.id)}
+              onConfirm={() => handleDeleteItem(item.id, item.itemType)}
             >
               <Button size="small" danger icon={<DeleteOutlined />} />
             </Popconfirm>
           </Space>
         }
       >
-        <pre style={{ fontSize: 11 }}>{JSON.stringify(data, null, 2)}</pre>
+        <pre className="text-xs">{JSON.stringify(data, null, 2)}</pre>
       </Card>
     );
   };
@@ -780,7 +903,7 @@ export default function LessonItemsPage() {
         } as any)}
       />
 
-      <Row gutter={16} style={{ marginBottom: 24 }}>
+      <Row gutter={16} className="mb-6">
         <Col span={8}>
           <Card>
             <Statistic
@@ -817,7 +940,7 @@ export default function LessonItemsPage() {
         <Tabs activeKey={activeTab} onChange={setActiveTab}>
           <TabPane tab={`Nội dung (${items.length})`} key="items">
             {loading ? (
-              <div style={{ textAlign: "center", padding: 50 }}>
+              <div className="text-center p-12">
                 <Spin size="large" />
               </div>
             ) : items.length === 0 ? (
@@ -845,7 +968,7 @@ export default function LessonItemsPage() {
                         <Image
                           src={word.wordSense.imageUrl}
                           alt="word"
-                          style={{ height: 120, objectFit: "cover" }}
+                          className="h-[120px] object-cover"
                         />
                       ) : null
                     }
@@ -857,40 +980,35 @@ export default function LessonItemsPage() {
                           handleDeleteWord(word.id, word.wordSenseId)
                         }
                       >
-                        <DeleteOutlined
-                          style={{ color: "red", fontSize: 14 }}
-                        />
+                        <DeleteOutlined className="text-red-500 text-sm" />
                       </Popconfirm>,
                     ]}
                     bodyStyle={{ padding: 12 }}
                   >
-                    <Title level={4} style={{ marginBottom: 4 }}>
+                    <Title level={4} className="!mb-1">
                       {word.wordSense?.word.simplified}
                     </Title>
-                    <Text type="secondary" style={{ fontSize: 12 }}>
+                    <Text type="secondary" className="text-xs">
                       {word.wordSense?.pinyin}
                     </Text>
                     <br />
                     {word.wordSense?.partOfSpeech && (
-                      <Tag color="blue" style={{ fontSize: 10 }}>
+                      <Tag color="blue" className="text-[10px]">
                         {word.wordSense.partOfSpeech}
                       </Tag>
                     )}
                     {word.wordSense?.hskLevel && (
-                      <Tag color="green" style={{ fontSize: 10 }}>
+                      <Tag color="green" className="text-[10px]">
                         HSK {word.wordSense.hskLevel}
                       </Tag>
                     )}
                     {word.wordSense?.isPrimary && (
-                      <Tag color="gold" style={{ fontSize: 10 }}>
+                      <Tag color="gold" className="text-[10px]">
                         Chính
                       </Tag>
                     )}
                     {word.wordSense?.translations?.map((trans, idx) => (
-                      <Paragraph
-                        key={idx}
-                        style={{ fontSize: 12, marginBottom: 4 }}
-                      >
+                      <Paragraph key={idx} className="text-xs !mb-1">
                         {trans.translation}
                       </Paragraph>
                     ))}
@@ -898,7 +1016,7 @@ export default function LessonItemsPage() {
                       <audio
                         controls
                         src={word.wordSense.audioUrl}
-                        style={{ width: "100%", marginTop: 6, height: 28 }}
+                        className="w-full mt-1.5 h-7"
                       />
                     )}
                   </Card>
@@ -912,7 +1030,7 @@ export default function LessonItemsPage() {
               <Card
                 key={grammar.id}
                 size="small"
-                style={{ marginBottom: 12 }}
+                className="mb-3"
                 bodyStyle={{ padding: 12 }}
                 extra={
                   <Popconfirm
@@ -928,29 +1046,29 @@ export default function LessonItemsPage() {
                   </Popconfirm>
                 }
               >
-                <Title level={5} style={{ marginBottom: 4 }}>
+                <Title level={5} className="!mb-1">
                   {grammar.grammarPattern?.pattern.join(" ")}
                 </Title>
-                <Text type="secondary" style={{ fontSize: 12 }}>
+                <Text type="secondary" className="text-xs">
                   {grammar.grammarPattern?.patternPinyin?.join(" ")}
                 </Text>
                 <br />
                 {grammar.grammarPattern?.patternFormula && (
-                  <Tag color="blue" style={{ fontSize: 10, marginTop: 4 }}>
+                  <Tag color="blue" className="text-[10px] mt-1">
                     {grammar.grammarPattern.patternFormula}
                   </Tag>
                 )}
                 {grammar.grammarPattern?.hskLevel && (
-                  <Tag color="green" style={{ fontSize: 10, marginTop: 4 }}>
+                  <Tag color="green" className="text-[10px] mt-1">
                     HSK {grammar.grammarPattern.hskLevel}
                   </Tag>
                 )}
                 {grammar.grammarPattern?.translations?.map((trans, idx) => (
-                  <div key={idx} style={{ marginTop: 8 }}>
-                    <Paragraph strong style={{ fontSize: 13, marginBottom: 2 }}>
+                  <div key={idx} className="mt-2">
+                    <Paragraph strong className="text-sm !mb-0.5">
                       {trans.grammarPoint}
                     </Paragraph>
-                    <Paragraph style={{ fontSize: 12, marginBottom: 0 }}>
+                    <Paragraph className="text-xs !mb-0">
                       {trans.explanation}
                     </Paragraph>
                   </div>

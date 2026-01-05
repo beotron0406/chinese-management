@@ -303,8 +303,9 @@ export const lessonApi = {
   },
 
   // Delete lesson content
-  deleteLessonContent: async (contentId: number): Promise<any> => {
-    const response = await api.delete(`/lessons/items/${contentId}`);
+  deleteLessonContent: async (contentId: number, type?: string): Promise<any> => {
+    const query = type ? `?type=${type}` : "";
+    const response = await api.delete(`/lessons/items/${contentId}${query}`);
     return response.data as LessonContent;
   },
 

@@ -30,16 +30,9 @@ const ProtectedRoute = ({
 
   if (isLoading) {
     return (
-      <div
-        style={{
-          display: "flex",
-          justifyContent: "center",
-          alignItems: "center",
-          height: "100vh",
-        }}
-      >
+      <div className="flex justify-center items-center h-screen">
         <Spin size="large" tip="Loading...">
-          <div style={{ padding: "50px" }} />
+          <div className="p-[50px]" />
         </Spin>
       </div>
     );

@@ -1,3 +1,7 @@
+// TextContent type for Chinese with split pinyin support
+export type { TextContent } from "./textContent";
+export { isChineseContent, isSimpleText } from "./textContent";
+
 // User types
 export interface User {
   id: number;
@@ -123,7 +127,6 @@ export interface CourseCreateInput {
   title: string;
   description?: string;
   prerequisiteCourseId?: number | null;
-  isActive?: boolean;
 }
 
 export interface CourseUpdateInput {

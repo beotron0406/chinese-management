@@ -9,8 +9,6 @@ export async function GET(request: NextRequest) {
     const page = searchParams.get('page') || '1';
     const limit = searchParams.get('limit') || '10';
 
-    console.log(`🔄 Fetching courses: page=${page}, limit=${limit}`);
-
     const response = await fetch(
       `${API_BASE_URL}/courses?page=${page}&limit=${limit}`,
       {
@@ -28,7 +26,6 @@ export async function GET(request: NextRequest) {
     }
 
     const responseBody: CoursesResponse = await response.json();
-    console.log('✅ Courses fetched successfully');
     
     return NextResponse.json(responseBody);
   } catch (error) {
@@ -46,8 +43,6 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     const courseData: CourseFormValues = await request.json();
-    
-    console.log('🔄 Creating course:', courseData);
 
     const response = await fetch(`${API_BASE_URL}/courses`, {
       method: 'POST',
@@ -64,7 +59,6 @@ export async function POST(request: NextRequest) {
     }
 
     const responseBody: Course = await response.json();
-    console.log('✅ Course created successfully');
     
     return NextResponse.json(responseBody, { status: 201 });
   } catch (error) {

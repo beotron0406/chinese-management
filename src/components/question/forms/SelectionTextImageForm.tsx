@@ -3,29 +3,31 @@ import React, { useState, useEffect, forwardRef, useImperativeHandle } from "rea
 import {
   Form,
   Input,
-  Card,
-  Typography,
   Upload,
   Button,
   message,
   Space,
+  Typography,
 } from "antd";
 import {
   PictureOutlined,
   UploadOutlined,
   DeleteOutlined,
   PlusOutlined,
+  QuestionCircleOutlined,
+  OrderedListOutlined,
+  CheckCircleOutlined,
 } from "@ant-design/icons";
 import type { FormInstance } from "antd/es/form";
-import { SelectionTextImageQuestionData } from '@/types/questionType';
-import { uploadImageByType, validateFile, UploadProgress } from '@/utils/s3Upload';
-import UploadModal from '@/components/common/UploadModal';
+import { SelectionTextImageQuestionData } from "@/types/questionType";
+import { TextContent } from "@/types/textContent";
+import { uploadImageByType, validateFile, UploadProgress } from "@/utils/s3Upload";
+import UploadModal from "@/components/common/UploadModal";
+import TextContentInput from "@/components/shared/TextContentInput";
+import { SectionContainer, SectionHeader, FormField } from "@/components/shared/FormStyles";
 
 const { Text } = Typography;
 const { TextArea } = Input;
-
-// Dev mode flag - set to false to hide individual upload buttons
-const DEV_MODE = false;
 
 interface SelectionTextImageFormProps {
   form: FormInstance;
@@ -43,235 +45,98 @@ export interface SelectionTextImageFormRef {
 const SelectionTextImageForm = forwardRef<SelectionTextImageFormRef, SelectionTextImageFormProps>(({
   form,
   initialValues,
-  questionType = 'question_selection_text_image',
+  questionType = "question_selection_text_image",
 }, ref) => {
-  // Upload modal state
   const [uploadModalVisible, setUploadModalVisible] = useState(false);
-  const [uploadStatus, setUploadStatus] = useState<'uploading' | 'success' | 'error' | 'idle'>('idle');
+  const [uploadStatus, setUploadStatus] = useState<"uploading" | "success" | "error" | "idle">("idle");
   const [uploadProgress, setUploadProgress] = useState(0);
-  const [uploadError, setUploadError] = useState<string>('');
-
-  // Answer image uploads state (tracking which answer is being uploaded)
-  const [answerImageUploads, setAnswerImageUploads] = useState<{
-    [key: number]: {
-      file: File | null;
-      uploadedUrl?: string;
-    }
-  }>({});
-
-  // Options state
-  const [options, setOptions] = useState<SelectionTextImageQuestionData['options']>([
-    { id: '1', image: '', alt: '' },
-    { id: '2', image: '', alt: '' },
-    { id: '3', image: '', alt: '' },
-    { id: '4', image: '', alt: '' }
+  const [uploadError, setUploadError] = useState<string>("");
+  const [answerImageUploads, setAnswerImageUploads] = useState<{ [key: number]: { file: File | null; uploadedUrl?: string } }>({});
+  const [options, setOptions] = useState<SelectionTextImageQuestionData["options"]>([
+    { id: "1", image: "", alt: "" },
+    { id: "2", image: "", alt: "" },
+    { id: "3", image: "", alt: "" },
+    { id: "4", image: "", alt: "" },
   ]);
-  const [correctAnswer, setCorrectAnswer] = useState<string>('1');
+  const [correctAnswer, setCorrectAnswer] = useState<string>("1");
+  const [questionContent, setQuestionContent] = useState<TextContent>({ text: "" });
 
-  const updateFormData = (newOptions: SelectionTextImageQuestionData['options'], newCorrectAnswer: string) => {
-    form.setFieldsValue({
-      data: {
-        ...form.getFieldValue('data'),
-        options: newOptions,
-        correctAnswer: newCorrectAnswer
-      }
-    });
+  const updateFormData = (newOptions: SelectionTextImageQuestionData["options"], newCorrectAnswer: string, newQuestionContent?: TextContent) => {
+    const qContent = newQuestionContent || questionContent;
+    form.setFieldsValue({ data: { ...form.getFieldValue("data"), questionContent: qContent, options: newOptions, correctAnswer: newCorrectAnswer } });
   };
 
-  // Answer image upload handlers
+  const handleQuestionContentChange = (content: TextContent) => {
+    setQuestionContent(content);
+    updateFormData(options, correctAnswer, content);
+  };
+
   const handleAnswerImageChange = async (optionId: string, file: File | null) => {
     if (!file) return false;
-    
-    const optionIndex = options.findIndex(opt => opt.id === optionId);
+    const optionIndex = options.findIndex((opt) => opt.id === optionId);
     if (optionIndex < 0) return false;
-
-    // Validate file
-    const imageValidation = validateFile(file, 'image', 10);
-    if (!imageValidation.isValid) {
-      message.error(imageValidation.error);
-      return false;
-    }
-
-    // Set file in state
-    setAnswerImageUploads(prev => ({
-      ...prev,
-      [optionIndex]: { file, uploadedUrl: prev[optionIndex]?.uploadedUrl }
-    }));
-
-    // Auto-upload immediately
+    const imageValidation = validateFile(file, "image", 10);
+    if (!imageValidation.isValid) { message.error(imageValidation.error); return false; }
+    setAnswerImageUploads((prev) => ({ ...prev, [optionIndex]: { file, uploadedUrl: prev[optionIndex]?.uploadedUrl } }));
     setUploadModalVisible(true);
-    setUploadStatus('uploading');
+    setUploadStatus("uploading");
     setUploadProgress(0);
-    setUploadError('');
+    setUploadError("");
 
     try {
-      const result = await uploadImageByType(
-        file,
-        questionType,
-        (progress: UploadProgress) => {
-          setUploadProgress(Math.round(progress.percentage));
-        }
-      );
-
+      const result = await uploadImageByType(file, questionType, (progress: UploadProgress) => {
+        setUploadProgress(Math.round(progress.percentage));
+      });
       if (result.success && result.url) {
-        // Update state
-        setAnswerImageUploads(prev => ({
-          ...prev,
-          [optionIndex]: { file: null, uploadedUrl: result.url }
-        }));
-
-        // Update options
-        const updatedOptions = options.map(option => {
-          if (option.id === optionId) {
-            return {
-              ...option,
-              image: result.url || '',
-            };
-          }
-          return option;
-        });
-
+        setAnswerImageUploads((prev) => ({ ...prev, [optionIndex]: { file: null, uploadedUrl: result.url } }));
+        const updatedOptions = options.map((option) => (option.id === optionId ? { ...option, image: result.url || "" } : option));
         setOptions(updatedOptions);
         updateFormData(updatedOptions, correctAnswer);
-
-        setUploadStatus('success');
+        setUploadStatus("success");
         setUploadProgress(100);
-        message.success('Tải hình ảnh lên thành công!');
+        message.success("Tải hình ảnh lên thành công!");
       } else {
-        throw new Error(result.error || 'Upload failed - no URL returned');
+        throw new Error(result.error || "Upload failed");
       }
     } catch (error) {
-      console.error('Upload error:', error);
-      setUploadStatus('error');
-      setUploadError(error instanceof Error ? error.message : 'Upload failed');
-      message.error('Tải lên thất bại. Vui lòng thử lại.');
+      console.error("Upload error:", error);
+      setUploadStatus("error");
+      setUploadError(error instanceof Error ? error.message : "Upload failed");
+      message.error("Tải lên thất bại.");
     }
-
     return false;
   };
 
-  const handleUploadAnswerImage = async (optionId: string) => {
-    const optionIndex = options.findIndex(opt => opt.id === optionId);
-    const answerUpload = answerImageUploads[optionIndex];
-    
-    if (!answerUpload?.file) {
-      message.warning('Vui lòng chọn file hình ảnh để tải lên');
-      return;
-    }
-
-    const imageValidation = validateFile(answerUpload.file, 'image', 10);
-    if (!imageValidation.isValid) {
-      message.error(imageValidation.error);
-      return;
-    }
-
-    setUploadModalVisible(true);
-    setUploadStatus('uploading');
-    setUploadProgress(0);
-    setUploadError('');
-
-    try {
-      const result = await uploadImageByType(
-        answerUpload.file,
-        questionType,
-        (progress: UploadProgress) => {
-          setUploadProgress(Math.round(progress.percentage));
-        }
-      );
-
-      if (result.success && result.url) {
-        // Update state
-        setAnswerImageUploads(prev => ({
-          ...prev,
-          [optionIndex]: { file: null, uploadedUrl: result.url }
-        }));
-
-        // Update options - ensure image is always a string
-        const updatedOptions = options.map(option => {
-          if (option.id === optionId) {
-            return {
-              ...option,
-              image: result.url || '', // Provide fallback empty string
-            };
-          }
-          return option;
-        });
-
-        setOptions(updatedOptions);
-        updateFormData(updatedOptions, correctAnswer);
-
-        setUploadStatus('success');
-        setUploadProgress(100);
-        message.success('Tải hình ảnh lên thành công!');
-      } else {
-        throw new Error(result.error || 'Upload failed - no URL returned');
-      }
-    } catch (error) {
-      console.error('Upload error:', error);
-      setUploadStatus('error');
-      setUploadError(error instanceof Error ? error.message : 'Upload failed');
-      message.error('Tải lên thất bại. Vui lòng thử lại.');
-    }
-  };
-
   const handleRemoveAnswerImage = (optionId: string) => {
-    const optionIndex = options.findIndex(opt => opt.id === optionId);
-    
-    setAnswerImageUploads(prev => ({
-      ...prev,
-      [optionIndex]: { file: null, uploadedUrl: undefined }
-    }));
-
-    const updatedOptions = options.map(option => {
-      if (option.id === optionId) {
-        return {
-          ...option,
-          image: '',
-        };
-      }
-      return option;
-    });
-
+    const optionIndex = options.findIndex((opt) => opt.id === optionId);
+    setAnswerImageUploads((prev) => ({ ...prev, [optionIndex]: { file: null, uploadedUrl: undefined } }));
+    const updatedOptions = options.map((option) => (option.id === optionId ? { ...option, image: "" } : option));
     setOptions(updatedOptions);
     updateFormData(updatedOptions, correctAnswer);
   };
 
-  // Option management
   const handleAltTextChange = (optionId: string, value: string) => {
-    const updatedOptions = options.map(option => {
-      if (option.id === optionId) {
-        return {
-          ...option,
-          alt: value
-        };
-      }
-      return option;
-    });
-
+    const updatedOptions = options.map((option) => (option.id === optionId ? { ...option, alt: value } : option));
     setOptions(updatedOptions);
     updateFormData(updatedOptions, correctAnswer);
   };
 
   const addOption = () => {
     const newId = (options.length + 1).toString();
-    const newOptions = [...options, { id: newId, image: '', alt: '' }];
+    const newOptions = [...options, { id: newId, image: "", alt: "" }];
     setOptions(newOptions);
     updateFormData(newOptions, correctAnswer);
   };
 
   const removeOption = (optionId: string) => {
-    if (options.length <= 2) return; // Keep minimum 2 options
-
-    const filteredOptions = options.filter(opt => opt.id !== optionId);
+    if (options.length <= 2) return;
+    const filteredOptions = options.filter((opt) => opt.id !== optionId);
     setOptions(filteredOptions);
-
-    // If removed option was correct answer, reset to first option
     let newCorrectAnswer = correctAnswer;
     if (correctAnswer === optionId) {
-      newCorrectAnswer = filteredOptions[0]?.id || '1';
+      newCorrectAnswer = filteredOptions[0]?.id || "1";
       setCorrectAnswer(newCorrectAnswer);
     }
-
     updateFormData(filteredOptions, newCorrectAnswer);
   };
 
@@ -280,323 +145,187 @@ const SelectionTextImageForm = forwardRef<SelectionTextImageFormRef, SelectionTe
     updateFormData(options, optionId);
   };
 
-  // Unified upload method for all image files
   const handleUploadAllFiles = async (showModal: boolean = true): Promise<boolean> => {
-    // Check if we have images to upload
-    const answerImagesToUpload = Object.entries(answerImageUploads)
-      .filter(([_, upload]) => upload.file && !upload.uploadedUrl);
-
+    const answerImagesToUpload = Object.entries(answerImageUploads).filter(([_, upload]) => upload.file && !upload.uploadedUrl);
     if (answerImagesToUpload.length === 0) {
-      // Check if all options have images uploaded
-      const allOptionsHaveImages = options.every(option => option.image);
-
-      if (allOptionsHaveImages) {
-        console.log('All images already uploaded');
-        return true;
-      }
-
-      message.warning('Vui lòng chọn và tải lên tất cả hình ảnh tùy chọn');
+      const allOptionsHaveImages = options.every((option) => option.image);
+      if (allOptionsHaveImages) return true;
+      message.warning("Vui lòng chọn và tải lên tất cả hình ảnh");
       return false;
     }
-
-    // Validate all image files
     for (const [index, upload] of answerImagesToUpload) {
       if (upload.file) {
-        const imageValidation = validateFile(upload.file, 'image', 10);
-        if (!imageValidation.isValid) {
-          message.error(`Hình ảnh tùy chọn ${parseInt(index) + 1}: ${imageValidation.error}`);
-          return false;
-        }
+        const imageValidation = validateFile(upload.file, "image", 10);
+        if (!imageValidation.isValid) { message.error(`Hình ảnh ${parseInt(index) + 1}: ${imageValidation.error}`); return false; }
       }
     }
-
-    if (showModal) {
-      setUploadModalVisible(true);
-    }
-    setUploadStatus('uploading');
+    if (showModal) setUploadModalVisible(true);
+    setUploadStatus("uploading");
     setUploadProgress(0);
-    setUploadError('');
+    setUploadError("");
 
     try {
       const uploadPromises: Promise<any>[] = [];
       const totalFiles = answerImagesToUpload.length;
       let completedFiles = 0;
-
-      // Upload option images
       for (const [index, upload] of answerImagesToUpload) {
         if (upload.file) {
-          const imagePromise = uploadImageByType(
-            upload.file,
-            questionType,
-            (progress: UploadProgress) => {
-              const fileProgress = progress.percentage / totalFiles;
-              setUploadProgress(Math.round((completedFiles / totalFiles) * 100 + fileProgress));
-            }
-          ).then(result => ({ type: 'option_image', index: parseInt(index), result }));
+          const imagePromise = uploadImageByType(upload.file, questionType, (progress: UploadProgress) => {
+            const fileProgress = progress.percentage / totalFiles;
+            setUploadProgress(Math.round((completedFiles / totalFiles) * 100 + fileProgress));
+          }).then((result) => ({ type: "option_image", index: parseInt(index), result }));
           uploadPromises.push(imagePromise);
         }
       }
-
       const results = await Promise.all(uploadPromises);
-
-      // Process results
       const newAnswerUploads = { ...answerImageUploads };
       let updatedOptions = [...options];
-
       for (const item of results) {
-        if (item.type === 'option_image') {
+        if (item.type === "option_image") {
           if (item.result.success) {
             newAnswerUploads[item.index] = { file: null, uploadedUrl: item.result.url };
-            updatedOptions[item.index] = {
-              ...updatedOptions[item.index],
-              image: item.result.url,
-            };
+            updatedOptions[item.index] = { ...updatedOptions[item.index], image: item.result.url };
           } else {
-            throw new Error(`Tải hình ảnh tùy chọn ${item.index + 1} thất bại: ${item.result.error}`);
+            throw new Error(`Tải hình ảnh ${item.index + 1} thất bại: ${item.result.error}`);
           }
         }
         completedFiles++;
       }
-
-      // Update form and state
       setAnswerImageUploads(newAnswerUploads);
       setOptions(updatedOptions);
-      
-      form.setFieldsValue({
-        data: {
-          ...form.getFieldValue('data'),
-          options: updatedOptions,
-        }
-      });
-
-      setUploadStatus('success');
+      form.setFieldsValue({ data: { ...form.getFieldValue("data"), options: updatedOptions } });
+      setUploadStatus("success");
       setUploadProgress(100);
-
-      if (showModal) {
-        message.success('Tất cả hình ảnh đã tải lên thành công!');
-      }
+      if (showModal) message.success("Tất cả hình ảnh đã tải lên thành công!");
       return true;
     } catch (error) {
-      console.error('Upload error:', error);
-      setUploadStatus('error');
-      setUploadError(error instanceof Error ? error.message : 'Upload failed');
-      message.error('Tải lên thất bại. Vui lòng thử lại.');
+      console.error("Upload error:", error);
+      setUploadStatus("error");
+      setUploadError(error instanceof Error ? error.message : "Upload failed");
+      message.error("Tải lên thất bại.");
       return false;
     }
   };
 
-  // Expose upload method to parent
-  useImperativeHandle(ref, () => ({
-    uploadFiles: () => handleUploadAllFiles(false),
-  }));
+  useImperativeHandle(ref, () => ({ uploadFiles: () => handleUploadAllFiles(false) }));
 
-  // Initialize values
   useEffect(() => {
     if (initialValues?.data) {
       const { data } = initialValues;
-      
+      if (data.questionContent) setQuestionContent(data.questionContent);
+      else if (data.question) setQuestionContent({ text: data.question });
       if (data.options) {
         setOptions(data.options);
         const imageUploads: typeof answerImageUploads = {};
-        data.options.forEach((option, index) => {
-          if (option.image) {
-            imageUploads[index] = { file: null, uploadedUrl: option.image };
-          }
-        });
+        data.options.forEach((option, index) => { if (option.image) imageUploads[index] = { file: null, uploadedUrl: option.image }; });
         setAnswerImageUploads(imageUploads);
       }
-      
-      if (data.correctAnswer) {
-        setCorrectAnswer(data.correctAnswer);
-      }
+      if (data.correctAnswer) setCorrectAnswer(data.correctAnswer);
     }
   }, [initialValues]);
 
   return (
-    <div>
-      {/* Question Setup */}
-      <Card title="Thiết Lập Câu Hỏi" style={{ marginBottom: '24px' }}>
-        <Form.Item
-          label="Hướng Dẫn Câu Hỏi"
-          name={['data', 'instruction']}
-          rules={[{ required: true, message: 'Vui lòng nhập hướng dẫn câu hỏi' }]}
-        >
-          <Input placeholder="ví dụ: Đọc văn bản và chọn hình ảnh đúng" />
-        </Form.Item>
+    <div className="max-w-2xl mx-auto">
+      {/* Section 1: Question Setup */}
+      <SectionContainer>
+        <SectionHeader step={1} title="Thiết Lập Câu Hỏi" description="Nhập hướng dẫn và nội dung câu hỏi" icon={<QuestionCircleOutlined />} />
+        <FormField label="Hướng dẫn câu hỏi" required>
+          <Form.Item name={["data", "instruction"]} rules={[{ required: true, message: "Bắt buộc" }]} className="mb-0">
+            <Input size="large" className="rounded-lg" placeholder="VD: Đọc văn bản và chọn hình ảnh đúng" />
+          </Form.Item>
+        </FormField>
+        <FormField label="Văn bản câu hỏi" required>
+          <TextContentInput value={questionContent} onChange={handleQuestionContentChange} placeholder="Nhập văn bản câu hỏi mà học viên sẽ đọc" multiline rows={3} />
+        </FormField>
+      </SectionContainer>
 
-        <Form.Item
-          label="Văn Bản Câu Hỏi"
-          name={['data', 'question']}
-          rules={[{ required: true, message: 'Vui lòng nhập văn bản câu hỏi' }]}
-        >
-          <TextArea
-            rows={3}
-            placeholder="Nhập văn bản câu hỏi mà học viên sẽ đọc"
-            style={{ fontSize: '16px' }}
-          />
-        </Form.Item>
-      </Card>
-
-      {/* Answer Options */}
-      <Card
-        title="Các Lựa Chọn Trả Lời (Hình Ảnh)"
-        extra={
-          <Button
-            type="dashed"
-            icon={<PlusOutlined />}
-            onClick={addOption}
-            disabled={options.length >= 6}
-          >
-            Thêm Tùy Chọn
-          </Button>
-        }
-        style={{ marginBottom: '24px' }}
-      >
-        <Space direction="vertical" style={{ width: '100%' }} size="large">
+      {/* Section 2: Answer Options */}
+      <SectionContainer>
+        <SectionHeader step={2} title="Các Lựa Chọn Trả Lời (Hình Ảnh)" description="Tải lên hình ảnh và chọn đáp án đúng" icon={<OrderedListOutlined />} />
+        <div className="space-y-4">
           {options.map((option, index) => {
             const answerUpload = answerImageUploads[index];
             return (
-              <Card
+              <div
                 key={option.id}
-                size="small"
-                style={{
-                  border: correctAnswer === option.id ? '2px solid #1890ff' : '1px solid #d9d9d9',
-                  backgroundColor: correctAnswer === option.id ? '#f6ffed' : 'white'
-                }}
-                title={
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <span>Tùy Chọn {index + 1}</span>
-                    <Space>
-                      <Button
-                        type={correctAnswer === option.id ? 'primary' : 'default'}
-                        size="small"
-                        onClick={() => handleCorrectAnswerChange(option.id)}
-                      >
-                        {correctAnswer === option.id ? 'Đáp Án Đúng' : 'Đánh Dấu Là Đúng'}
-                      </Button>
-                      {options.length > 2 && (
-                        <Button
-                          danger
-                          size="small"
-                          icon={<DeleteOutlined />}
-                          onClick={() => removeOption(option.id)}
-                        />
-                      )}
-                    </Space>
-                  </div>
-                }
+                className={`p-4 rounded-xl border-2 transition-all ${
+                  correctAnswer === option.id ? "border-green-500 bg-green-50" : "border-gray-200 bg-white hover:border-gray-300"
+                }`}
               >
-                {/* Image Upload */}
-                <div style={{ marginBottom: '16px' }}>
-                  <Text strong>Hình Ảnh Tùy Chọn</Text>
-                  <div style={{ marginTop: '4px' }}>
-                    <Upload
-                      accept="image/*"
-                      maxCount={1}
-                      showUploadList={false}
-                      beforeUpload={(file) => {
-                        handleAnswerImageChange(option.id, file);
-                        return false;
-                      }}
-                      disabled={!!answerUpload?.uploadedUrl}
+                <div className="flex justify-between items-center mb-3">
+                  <span className="text-sm font-bold text-gray-600">Lựa chọn {index + 1}</span>
+                  <Space>
+                    <Button
+                      type={correctAnswer === option.id ? "primary" : "default"}
+                      size="small"
+                      onClick={() => handleCorrectAnswerChange(option.id)}
+                      className="rounded-lg"
+                      icon={correctAnswer === option.id ? <CheckCircleOutlined /> : null}
                     >
-                      <Button
-                        icon={<UploadOutlined />}
-                        disabled={!!answerUpload?.uploadedUrl}
-                      >
-                        {answerUpload?.file ? answerUpload.file.name : 'Chọn Hình Ảnh'}
-                      </Button>
-                    </Upload>
-                    {answerUpload?.uploadedUrl && (
-                      <div style={{ marginTop: 8 }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                          <PictureOutlined style={{ color: '#52c41a' }} />
-                          <span style={{ color: '#52c41a' }}>Hình ảnh đã tải lên</span>
-                          <Button
-                            size="small"
-                            icon={<DeleteOutlined />}
-                            onClick={() => handleRemoveAnswerImage(option.id)}
-                            type="text"
-                            danger
-                          />
-                        </div>
-                        <div style={{ marginTop: 4 }}>
-                          <img
-                            src={answerUpload.uploadedUrl}
-                            alt={option.alt || `Option ${index + 1}`}
-                            style={{ maxWidth: 200, maxHeight: 200, objectFit: 'cover', borderRadius: '4px' }}
-                          />
-                        </div>
-                      </div>
+                      {correctAnswer === option.id ? "Đáp án đúng" : "Đánh dấu đúng"}
+                    </Button>
+                    {options.length > 2 && (
+                      <Button danger size="small" icon={<DeleteOutlined />} onClick={() => removeOption(option.id)} className="rounded-lg" />
                     )}
-                  </div>
+                  </Space>
                 </div>
 
-                {/* Alt Text */}
-                <div>
-                  <Text strong>Văn Bản Thay Thế (cho khả năng tiếp cận)</Text>
-                  <Input
-                    placeholder="Mô tả nội dung trong hình ảnh"
-                    value={option.alt}
-                    onChange={(e) => handleAltTextChange(option.id, e.target.value)}
-                    style={{ marginTop: '4px' }}
-                  />
-                </div>
-
-                {/* Preview */}
-                {answerUpload?.uploadedUrl && (
-                  <div style={{ marginTop: '12px', padding: '8px', backgroundColor: '#fafafa', borderRadius: '4px' }}>
-                    <Text strong>Xem Trước: </Text>
-                    <div style={{ marginTop: '4px' }}>
-                      <img
-                        src={answerUpload.uploadedUrl}
-                        alt={option.alt || `Option ${index + 1}`}
-                        style={{ maxWidth: 120, maxHeight: 120, objectFit: 'cover', borderRadius: '4px' }}
-                      />
-                      {option.alt && (
-                        <div style={{ fontSize: '12px', color: '#666', marginTop: '4px' }}>
-                          Mô tả: {option.alt}
-                        </div>
-                      )}
+                <div className="p-4 border border-dashed border-gray-300 rounded-xl bg-gray-50/50">
+                  <Upload
+                    accept="image/*"
+                    maxCount={1}
+                    showUploadList={false}
+                    beforeUpload={(file) => { handleAnswerImageChange(option.id, file); return false; }}
+                    disabled={!!answerUpload?.uploadedUrl}
+                  >
+                    <Button icon={<UploadOutlined />} size="large" className="rounded-lg" disabled={!!answerUpload?.uploadedUrl}>
+                      {answerUpload?.file ? answerUpload.file.name : "Chọn Hình Ảnh"}
+                    </Button>
+                  </Upload>
+                  {answerUpload?.uploadedUrl && (
+                    <div className="mt-4">
+                      <div className="flex items-center gap-2 text-green-600 mb-2">
+                        <PictureOutlined />
+                        <span className="text-sm font-medium">Đã tải lên</span>
+                        <Button size="small" icon={<DeleteOutlined />} onClick={() => handleRemoveAnswerImage(option.id)} type="text" danger>Xóa</Button>
+                      </div>
+                      <img src={answerUpload.uploadedUrl} alt={option.alt || `Option ${index + 1}`} className="max-w-[200px] max-h-[200px] object-cover rounded-lg border" />
                     </div>
-                  </div>
-                )}
-              </Card>
+                  )}
+                </div>
+
+                <div className="mt-3">
+                  <Input size="large" className="rounded-lg" placeholder="Văn bản thay thế (mô tả hình ảnh)" value={option.alt} onChange={(e) => handleAltTextChange(option.id, e.target.value)} />
+                </div>
+              </div>
             );
           })}
-        </Space>
-
-        {/* Correct Answer Summary */}
-        <div style={{ marginTop: '16px', padding: '12px', backgroundColor: '#e6f7ff', borderRadius: '6px' }}>
-          <Text strong>Đáp Án Đúng: </Text>
-          <Text>Tùy Chọn {options.findIndex(opt => opt.id === correctAnswer) + 1}</Text>
-          {options.find(opt => opt.id === correctAnswer)?.alt && (
-            <Text> - {options.find(opt => opt.id === correctAnswer)?.alt}</Text>
-          )}
         </div>
-      </Card>
+        <Button type="dashed" icon={<PlusOutlined />} onClick={addOption} disabled={options.length >= 6} className="w-full mt-4 h-10 rounded-lg">
+          Thêm lựa chọn
+        </Button>
+        <div className="mt-4 p-3 bg-blue-50 rounded-lg border border-blue-100">
+          <Text strong className="text-blue-800">Đáp án đúng: </Text>
+          <Text className="text-blue-700">
+            Lựa chọn {options.findIndex((opt) => opt.id === correctAnswer) + 1}
+            {options.find((opt) => opt.id === correctAnswer)?.alt && <span> - {options.find((opt) => opt.id === correctAnswer)?.alt}</span>}
+          </Text>
+        </div>
+      </SectionContainer>
 
-      {/* Additional Settings */}
-      <Card title="Cài Đặt Thêm" style={{ marginBottom: '24px' }}>
-        <Form.Item
-          label="Giải Thích (Tùy Chọn)"
-          name={['data', 'explanation']}
-          help="Cung cấp giải thích sẽ được hiển thị sau khi học viên trả lời"
-        >
-          <TextArea
-            rows={3}
-            placeholder="Giải thích tại sao đây là đáp án đúng..."
-          />
-        </Form.Item>
-      </Card>
+      {/* Section 3: Additional Settings */}
+      <SectionContainer>
+        <SectionHeader step={3} title="Cài Đặt Bổ Sung" description="Giải thích đáp án" icon={<CheckCircleOutlined />} />
+        <FormField label="Giải thích" hint="Hiển thị sau khi học viên trả lời">
+          <Form.Item name={["data", "explanation"]} className="mb-0">
+            <TextArea rows={3} className="rounded-lg" placeholder="Giải thích tại sao đây là đáp án đúng..." />
+          </Form.Item>
+        </FormField>
+      </SectionContainer>
 
-      {/* Hidden form fields for proper data structure */}
-      <Form.Item name={['data', 'options']} style={{ display: 'none' }}>
-        <Input />
-      </Form.Item>
-      <Form.Item name={['data', 'correctAnswer']} style={{ display: 'none' }}>
-        <Input />
-      </Form.Item>
+      <Form.Item name={["data", "questionContent"]} className="hidden"><Input /></Form.Item>
+      <Form.Item name={["data", "options"]} className="hidden"><Input /></Form.Item>
+      <Form.Item name={["data", "correctAnswer"]} className="hidden"><Input /></Form.Item>
 
       <UploadModal
         visible={uploadModalVisible}
@@ -611,6 +340,6 @@ const SelectionTextImageForm = forwardRef<SelectionTextImageFormRef, SelectionTe
   );
 });
 
-SelectionTextImageForm.displayName = 'SelectionTextImageForm';
+SelectionTextImageForm.displayName = "SelectionTextImageForm";
 
 export default SelectionTextImageForm;

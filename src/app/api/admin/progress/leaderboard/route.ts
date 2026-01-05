@@ -7,8 +7,6 @@ export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
     const limit = searchParams.get('limit') || '20';
-    
-    console.log(`🔄 Fetching leaderboard with limit: ${limit}`);
 
     const response = await fetch(`${API_BASE_URL}/admin/progress/leaderboard?limit=${limit}`, {
       method: 'GET',
@@ -24,7 +22,6 @@ export async function GET(request: NextRequest) {
     }
 
     const responseBody: LeaderboardData = await response.json();
-    console.log('✅ Leaderboard fetched successfully');
     
     return NextResponse.json(responseBody);
   } catch (error) {

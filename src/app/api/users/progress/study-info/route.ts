@@ -5,7 +5,7 @@ const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || "http://26.112.47.2
 
 export async function GET(request: NextRequest) {
   try {
-    console.log('🔄 Fetching study info');
+
 
     const response = await fetch(`${API_BASE_URL}/users/progress/study-info`, {
       method: 'GET',
@@ -21,7 +21,7 @@ export async function GET(request: NextRequest) {
     }
 
     const responseBody: StudyInfo = await response.json();
-    console.log('✅ Study info fetched successfully');
+
     
     return NextResponse.json(responseBody);
   } catch (error) {
