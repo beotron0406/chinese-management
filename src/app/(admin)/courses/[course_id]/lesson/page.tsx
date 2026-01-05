@@ -22,6 +22,7 @@ import {
   BookOutlined,
   UndoOutlined,
   ExclamationCircleOutlined,
+  StopOutlined,
 } from "@ant-design/icons";
 import { courseService } from "@/services/api";
 import { lessonApi } from "@/services/lessonApi";
@@ -147,23 +148,23 @@ export default function CourseLessonsPage() {
     }
   };
 
-  const handleDeleteLesson = (lesson: Lesson) => {
+  const handleDeactivateLesson = (lesson: Lesson) => {
     Modal.confirm({
-      title: "Xóa bài học",
+      title: "Vô hiệu hóa bài học",
       icon: <ExclamationCircleOutlined />,
-      content: `Bạn có chắc chắn muốn xóa bài học "${lesson.name}"? Bài học sẽ được đánh dấu là không hoạt động.`,
-      okText: "Xóa",
+      content: `Bạn có chắc chắn muốn vô hiệu hóa bài học "${lesson.name}"? Bài học sẽ được đánh dấu là không hoạt động.`,
+      okText: "Vô hiệu hóa",
       cancelText: "Hủy",
       okType: "danger",
       onOk: async () => {
         try {
           await lessonApi.deleteLesson(lesson.id);
-          message.success("Xóa bài học thành công");
+          message.success("Vô hiệu hóa bài học thành công");
           // Refresh lessons list
           const lessonsData = await lessonApi.getAllLessonsByCourse(courseId);
           setLessons(lessonsData);
         } catch (error) {
-          message.error("Có lỗi khi xóa bài học");
+          message.error("Có lỗi khi vô hiệu hóa bài học");
         }
       },
     });
@@ -290,11 +291,11 @@ export default function CourseLessonsPage() {
           {record.isActive ? (
             <Button
               danger
-              icon={<DeleteOutlined />}
+              icon={<StopOutlined />}
               size="small"
               onClick={(e) => {
                 e.stopPropagation();
-                handleDeleteLesson(record);
+                handleDeactivateLesson(record);
               }}
             ></Button>
           ) : (
