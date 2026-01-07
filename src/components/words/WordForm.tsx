@@ -122,7 +122,6 @@ const WordForm: React.FC<WordFormProps> = ({ wordData, onSuccess }) => {
   const [existingWord, setExistingWord] = useState<Word | null>(null);
   const [senseEditing, setSenseEditing] = useState<WordSense | null>(null);
   const [generatedPinyin, setGeneratedPinyin] = useState<string>("");
-  const [chineseText, setChineseText] = useState<string>("");
 
   // Upload state
   const [selectedImageFile, setSelectedImageFile] = useState<File | null>(null);
@@ -416,12 +415,9 @@ const WordForm: React.FC<WordFormProps> = ({ wordData, onSuccess }) => {
     }
   }, 500);
 
-  // Combined handler for simplified input
-  const handleSimplifiedInput = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = e.target.value;
-    setChineseText(value);
+  // Combined handler for simplified input - matches WordDefinitionForm pattern
+  const handleSimplifiedInput = (value: string) => {
     handleSimplifiedChange(value);
-    handleSimplifiedSearch(value);
   };
 
   // Handle TTS audio generated
@@ -579,7 +575,7 @@ const WordForm: React.FC<WordFormProps> = ({ wordData, onSuccess }) => {
               className="mb-0"
             >
               <Input
-                onChange={handleSimplifiedInput}
+                onChange={(e) => handleSimplifiedInput(e.target.value)}
                 disabled={isEdit || !!existingWord}
                 suffix={searchLoading ? <Spin size="small" /> : null}
                 placeholder="Ví dụ: 你好"
@@ -815,7 +811,7 @@ const WordForm: React.FC<WordFormProps> = ({ wordData, onSuccess }) => {
                 </Upload>
 
                 <TTSButton
-                  text={chineseText || form.getFieldValue(["word", "simplified"])}
+                  text={form.getFieldValue(["word", "simplified"]) || ""}
                   onAudioGenerated={handleTTSGenerated}
                   buttonText="Tạo TTS"
                 />
