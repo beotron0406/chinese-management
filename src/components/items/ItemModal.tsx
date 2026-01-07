@@ -306,13 +306,23 @@ const ItemModal: React.FC<ItemModalProps> = ({
   };
 
   const handleBack = () => {
-    if (currentStep === 3) {
-      // Configure step
-      if (selectedCategory === "content") {
+    if (selectedCategory === "content") {
+      // Content: 3 steps (0, 1, 2)
+      if (currentStep === 2) {
+        // Form step -> back to type selection
         setCurrentStep(1);
         setSelectedContentType(undefined);
         setFinalType(undefined);
-      } else if (selectedCategory === "question") {
+      } else if (currentStep === 1) {
+        // Type selection -> back to category
+        setCurrentStep(0);
+        setSelectedCategory(undefined);
+        setSelectedContentType(undefined);
+      }
+    } else if (selectedCategory === "question") {
+      // Question: 4 steps (0, 1, 2, 3)
+      if (currentStep === 3) {
+        // Form step -> back to Q/A type selection or type selection
         const categoryConfig =
           QUESTION_ANSWER_TYPES[
             selectedQuestionCategory! as keyof typeof QUESTION_ANSWER_TYPES
@@ -330,23 +340,23 @@ const ItemModal: React.FC<ItemModalProps> = ({
         setSelectedQuestionType(undefined);
         setSelectedAnswerType(undefined);
         setFinalType(undefined);
-      }
-    } else if (currentStep === 2) {
-      if (selectedCategory === "content") {
-        setCurrentStep(1);
-        setSelectedContentType(undefined);
-        setFinalType(undefined);
-      } else if (selectedCategory === "question") {
+      } else if (currentStep === 2) {
+        // Q/A type selection -> back to type selection
         setCurrentStep(1);
         setSelectedQuestionCategory(undefined);
         setSelectedQuestionType(undefined);
         setSelectedAnswerType(undefined);
+      } else if (currentStep === 1) {
+        // Type selection -> back to category
+        setCurrentStep(0);
+        setSelectedCategory(undefined);
+        setSelectedQuestionCategory(undefined);
       }
-    } else if (currentStep === 1) {
-      setCurrentStep(0);
-      setSelectedCategory(undefined);
-      setSelectedContentType(undefined);
-      setSelectedQuestionCategory(undefined);
+    } else {
+      // No category selected yet
+      if (currentStep > 0) {
+        setCurrentStep(currentStep - 1);
+      }
     }
   };
 
@@ -875,25 +885,27 @@ const ItemModal: React.FC<ItemModalProps> = ({
                 current={currentStep}
                 className="custom-vertical-steps"
                 size="small"
-                items={[
-                  {
-                    title: "Danh Mục",
-                    description: "Chọn loại chính",
-                  },
-                  {
-                    title: "Chi Tiết",
-                    description: "Chọn loại cụ thể",
-                  },
-                  {
-                    title: "Cấu Hình",
-                    description: "Loại câu hỏi/trả lời",
-                    disabled: selectedCategory === "content", // Skip for content
-                  },
-                  {
-                    title: "Nội Dung",
-                    description: "Nhập dữ liệu",
-                  },
-                ]}
+                items={
+                  selectedCategory === "content"
+                    ? [
+                        { title: "Danh Mục", description: "Chọn loại chính" },
+                        { title: "Chi Tiết", description: "Chọn loại cụ thể" },
+                        { title: "Nội Dung", description: "Nhập dữ liệu" },
+                      ]
+                    : selectedCategory === "question"
+                    ? [
+                        { title: "Danh Mục", description: "Chọn loại chính" },
+                        { title: "Chi Tiết", description: "Chọn loại cụ thể" },
+                        { title: "Cấu Hình", description: "Loại câu hỏi/trả lời" },
+                        { title: "Nội Dung", description: "Nhập dữ liệu" },
+                      ]
+                    : [
+                        { title: "Danh Mục", description: "Chọn loại chính" },
+                        { title: "Chi Tiết", description: "Chọn loại cụ thể" },
+                        { title: "Cấu Hình", description: "Loại câu hỏi/trả lời" },
+                        { title: "Nội Dung", description: "Nhập dữ liệu" },
+                      ]
+                }
               />
               
               <div className="mt-8 pt-6 border-t border-gray-200">
@@ -907,22 +919,35 @@ const ItemModal: React.FC<ItemModalProps> = ({
                         </div>
                     </div>
 
-                    {(selectedContentType || selectedQuestionCategory) && (
+                    {selectedContentType && (
                          <div>
                             <div className="text-xs text-gray-400 mb-1">Loại</div>
                             <div className="font-medium text-sm text-gray-800">
-                                {selectedContentType && CONTENT_TYPES.find(c => c.value === selectedContentType)?.label}
-                                {selectedQuestionCategory && QUESTION_CATEGORIES.find(c => c.value === selectedQuestionCategory)?.label}
+                                {CONTENT_TYPES.find(c => c.value === selectedContentType)?.label}
                             </div>
                         </div>
                     )}
 
-                    {finalType && (
-                        <div className="pt-2 border-t border-gray-100">
-                            <div className="text-xs text-gray-400 mb-1">Mã loại</div>
-                            <Tag className="m-0 text-[10px] max-w-full truncate">{finalType}</Tag>
+                    {selectedQuestionCategory && (
+                         <div>
+                            <div className="text-xs text-gray-400 mb-1">Loại</div>
+                            <div className="font-medium text-sm text-gray-800">
+                                {QUESTION_CATEGORIES.find(c => c.value === selectedQuestionCategory)?.label}
+                            </div>
                         </div>
                     )}
+
+                    {selectedQuestionType && selectedAnswerType && (
+                         <div>
+                            <div className="text-xs text-gray-400 mb-1">Dạng câu hỏi</div>
+                            <div className="font-medium text-sm text-gray-800">
+                                {QUESTION_ANSWER_TYPES[selectedQuestionCategory as keyof typeof QUESTION_ANSWER_TYPES]?.question.find(q => q.value === selectedQuestionType)?.label}
+                                {" → "}
+                                {QUESTION_ANSWER_TYPES[selectedQuestionCategory as keyof typeof QUESTION_ANSWER_TYPES]?.answer.find(a => a.value === selectedAnswerType)?.label}
+                            </div>
+                        </div>
+                    )}
+
                 </div>
               </div>
            </div>
