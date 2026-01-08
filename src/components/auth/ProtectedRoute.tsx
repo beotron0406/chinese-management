@@ -23,7 +23,7 @@ const ProtectedRoute = ({
         router.push("/login");
       } else if (adminOnly && user?.role !== "admin") {
         // Redirect non-admin users trying to access admin routes
-        router.push("/");
+        router.push("/unauthorized");
       }
     }
   }, [isLoading, isAuthenticated, user, router, adminOnly]);

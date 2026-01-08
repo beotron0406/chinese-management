@@ -23,9 +23,15 @@ const LoginPage = () => {
   const onFinish = async (values: { email: string; password: string }) => {
     setLoading(true);
     try {
-      await login(values.email, values.password);
-      message.success('Login successful');
-      router.push('/dashboard');
+      const result = await login(values.email, values.password);
+      
+      if (result.isAdmin) {
+        message.success('Login successful');
+        router.push('/dashboard');
+      } else {
+        // User role is not admin - redirect to unauthorized page
+        router.push('/unauthorized');
+      }
     } catch (err) {
       message.error('Invalid email or password');
       console.error('Login error:', err);

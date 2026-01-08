@@ -16,7 +16,7 @@ interface AuthContextType {
   user: User | null;
   isLoading: boolean;
   isAuthenticated: boolean;
-  login: (email: string, password: string) => Promise<void>;
+  login: (email: string, password: string) => Promise<{ isAdmin: boolean }>;
   logout: () => void;
   checkAuthStatus: () => Promise<void>;
 }
@@ -33,7 +33,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const router = useRouter();
 
-  const login = async (email: string, password: string) => {
+  const login = async (email: string, password: string): Promise<{ isAdmin: boolean }> => {
     try {
       const response = await fetch(`${API_BASE_URL}/auth/login`, {
         method: 'POST',
@@ -49,7 +49,25 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       const { access_token } = await response.json();
       localStorage.setItem('auth_token', access_token);
       
-      await checkAuthStatus(); // Verify and get user profile
+      // Get user profile to check role
+      const profileResponse = await fetch(`${API_BASE_URL}/users/profile`, {
+        headers: { 
+          'Authorization': `Bearer ${access_token}` 
+        },
+      });
+      
+      if (!profileResponse.ok) {
+        throw new Error('Failed to fetch user profile');
+      }
+
+      const userData = await profileResponse.json();
+      setUser(userData);
+      setIsAuthenticated(true);
+      setIsLoading(false);
+
+      // Check if user has admin role
+      const isAdmin = userData.role === 'admin';
+      return { isAdmin };
     } catch (error) {
       console.error('Login error:', error);
       throw error;
